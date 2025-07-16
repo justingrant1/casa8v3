@@ -10,21 +10,14 @@ import { MapPin, Bed, Bath, Square, Heart, MessageSquare, Check } from "lucide-r
 import Image from "next/image"
 import { useAuth } from '@/lib/auth'
 import { useRouter } from 'next/navigation'
+import { Navbar } from '@/components/navbar'
 
-export default function PropertyDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+export default function PropertyDetailsPage({ params }: { params: { id: string } }) {
   const { user } = useAuth()
   const router = useRouter()
   const [property, setProperty] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-  const [propertyId, setPropertyId] = useState<string | null>(null)
-
-  useEffect(() => {
-    const initializeParams = async () => {
-      const resolvedParams = await params
-      setPropertyId(resolvedParams.id)
-    }
-    initializeParams()
-  }, [params])
+  const { id: propertyId } = params
 
   useEffect(() => {
     if (!propertyId) return
@@ -72,9 +65,11 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
+    <>
+      <Navbar />
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2">
           {/* Image Gallery */}
           <div className="grid grid-cols-2 gap-2 mb-8">
             {property.images?.slice(0, 4).map((img: string, index: number) => (
@@ -161,8 +156,9 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
               </Button>
             </CardContent>
           </Card>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   )
 }
