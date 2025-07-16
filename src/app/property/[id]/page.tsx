@@ -12,6 +12,7 @@ import { useRouter } from 'next/navigation'
 import { Navbar } from '@/components/navbar'
 import Link from 'next/link'
 import { getPropertyById } from '@/lib/properties'
+import { getImageUrls } from '@/lib/storage'
 
 export default function PropertyDetailsPage({ params }: { params: { id: string } }) {
   const { user } = useAuth()
@@ -100,10 +101,10 @@ export default function PropertyDetailsPage({ params }: { params: { id: string }
           <div className="lg:col-span-2">
             {/* Image Gallery */}
             <div className="grid grid-cols-2 gap-2 mb-8">
-              {property.images?.slice(0, 5).map((img: string, index: number) => (
+              {getImageUrls(property.images).slice(0, 5).map((img: string, index: number) => (
                 <div key={index} className={`relative rounded-lg overflow-hidden ${index === 0 ? 'col-span-2 row-span-2 h-96' : 'h-48'}`}>
                   <Image
-                    src={img || '/placeholder.svg'}
+                    src={img}
                     alt={`${property.title} image ${index + 1}`}
                     fill
                     className="object-cover"
