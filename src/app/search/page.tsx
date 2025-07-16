@@ -10,9 +10,10 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Search, MapPin, Bed, Bath, Square, Heart } from "lucide-react"
+import { Search, MapPin, Bed, Bath, Square, Heart, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
+import { Navbar } from "@/components/navbar"
 
 function SearchPageContent() {
   const searchParams = useSearchParams()
@@ -68,124 +69,161 @@ function SearchPageContent() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-        {/* Filters */}
-        <div className="md:col-span-1">
-          <Card>
-            <CardHeader>
-              <CardTitle>Filters</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="location">Location</Label>
-                <Input
-                  id="location"
-                  placeholder="City, State, or Zip"
-                  value={filters.location}
-                  onChange={(e) => handleFilterChange('location', e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="bedrooms">Bedrooms</Label>
-                <Select
-                  value={filters.bedrooms}
-                  onValueChange={(value: string) => handleFilterChange('bedrooms', value)}
-                >
-                  <SelectTrigger id="bedrooms">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="any">Any</SelectItem>
-                    <SelectItem value="1">1</SelectItem>
-                    <SelectItem value="2">2</SelectItem>
-                    <SelectItem value="3">3</SelectItem>
-                    <SelectItem value="4">4+</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Amenities</Label>
+    <>
+      <Navbar />
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          {/* Filters */}
+          <div className="md:col-span-1">
+            <Card>
+              <CardHeader>
+                <CardTitle>Filters</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  {['Washer/Dryer', 'Air Conditioning', 'Parking', 'Dishwasher', 'Pet Friendly', 'Gym'].map((amenity) => (
-                    <div key={amenity} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={amenity}
-                        checked={filters.amenities.includes(amenity)}
-                        onCheckedChange={() => handleAmenityChange(amenity)}
-                      />
-                      <Label htmlFor={amenity}>{amenity}</Label>
-                    </div>
-                  ))}
+                  <Label htmlFor="location">Location</Label>
+                  <Input
+                    id="location"
+                    placeholder="City, State, or Zip"
+                    value={filters.location}
+                    onChange={(e) => handleFilterChange('location', e.target.value)}
+                  />
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Properties */}
-        <div className="md:col-span-3">
-          <h1 className="text-3xl font-bold mb-6">Search Results</h1>
-          {loading ? (
-            <p>Loading...</p>
-          ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-              {properties.map((property) => (
-                <Card key={property.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                  <div className="relative">
-                    <Image
-                      src={property.images?.[0] || '/placeholder.svg'}
-                      alt={property.title}
-                      width={400}
-                      height={250}
-                      className="object-cover w-full h-48"
-                    />
-                    <Button size="icon" variant="secondary" className="absolute top-2 right-2 h-8 w-8">
-                      <Heart className="h-4 w-4" />
-                    </Button>
+                <div className="space-y-2">
+                  <Label htmlFor="bedrooms">Bedrooms</Label>
+                  <Select
+                    value={filters.bedrooms}
+                    onValueChange={(value: string) => handleFilterChange('bedrooms', value)}
+                  >
+                    <SelectTrigger id="bedrooms">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="any">Any</SelectItem>
+                      <SelectItem value="1">1</SelectItem>
+                      <SelectItem value="2">2</SelectItem>
+                      <SelectItem value="3">3</SelectItem>
+                      <SelectItem value="4">4+</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Amenities</Label>
+                  <div className="space-y-2">
+                    {['Washer/Dryer', 'Air Conditioning', 'Parking', 'Dishwasher', 'Pet Friendly', 'Gym'].map((amenity) => (
+                      <div key={amenity} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={amenity}
+                          checked={filters.amenities.includes(amenity)}
+                          onCheckedChange={() => handleAmenityChange(amenity)}
+                        />
+                        <Label htmlFor={amenity}>{amenity}</Label>
+                      </div>
+                    ))}
                   </div>
-                  <CardHeader>
-                    <CardTitle className="text-lg">{property.title}</CardTitle>
-                    <div className="flex items-center text-sm text-gray-500">
-                      <MapPin className="h-4 w-4 mr-1" />
-                      {property.address}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Properties */}
+          <div className="md:col-span-3">
+            <h1 className="text-3xl font-bold mb-6">Search Results</h1>
+            {loading ? (
+              <div className="text-center">
+                <div className="loading-dots">
+                  <div></div>
+                  <div></div>
+                  <div></div>
+                  <div></div>
+                </div>
+                <p className="mt-4 text-lg text-muted-foreground">Loading properties...</p>
+              </div>
+            ) : properties.length === 0 ? (
+              <div className="text-center">
+                <h2 className="text-2xl font-bold mb-4">No Results Found</h2>
+                <p className="text-muted-foreground mb-8">
+                  We couldn't find any properties matching your search.
+                </p>
+                <Link href="/search">
+                  <Button>
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Clear Filters and Start Over
+                  </Button>
+                </Link>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                {properties.map((property) => (
+                  <Card key={property.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                    <div className="relative">
+                      <Image
+                        src={property.images?.[0] || '/placeholder.svg'}
+                        alt={property.title}
+                        width={400}
+                        height={250}
+                        className="object-cover w-full h-48"
+                      />
+                      <Button size="icon" variant="secondary" className="absolute top-2 right-2 h-8 w-8">
+                        <Heart className="h-4 w-4" />
+                      </Button>
                     </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex justify-between items-center text-sm">
-                      <div className="flex items-center">
-                        <Bed className="h-4 w-4 mr-1" />
-                        {property.bedrooms} beds
+                    <CardHeader>
+                      <CardTitle className="text-lg">{property.title}</CardTitle>
+                      <div className="flex items-center text-sm text-gray-500">
+                        <MapPin className="h-4 w-4 mr-1" />
+                        {property.address}
                       </div>
-                      <div className="flex items-center">
-                        <Bath className="h-4 w-4 mr-1" />
-                        {property.bathrooms} baths
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex justify-between items-center text-sm">
+                        <div className="flex items-center">
+                          <Bed className="h-4 w-4 mr-1" />
+                          {property.bedrooms} beds
+                        </div>
+                        <div className="flex items-center">
+                          <Bath className="h-4 w-4 mr-1" />
+                          {property.bathrooms} baths
+                        </div>
+                        <div className="flex items-center">
+                          <Square className="h-4 w-4 mr-1" />
+                          {property.sqft} sqft
+                        </div>
                       </div>
-                      <div className="flex items-center">
-                        <Square className="h-4 w-4 mr-1" />
-                        {property.sqft} sqft
-                      </div>
-                    </div>
-                  </CardContent>
-                  <CardFooter className="flex justify-between items-center">
-                    <div className="text-lg font-bold text-primary">${property.price}/mo</div>
-                    <Link href={`/property/${property.id}`}>
-                      <Button>View Details</Button>
-                    </Link>
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
-          )}
+                    </CardContent>
+                    <CardFooter className="flex justify-between items-center">
+                      <div className="text-lg font-bold text-primary">${property.price}/mo</div>
+                      <Link href={`/property/${property.id}`} passHref>
+                        <Button>View Details</Button>
+                      </Link>
+                    </CardFooter>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   )
 }
 
 export default function SearchPage() {
   return (
-    <Suspense fallback={<div>Loading search...</div>}>
+    <Suspense fallback={
+      <>
+        <Navbar />
+        <div className="container mx-auto px-4 py-8 text-center">
+          <div className="loading-dots">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+          </div>
+          <p className="mt-4 text-lg text-muted-foreground">Loading search page...</p>
+        </div>
+      </>
+    }>
       <SearchPageContent />
     </Suspense>
   )
