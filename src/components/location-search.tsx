@@ -16,64 +16,94 @@ interface LocationSearchProps {
   }) => void
 }
 
+interface PlacePrediction {
+  description: string
+  place_id: string
+  structured_formatting: {
+    main_text: string
+    secondary_text: string
+  }
+}
+
 export function LocationSearch({ 
   placeholder = "Enter location...",
   className = "",
   onLocationSelect
 }: LocationSearchProps) {
   const [query, setQuery] = useState("")
-  const [suggestions, setSuggestions] = useState<string[]>([])
+  const [suggestions, setSuggestions] = useState<PlacePrediction[]>([])
   const [isOpen, setIsOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const autocompleteServiceRef = useRef<google.maps.places.AutocompleteService | null>(null)
+  const placesServiceRef = useRef<google.maps.places.PlacesService | null>(null)
 
-  // Common US cities for suggestions
-  const commonCities = [
-    "New York, NY",
-    "Los Angeles, CA",
-    "Chicago, IL",
-    "Houston, TX",
-    "Phoenix, AZ",
-    "Philadelphia, PA",
-    "San Antonio, TX",
-    "San Diego, CA",
-    "Dallas, TX",
-    "San Jose, CA",
-    "Austin, TX",
-    "Jacksonville, FL",
-    "Fort Worth, TX",
-    "Columbus, OH",
-    "Charlotte, NC",
-    "San Francisco, CA",
-    "Indianapolis, IN",
-    "Seattle, WA",
-    "Denver, CO",
-    "Boston, MA",
-    "Miami, FL",
-    "Atlanta, GA",
-    "Tampa, FL",
-    "Nashville, TN",
-    "Detroit, MI",
-    "Portland, OR",
-    "Sacramento, CA",
-    "Las Vegas, NV",
-    "Orlando, FL",
-    "Minneapolis, MN"
-  ]
-
+  // Initialize Google Maps services
   useEffect(() => {
-    if (query.length > 0) {
-      const filtered = commonCities.filter(city =>
-        city.toLowerCase().includes(query.toLowerCase())
-      ).slice(0, 5)
-      setSuggestions(filtered)
-      setIsOpen(true)
-    } else {
+    const initializeServices = async () => {
+      try {
+        await loadGoogleMaps()
+        
+        if (typeof google !== 'undefined' && google.maps && google.maps.places) {
+          autocompleteServiceRef.current = new google.maps.places.AutocompleteService()
+          
+          // Create a dummy div for places service
+          const dummyDiv = document.createElement('div')
+          placesServiceRef.current = new google.maps.places.PlacesService(dummyDiv)
+        }
+      } catch (error) {
+        console.error('Error initializing Google Maps services:', error)
+      }
+    }
+
+    initializeServices()
+  }, [])
+
+  // Debounced search for places
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (query.length > 2 && autocompleteServiceRef.current) {
+        searchPlaces(query)
+      } else {
+        setSuggestions([])
+        setIsOpen(false)
+      }
+    }, 300)
+
+    return () => clearTimeout(timeoutId)
+  }, [query])
+
+  const searchPlaces = async (searchQuery: string) => {
+    if (!autocompleteServiceRef.current) return
+
+    try {
+      setLoading(true)
+      
+      const request = {
+        input: searchQuery,
+        types: ['(cities)'],
+        componentRestrictions: { country: 'us' }
+      }
+
+      autocompleteServiceRef.current.getPlacePredictions(request, (predictions, status) => {
+        setLoading(false)
+        
+        if (status === google.maps.places.PlacesServiceStatus.OK && predictions) {
+          setSuggestions(predictions)
+          setIsOpen(true)
+        } else {
+          setSuggestions([])
+          setIsOpen(false)
+        }
+      })
+    } catch (error) {
+      console.error('Error searching places:', error)
+      setLoading(false)
       setSuggestions([])
       setIsOpen(false)
     }
-  }, [query])
+  }
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -92,25 +122,75 @@ export function LocationSearch({
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
-  const handleSelect = async (location: string) => {
-    setQuery(location)
+  const handleSelect = async (prediction: PlacePrediction) => {
+    const locationText = prediction.description
+    setQuery(locationText)
     setIsOpen(false)
     setLoading(true)
 
     try {
-      const [city, state] = location.split(", ")
-      const result = await geocodeAddress(location)
-      
-      if (result && onLocationSelect) {
-        onLocationSelect({
-          city: city.trim(),
-          state: state.trim(),
-          coordinates: { lat: result.lat, lng: result.lng }
+      // Use Places service to get detailed place information
+      if (placesServiceRef.current) {
+        const request = {
+          placeId: prediction.place_id,
+          fields: ['geometry', 'address_components', 'formatted_address']
+        }
+
+        placesServiceRef.current.getDetails(request, async (place, status) => {
+          if (status === google.maps.places.PlacesServiceStatus.OK && place) {
+            const city = place.address_components?.find(comp => 
+              comp.types.includes('locality') || comp.types.includes('administrative_area_level_1')
+            )?.long_name || prediction.structured_formatting.main_text
+
+            const state = place.address_components?.find(comp => 
+              comp.types.includes('administrative_area_level_1')
+            )?.short_name || prediction.structured_formatting.secondary_text
+
+            const coordinates = {
+              lat: place.geometry?.location?.lat() || 0,
+              lng: place.geometry?.location?.lng() || 0
+            }
+
+            if (onLocationSelect) {
+              onLocationSelect({
+                city: city,
+                state: state,
+                coordinates
+              })
+            }
+          } else {
+            // Fallback to geocoding
+            try {
+              const result = await geocodeAddress(locationText)
+              if (result && onLocationSelect) {
+                const [city, state] = locationText.split(", ")
+                onLocationSelect({
+                  city: city?.trim() || prediction.structured_formatting.main_text,
+                  state: state?.trim() || prediction.structured_formatting.secondary_text,
+                  coordinates: { lat: result.lat, lng: result.lng }
+                })
+              }
+            } catch (error) {
+              console.error("Error in fallback geocoding:", error)
+            }
+          }
+          setLoading(false)
         })
+      } else {
+        // Fallback to geocoding
+        const result = await geocodeAddress(locationText)
+        if (result && onLocationSelect) {
+          const [city, state] = locationText.split(", ")
+          onLocationSelect({
+            city: city?.trim() || prediction.structured_formatting.main_text,
+            state: state?.trim() || prediction.structured_formatting.secondary_text,
+            coordinates: { lat: result.lat, lng: result.lng }
+          })
+        }
+        setLoading(false)
       }
     } catch (error) {
       console.error("Error geocoding location:", error)
-    } finally {
       setLoading(false)
     }
   }
@@ -180,7 +260,7 @@ export function LocationSearch({
               className="w-full px-4 py-3 text-left hover:bg-gray-50 focus:bg-gray-50 focus:outline-none flex items-center space-x-3 transition-colors"
             >
               <MapPin className="h-4 w-4 text-gray-400 flex-shrink-0" />
-              <span className="text-sm">{suggestion}</span>
+              <span className="text-sm">{suggestion.description}</span>
             </button>
           ))}
         </div>

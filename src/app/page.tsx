@@ -17,6 +17,7 @@ import { useAuth } from "@/lib/auth"
 import { useFavorites } from "@/lib/favorites-context"
 import { getProperties, formatPropertyForFrontend } from "@/lib/properties"
 import { getUserLocationByIP, getNearbyProperties, kmToMiles } from "@/lib/location"
+import { geocodeAddress } from "@/lib/google-maps"
 import { ChevronLeft, ChevronRight, MapPin as LocationIcon } from "lucide-react"
 import { Navbar } from "@/components/navbar"
 
