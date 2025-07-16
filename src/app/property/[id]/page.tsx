@@ -1,10 +1,9 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { MapPin, Bed, Bath, Square, Heart, MessageSquare, Check, ArrowLeft } from "lucide-react"
 import Image from "next/image"
@@ -20,37 +19,37 @@ export default function PropertyDetailsPage({ params }: { params: { id: string }
   const [loading, setLoading] = useState(true)
   const { id: propertyId } = params
 
-  useEffect(() => {
+  const fetchProperty = useCallback(async () => {
     if (!propertyId) {
       setLoading(false)
       return
     }
 
-    const fetchProperty = async () => {
-      setLoading(true)
-      const { data, error } = await supabase
-        .from('properties')
-        .select(`
-          *,
-          profiles (
-            full_name,
-            avatar_url
-          )
-        `)
-        .eq('id', propertyId)
-        .single()
+    setLoading(true)
+    const { data, error } = await supabase
+      .from('properties')
+      .select(`
+        *,
+        profiles (
+          full_name,
+          avatar_url
+        )
+      `)
+      .eq('id', propertyId)
+      .single()
 
-      if (error) {
-        console.error('Error fetching property:', error)
-        setProperty(null)
-      } else {
-        setProperty(data)
-      }
-      setLoading(false)
+    if (error) {
+      console.error('Error fetching property:', error)
+      setProperty(null)
+    } else {
+      setProperty(data)
     }
-
-    fetchProperty()
+    setLoading(false)
   }, [propertyId])
+
+  useEffect(() => {
+    fetchProperty()
+  }, [fetchProperty])
 
   const handleApply = () => {
     if (!user) {
