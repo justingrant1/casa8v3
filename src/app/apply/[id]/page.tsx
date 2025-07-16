@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { Navbar } from '@/components/navbar'
 
 export default function ApplyPage({ params }: { params: Promise<{ id: string }> }) {
   const { user } = useAuth()
@@ -82,8 +83,10 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <Card className="max-w-2xl mx-auto">
+    <>
+      <Navbar />
+      <div className="container mx-auto px-4 py-8">
+        <Card className="max-w-2xl mx-auto">
         <CardHeader>
           <CardTitle>Apply for {property?.title || 'Property'}</CardTitle>
           <CardDescription>Submit your application for this property.</CardDescription>
@@ -115,7 +118,8 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
             </Button>
           </form>
         </CardContent>
-      </Card>
-    </div>
+        </Card>
+      </div>
+    </>
   )
 }

@@ -154,7 +154,7 @@ export function VideoUpload({
       {/* Upload Area */}
       {canUploadMore && (
         <div className="space-y-2">
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors relative">
             <Video className="mx-auto h-12 w-12 text-gray-400 mb-4" />
             <div className="space-y-2">
               <p className="text-sm text-gray-600">
@@ -171,7 +171,7 @@ export function VideoUpload({
               multiple
               onChange={handleFileSelect}
               disabled={isUploading}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
             />
           </div>
           
