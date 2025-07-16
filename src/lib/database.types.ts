@@ -63,6 +63,7 @@ export interface Database {
           sqft: number | null
           amenities: string[] | null
           images: string[] | null
+          videos: string[] | null
           available_date: string | null
           is_active: boolean
           created_at: string
@@ -86,6 +87,7 @@ export interface Database {
           sqft?: number | null
           amenities?: string[] | null
           images?: string[] | null
+          videos?: string[] | null
           available_date?: string | null
           is_active?: boolean
           created_at?: string
@@ -109,6 +111,7 @@ export interface Database {
           sqft?: number | null
           amenities?: string[] | null
           images?: string[] | null
+          videos?: string[] | null
           available_date?: string | null
           is_active?: boolean
           created_at?: string

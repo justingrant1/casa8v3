@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '../../components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { VideoUpload } from '@/components/video-upload'
 
 export default function ListPropertyPage() {
   const { user } = useAuth()
@@ -27,6 +28,7 @@ export default function ListPropertyPage() {
   const [sqft, setSqft] = useState('')
   const [amenities, setAmenities] = useState<string[]>([])
   const [images, setImages] = useState<File[]>([])
+  const [videos, setVideos] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -43,6 +45,7 @@ export default function ListPropertyPage() {
       setImages(Array.from(e.target.files))
     }
   }
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -68,7 +71,10 @@ export default function ListPropertyPage() {
         imageUrls.push(publicUrl)
       }
 
-      // 2. Fetch the user's profile to get the correct landlord_id
+      // 2. Videos are already uploaded URLs from VideoUpload component
+      const videoUrls: string[] = videos
+
+      // 3. Fetch the user's profile to get the correct landlord_id
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('id')
@@ -79,7 +85,7 @@ export default function ListPropertyPage() {
         throw new Error('Could not find a landlord profile for the current user.')
       }
 
-      // 3. Insert property data into the database
+      // 4. Insert property data into the database
       const { error: dbError } = await supabase.from('properties').insert({
         landlord_id: profile.id,
         title,
@@ -95,6 +101,7 @@ export default function ListPropertyPage() {
         sqft: parseInt(sqft),
         amenities,
         images: imageUrls,
+        videos: videoUrls,
       })
 
       if (dbError) throw dbError
@@ -201,7 +208,17 @@ export default function ListPropertyPage() {
 
             <div className="space-y-2">
               <Label htmlFor="images">Images</Label>
-              <Input id="images" type="file" multiple onChange={handleImageChange} />
+              <Input id="images" type="file" multiple accept="image/*" onChange={handleImageChange} />
+            </div>
+
+            <div className="space-y-2">
+              <VideoUpload 
+                onVideoUpload={(videoUrl) => setVideos(prev => [...prev, videoUrl])}
+                onVideoRemove={(videoUrl) => setVideos(prev => prev.filter(url => url !== videoUrl))}
+                existingVideos={videos}
+                maxVideos={5}
+                maxSizeInMB={50}
+              />
             </div>
 
             {error && <p className="text-sm text-red-500">{error}</p>}
