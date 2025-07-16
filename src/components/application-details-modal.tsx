@@ -178,29 +178,7 @@ export function ApplicationDetailsModal({ isOpen, onClose, application }: Applic
                 </div>
               )}
 
-              {application.employment_status && (
-                <div className="flex items-center gap-3">
-                  <User className="h-5 w-5 text-gray-500" />
-                  <div>
-                    <div className="font-medium">Employment Status</div>
-                    <div className="text-sm text-gray-600">
-                      {application.employment_status}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {application.monthly_income && (
-                <div className="flex items-center gap-3">
-                  <DollarSign className="h-5 w-5 text-gray-500" />
-                  <div>
-                    <div className="font-medium">Monthly Income</div>
-                    <div className="text-sm text-gray-600">
-                      {formatCurrency(application.monthly_income)}
-                    </div>
-                  </div>
-                </div>
-              )}
+              {/* Employment status and income fields removed - not in database schema */}
 
               {application.message && (
                 <div className="mt-4">
@@ -213,51 +191,7 @@ export function ApplicationDetailsModal({ isOpen, onClose, application }: Applic
             </CardContent>
           </Card>
 
-          {/* Income-to-Rent Ratio */}
-          {application.monthly_income && application.properties?.price && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <DollarSign className="h-5 w-5" />
-                  Financial Assessment
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="text-center">
-                    <div className="text-xl font-bold">
-                      {formatCurrency(application.monthly_income)}
-                    </div>
-                    <div className="text-sm text-gray-500">Monthly Income</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-xl font-bold">
-                      {formatCurrency(application.properties.price)}
-                    </div>
-                    <div className="text-sm text-gray-500">Monthly Rent</div>
-                  </div>
-                  <div className="text-center">
-                    <div className={`text-xl font-bold ${
-                      (application.properties.price / application.monthly_income) <= 0.3 
-                        ? 'text-green-600' 
-                        : (application.properties.price / application.monthly_income) <= 0.4
-                        ? 'text-yellow-600'
-                        : 'text-red-600'
-                    }`}>
-                      {Math.round((application.properties.price / application.monthly_income) * 100)}%
-                    </div>
-                    <div className="text-sm text-gray-500">Rent-to-Income Ratio</div>
-                  </div>
-                </div>
-                <div className="mt-4 text-sm text-gray-600">
-                  <p>
-                    Recommended rent-to-income ratio is 30% or less. 
-                    This applicant's ratio is {Math.round((application.properties.price / application.monthly_income) * 100)}%.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+          {/* Financial Assessment section removed - monthly_income field not in database schema */}
 
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-6 border-t">

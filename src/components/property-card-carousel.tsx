@@ -154,7 +154,7 @@ export function PropertyCardCarousel({ images, propertyTitle, className = "" }: 
               src={image}
               alt={`${propertyTitle} image ${index + 1}`}
               fill
-              className="object-cover"
+              className="object-contain bg-gray-100"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               draggable={false}
             />
