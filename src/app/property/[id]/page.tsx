@@ -13,6 +13,7 @@ import { Navbar } from '@/components/navbar'
 import Link from 'next/link'
 import { getPropertyById } from '@/lib/properties'
 import { getImageUrls } from '@/lib/storage'
+import { ImageCarousel } from '@/components/image-carousel'
 
 export default function PropertyDetailsPage({ params }: { params: { id: string } }) {
   const { user } = useAuth()
@@ -99,20 +100,8 @@ export default function PropertyDetailsPage({ params }: { params: { id: string }
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
-            {/* Image Gallery */}
-            <div className="grid grid-cols-2 gap-2 mb-8">
-              {getImageUrls(property.images).slice(0, 5).map((img: string, index: number) => (
-                <div key={index} className={`relative rounded-lg overflow-hidden ${index === 0 ? 'col-span-2 row-span-2 h-96' : 'h-48'}`}>
-                  <Image
-                    src={img}
-                    alt={`${property.title} image ${index + 1}`}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  />
-                </div>
-              ))}
-            </div>
+            {/* Image Carousel */}
+            <ImageCarousel images={getImageUrls(property.images)} propertyTitle={property.title} />
 
             {/* Property Info */}
             <h1 className="text-4xl font-bold mb-2">{property.title}</h1>
