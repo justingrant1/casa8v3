@@ -69,8 +69,8 @@ export function TenantOnboarding({ isOpen, onComplete, onSkip }: TenantOnboardin
 
       // Process the form data
       const processedData = {
-        hasSection8Voucher: formData.hasSection8Voucher === 'yes',
-        voucherBedroomCount: formData.voucherBedroomCount ? parseInt(formData.voucherBedroomCount) : null,
+        has_section8_voucher: formData.hasSection8Voucher === 'yes',
+        voucher_bedroom_count: formData.voucherBedroomCount ? parseInt(formData.voucherBedroomCount) : null,
         city: formData.city,
         onboarding_completed: true
       }
