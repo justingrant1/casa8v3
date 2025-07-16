@@ -43,6 +43,7 @@ export function SimpleMap({
   const mapRef = useRef<HTMLDivElement>(null)
   const [map, setMap] = useState<google.maps.Map | null>(null)
   const [markers, setMarkers] = useState<google.maps.Marker[]>([])
+  const [infoWindows, setInfoWindows] = useState<google.maps.InfoWindow[]>([])
 
   // Debug logging
   console.log('SimpleMap render - isLoaded:', isLoaded, 'error:', error, 'properties:', properties)
@@ -93,32 +94,30 @@ export function SimpleMap({
   useEffect(() => {
     if (!map || !isLoaded) return
 
-    // Clear existing markers
+    // Clear existing markers and info windows
     markers.forEach(marker => marker.setMap(null))
+    infoWindows.forEach(infoWindow => infoWindow.close())
+    
     const newMarkers: google.maps.Marker[] = []
+    const newInfoWindows: google.maps.InfoWindow[] = []
 
     properties.forEach(property => {
       if (!property.coordinates) return
 
+      // Create larger, more touch-friendly markers
       const marker = new google.maps.Marker({
         position: property.coordinates,
         map,
         title: property.title,
         icon: {
           path: google.maps.SymbolPath.CIRCLE,
-          scale: 12,
+          scale: 16, // Larger for better touch interaction
           fillColor: '#3b82f6',
-          fillOpacity: 0.8,
+          fillOpacity: 0.9,
           strokeColor: '#ffffff',
-          strokeWeight: 2
-        }
-      })
-
-      // Add click handler
-      marker.addListener('click', () => {
-        if (onMarkerClick) {
-          onMarkerClick(property)
-        }
+          strokeWeight: 3
+        },
+        optimized: false // Better for touch interaction
       })
 
       // Create info window
@@ -135,23 +134,57 @@ export function SimpleMap({
         `
       })
 
-      marker.addListener('mouseover', () => {
+      // Function to close all info windows
+      const closeAllInfoWindows = () => {
+        newInfoWindows.forEach(iw => iw.close())
+      }
+
+      // Handle both click and touch events
+      marker.addListener('click', () => {
+        closeAllInfoWindows()
         infoWindow.open(map, marker)
+        
+        if (onMarkerClick) {
+          onMarkerClick(property)
+        }
       })
 
-      marker.addListener('mouseout', () => {
-        infoWindow.close()
+      // Add touch event handling for mobile
+      marker.addListener('touchstart', (e: any) => {
+        e.preventDefault()
+        closeAllInfoWindows()
+        infoWindow.open(map, marker)
+        
+        if (onMarkerClick) {
+          onMarkerClick(property)
+        }
       })
+
+      // For desktop, still use hover for better UX
+      const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0
+      
+      if (!isTouchDevice) {
+        marker.addListener('mouseover', () => {
+          infoWindow.open(map, marker)
+        })
+
+        marker.addListener('mouseout', () => {
+          infoWindow.close()
+        })
+      }
 
       newMarkers.push(marker)
+      newInfoWindows.push(infoWindow)
     })
 
     setMarkers(newMarkers)
+    setInfoWindows(newInfoWindows)
 
     return () => {
       newMarkers.forEach(marker => marker.setMap(null))
+      newInfoWindows.forEach(infoWindow => infoWindow.close())
     }
-  }, [map, properties, onMarkerClick])
+  }, [map, properties, onMarkerClick, infoWindows])
 
   // Show loading state
   if (!isLoaded) {
