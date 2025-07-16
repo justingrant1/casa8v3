@@ -222,6 +222,7 @@ export default function ProfilePage() {
                 </Label>
                 <LocationSearch
                   placeholder="Search for a city..."
+                  value={city}
                   onLocationSelect={(location) => {
                     setCity(`${location.city}, ${location.state}`)
                   }}

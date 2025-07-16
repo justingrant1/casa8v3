@@ -9,6 +9,7 @@ import { loadGoogleMaps, initializeAutocomplete, parsePlaceResult, geocodeAddres
 interface LocationSearchProps {
   placeholder?: string
   className?: string
+  value?: string
   onLocationSelect?: (location: {
     city: string
     state: string
@@ -28,9 +29,10 @@ interface PlacePrediction {
 export function LocationSearch({ 
   placeholder = "Enter location...",
   className = "",
+  value = "",
   onLocationSelect
 }: LocationSearchProps) {
-  const [query, setQuery] = useState("")
+  const [query, setQuery] = useState(value)
   const [suggestions, setSuggestions] = useState<PlacePrediction[]>([])
   const [isOpen, setIsOpen] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -38,6 +40,11 @@ export function LocationSearch({
   const dropdownRef = useRef<HTMLDivElement>(null)
   const autocompleteServiceRef = useRef<google.maps.places.AutocompleteService | null>(null)
   const placesServiceRef = useRef<google.maps.places.PlacesService | null>(null)
+
+  // Update query when value prop changes
+  useEffect(() => {
+    setQuery(value)
+  }, [value])
 
   // Initialize Google Maps services
   useEffect(() => {
