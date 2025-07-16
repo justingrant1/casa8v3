@@ -14,6 +14,7 @@ import Link from 'next/link'
 import { getPropertyById } from '@/lib/properties'
 import { getImageUrls } from '@/lib/storage'
 import { ImageCarousel } from '@/components/image-carousel'
+import { ApplicationModal } from '@/components/application-modal'
 
 export default function PropertyDetailsPage({ params }: { params: { id: string } }) {
   const { user } = useAuth()
@@ -21,6 +22,7 @@ export default function PropertyDetailsPage({ params }: { params: { id: string }
   const [property, setProperty] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [showApplicationModal, setShowApplicationModal] = useState(false)
   const { id: propertyId } = params
 
   const fetchProperty = useCallback(async () => {
@@ -53,7 +55,7 @@ export default function PropertyDetailsPage({ params }: { params: { id: string }
       router.push('/login')
       return
     }
-    router.push(`/apply/${propertyId}`)
+    setShowApplicationModal(true)
   }
 
   if (loading) {
@@ -177,6 +179,18 @@ export default function PropertyDetailsPage({ params }: { params: { id: string }
           </div>
         </div>
       </div>
+
+      {/* Application Modal */}
+      <ApplicationModal
+        propertyId={propertyId}
+        propertyTitle={property.title}
+        open={showApplicationModal}
+        onClose={() => setShowApplicationModal(false)}
+        onSuccess={() => {
+          // Optionally redirect to dashboard or show success message
+          router.push('/dashboard')
+        }}
+      />
     </>
   )
 }
