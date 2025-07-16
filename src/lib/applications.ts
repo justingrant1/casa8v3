@@ -66,6 +66,8 @@ export async function getApplicationsForLandlord(landlordId: string): Promise<Ap
     const tenantIds = [...new Set(applicationsData.map(app => app.tenant_id))]
     const applicationPropertyIds = [...new Set(applicationsData.map(app => app.property_id))]
 
+    console.log('Looking for tenant IDs:', tenantIds)
+
     // Fetch tenant profiles
     const { data: tenantsData, error: tenantsError } = await supabase
       .from('profiles')
@@ -76,6 +78,15 @@ export async function getApplicationsForLandlord(landlordId: string): Promise<Ap
       console.error('Error fetching tenant profiles:', tenantsError)
       throw tenantsError
     }
+
+    // Also let's check if ANY profiles exist for debugging
+    const { data: allProfiles, error: allProfilesError } = await supabase
+      .from('profiles')
+      .select('id, first_name, last_name, email, phone')
+      .limit(10)
+
+    console.log('All profiles (sample):', allProfiles)
+    console.log('Found tenant profiles for IDs:', tenantsData?.map(t => t.id))
 
     // Fetch property data
     const { data: propertiesFullData, error: propertiesFullError } = await supabase
