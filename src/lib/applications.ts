@@ -75,21 +75,36 @@ export async function getApplicationsForLandlord(landlordId: string): Promise<Ap
       throw error
     }
 
+    // Add debugging to see what we're getting
+    console.log('Raw applications data:', data)
+    
     // Transform the data to match our interface
-    const applications: Application[] = (data || []).map(app => ({
-      id: app.id,
-      property_id: app.property_id,
-      tenant_id: app.tenant_id,
-      status: app.status,
-      message: app.message,
-      move_in_date: app.move_in_date,
-      created_at: app.created_at,
-      updated_at: app.updated_at,
-      tenant_name: app.tenant ? `${app.tenant.first_name || ''} ${app.tenant.last_name || ''}`.trim() || 'Unknown' : 'Unknown',
-      tenant_email: app.tenant?.email || 'Unknown',
-      tenant_phone: app.tenant?.phone,
-      properties: app.properties
-    }))
+    const applications: Application[] = (data || []).map(app => {
+      console.log('Processing application:', app)
+      console.log('Tenant data:', app.tenant)
+      console.log('Properties data:', app.properties)
+      
+      const tenantName = app.tenant ? 
+        `${app.tenant.first_name || ''} ${app.tenant.last_name || ''}`.trim() || 
+        app.tenant.email || 'Unknown' : 'Unknown'
+      
+      return {
+        id: app.id,
+        property_id: app.property_id,
+        tenant_id: app.tenant_id,
+        status: app.status,
+        message: app.message,
+        move_in_date: app.move_in_date,
+        created_at: app.created_at,
+        updated_at: app.updated_at,
+        tenant_name: tenantName,
+        tenant_email: app.tenant?.email || 'Unknown',
+        tenant_phone: app.tenant?.phone,
+        properties: app.properties
+      }
+    })
+    
+    console.log('Processed applications:', applications)
 
     return applications
   } catch (error) {
