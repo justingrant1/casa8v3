@@ -27,6 +27,24 @@ export interface Application {
 
 export async function getApplicationsForLandlord(landlordId: string): Promise<Application[]> {
   try {
+    // First get property IDs for this landlord
+    const { data: propertiesData, error: propertiesError } = await supabase
+      .from('properties')
+      .select('id')
+      .eq('landlord_id', landlordId)
+
+    if (propertiesError) {
+      console.error('Error fetching landlord properties:', propertiesError)
+      throw propertiesError
+    }
+
+    const propertyIds = propertiesData?.map(p => p.id) || []
+
+    if (propertyIds.length === 0) {
+      return []
+    }
+
+    // Then fetch applications for those properties
     const { data, error } = await supabase
       .from('applications')
       .select(`
@@ -49,7 +67,7 @@ export async function getApplicationsForLandlord(landlordId: string): Promise<Ap
           bathrooms
         )
       `)
-      .eq('properties.landlord_id', landlordId)
+      .in('property_id', propertyIds)
       .order('created_at', { ascending: false })
 
     if (error) {
