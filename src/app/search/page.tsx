@@ -263,6 +263,10 @@ function SearchPageContent() {
                   </div>
                 ) : (
                   <div className="h-[600px] rounded-lg overflow-hidden">
+                    <div className="mb-4 text-sm text-gray-600">
+                      Debug: Total properties: {properties.length}, 
+                      Properties with coordinates: {properties.filter(p => p.coordinates).length}
+                    </div>
                     <SimpleMap 
                       properties={properties.filter(p => p.coordinates)}
                       center={searchLocation?.coordinates}

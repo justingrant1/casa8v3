@@ -217,6 +217,14 @@ export function formatPropertyForFrontend(property: any) {
     ? `${property.profiles.first_name || ''} ${property.profiles.last_name || ''}`.trim() || 'Property Owner'
     : 'Property Owner'
 
+  // Create coordinates object with more robust checking
+  const lat = property.latitude ? parseFloat(property.latitude) : null
+  const lng = property.longitude ? parseFloat(property.longitude) : null
+  const coordinates = (lat !== null && lng !== null && !isNaN(lat) && !isNaN(lng)) ? {
+    lat: lat,
+    lng: lng
+  } : null
+
   return {
     id: property.id,
     title: property.title,
@@ -240,10 +248,7 @@ export function formatPropertyForFrontend(property: any) {
     landlord_id: property.landlord_id,
     latitude: property.latitude,
     longitude: property.longitude,
-    coordinates: property.latitude && property.longitude ? {
-      lat: parseFloat(property.latitude),
-      lng: parseFloat(property.longitude)
-    } : null,
+    coordinates: coordinates,
     created_at: property.created_at,
     updated_at: property.updated_at
   }

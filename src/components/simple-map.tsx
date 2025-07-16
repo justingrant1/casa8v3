@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -44,8 +44,13 @@ export function SimpleMap({
   const [map, setMap] = useState<google.maps.Map | null>(null)
   const [markers, setMarkers] = useState<google.maps.Marker[]>([])
 
-  // Calculate center if not provided
-  const mapCenter = center || (() => {
+  // Debug logging
+  console.log('SimpleMap render - isLoaded:', isLoaded, 'error:', error, 'properties:', properties)
+
+  // Calculate center if not provided - memoized to prevent infinite loops
+  const mapCenter = useMemo(() => {
+    if (center) return center
+    
     const validProperties = properties.filter(p => p.coordinates)
     if (validProperties.length === 0) {
       return { lat: 39.8283, lng: -98.5795 } // Center of US
@@ -55,12 +60,14 @@ export function SimpleMap({
     const avgLng = validProperties.reduce((sum, p) => sum + (p.coordinates?.lng || 0), 0) / validProperties.length
     
     return { lat: avgLat, lng: avgLng }
-  })()
+  }, [center, properties])
 
   // Initialize map
   useEffect(() => {
+    console.log('Map initialization effect - isLoaded:', isLoaded, 'mapRef.current:', mapRef.current, 'mapCenter:', mapCenter)
     if (!isLoaded || !mapRef.current) return
 
+    console.log('Creating map instance...')
     const mapInstance = new google.maps.Map(mapRef.current, {
       center: mapCenter,
       zoom,
@@ -73,6 +80,7 @@ export function SimpleMap({
       ]
     })
 
+    console.log('Map instance created:', mapInstance)
     setMap(mapInstance)
 
     return () => {
