@@ -68,9 +68,20 @@ export default function ListPropertyPage() {
         imageUrls.push(publicUrl)
       }
 
-      // 2. Insert property data into the database
+      // 2. Fetch the user's profile to get the correct landlord_id
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', user.id)
+        .single()
+
+      if (profileError || !profile) {
+        throw new Error('Could not find a landlord profile for the current user.')
+      }
+
+      // 3. Insert property data into the database
       const { error: dbError } = await supabase.from('properties').insert({
-        landlord_id: user.id,
+        landlord_id: profile.id,
         title,
         description,
         price: parseFloat(price),
