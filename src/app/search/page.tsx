@@ -2,7 +2,6 @@
 
 import { useState, useEffect, Suspense } from "react"
 import { useSearchParams } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -18,6 +17,7 @@ import { LocationSearch } from "@/components/location-search"
 import { SimpleMap } from "@/components/simple-map"
 import { useAuth } from "@/lib/auth"
 import { useFavorites } from "@/lib/favorites-context"
+import { getProperties, searchProperties, formatPropertyForFrontend } from "@/lib/properties"
 
 function SearchPageContent() {
   const searchParams = useSearchParams()
@@ -37,27 +37,48 @@ function SearchPageContent() {
   useEffect(() => {
     const fetchProperties = async () => {
       setLoading(true)
-      let query = supabase.from('properties').select('*')
+      try {
+        // Build filters object for the properties library
+        const propertyFilters: any = {}
+        
+        if (filters.location) {
+          // Extract city/state from location string if possible
+          const locationParts = filters.location.split(',')
+          if (locationParts.length >= 2) {
+            propertyFilters.city = locationParts[0].trim()
+            propertyFilters.state = locationParts[1].trim()
+          } else {
+            propertyFilters.city = filters.location.trim()
+          }
+        }
+        
+        if (filters.bedrooms !== 'any') {
+          propertyFilters.bedrooms = parseInt(filters.bedrooms)
+        }
+        
+        propertyFilters.minPrice = filters.priceRange[0]
+        propertyFilters.maxPrice = filters.priceRange[1]
+        
+        if (filters.amenities.length > 0) {
+          propertyFilters.amenities = filters.amenities
+        }
 
-      if (filters.location) {
-        query = query.ilike('address', `%${filters.location}%`)
+        // Use the properties library function
+        const data = filters.location 
+          ? await searchProperties(filters.location, propertyFilters)
+          : await getProperties(propertyFilters)
+        
+        console.log('Fetched properties:', data)
+        
+        // Format properties for frontend display
+        const formattedProperties = data.map(formatPropertyForFrontend)
+        setProperties(formattedProperties)
+      } catch (error) {
+        console.error('Error in fetchProperties:', error)
+        setProperties([])
+      } finally {
+        setLoading(false)
       }
-      if (filters.bedrooms !== 'any') {
-        query = query.eq('bedrooms', parseInt(filters.bedrooms))
-      }
-      query = query.gte('price', filters.priceRange[0])
-      query = query.lte('price', filters.priceRange[1])
-      if (filters.amenities.length > 0) {
-        query = query.contains('amenities', filters.amenities)
-      }
-
-      const { data, error } = await query
-      if (error) {
-        console.error(error)
-      } else {
-        setProperties(data)
-      }
-      setLoading(false)
     }
 
     fetchProperties()
