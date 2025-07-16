@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
@@ -10,19 +10,31 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '../../components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Checkbox } from '@/components/ui/checkbox'
 import { VideoUpload } from '@/components/video-upload'
+import { useGoogleMaps, geocodeAddress, initializeAutocomplete, parsePlaceResult } from '@/lib/google-maps'
+import { MapPin, Settings } from 'lucide-react'
 
 export default function ListPropertyPage() {
   const { user } = useAuth()
   const router = useRouter()
+  const { isLoaded: mapsLoaded } = useGoogleMaps()
+  
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [price, setPrice] = useState('')
   const [propertyType, setPropertyType] = useState('')
+  
+  // Address handling
+  const [fullAddress, setFullAddress] = useState('')
   const [address, setAddress] = useState('')
   const [city, setCity] = useState('')
   const [state, setState] = useState('')
   const [zipCode, setZipCode] = useState('')
+  const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null)
+  const [manualOverride, setManualOverride] = useState(false)
+  const [geocoding, setGeocoding] = useState(false)
+  
   const [bedrooms, setBedrooms] = useState('')
   const [bathrooms, setBathrooms] = useState('')
   const [sqft, setSqft] = useState('')
@@ -31,6 +43,96 @@ export default function ListPropertyPage() {
   const [videos, setVideos] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const addressInputRef = useRef<HTMLInputElement>(null)
+  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null)
+
+  // Initialize Google Maps autocomplete
+  useEffect(() => {
+    if (mapsLoaded && addressInputRef.current && !autocompleteRef.current && !manualOverride) {
+      autocompleteRef.current = initializeAutocomplete(addressInputRef.current, {
+        types: ['address'],
+        componentRestrictions: { country: 'us' },
+        fields: ['formatted_address', 'geometry', 'address_components', 'place_id'],
+        onPlaceChanged: (place) => {
+          const parsed = parsePlaceResult(place)
+          
+          if (parsed.coordinates) {
+            setFullAddress(parsed.formatted_address)
+            setCoordinates(parsed.coordinates)
+            
+            // Parse address components
+            const addressComponents = place.address_components || []
+            let streetNumber = ''
+            let route = ''
+            let zipCode = ''
+            
+            addressComponents.forEach(component => {
+              const types = component.types
+              if (types.includes('street_number')) {
+                streetNumber = component.long_name
+              } else if (types.includes('route')) {
+                route = component.long_name
+              } else if (types.includes('postal_code')) {
+                zipCode = component.long_name
+              }
+            })
+            
+            setAddress(`${streetNumber} ${route}`.trim())
+            setCity(parsed.city)
+            setState(parsed.state)
+            setZipCode(zipCode)
+          }
+        }
+      })
+    }
+  }, [mapsLoaded, manualOverride])
+
+  // Manual geocoding for override mode
+  const handleGeocodeAddress = async () => {
+    if (!fullAddress.trim()) return
+    
+    setGeocoding(true)
+    try {
+      const result = await geocodeAddress(fullAddress)
+      if (result) {
+        setCoordinates({ lat: result.lat, lng: result.lng })
+        
+        // Parse the result to fill in city, state, etc.
+        const addressComponents = result.address_components || []
+        let streetNumber = ''
+        let route = ''
+        let city = ''
+        let state = ''
+        let zipCode = ''
+        
+        addressComponents.forEach(component => {
+          const types = component.types
+          if (types.includes('street_number')) {
+            streetNumber = component.long_name
+          } else if (types.includes('route')) {
+            route = component.long_name
+          } else if (types.includes('locality')) {
+            city = component.long_name
+          } else if (types.includes('administrative_area_level_1')) {
+            state = component.short_name
+          } else if (types.includes('postal_code')) {
+            zipCode = component.long_name
+          }
+        })
+        
+        setAddress(`${streetNumber} ${route}`.trim())
+        setCity(city)
+        setState(state)
+        setZipCode(zipCode)
+      }
+    } catch (error) {
+      console.error('Geocoding error:', error)
+      setError('Failed to geocode address. Please check the address and try again.')
+    } finally {
+      setGeocoding(false)
+    }
+  }
 
   const handleAmenityChange = (amenity: string) => {
     setAmenities((prev) =>
@@ -96,6 +198,8 @@ export default function ListPropertyPage() {
         city,
         state,
         zip_code: zipCode,
+        latitude: coordinates?.lat?.toString() || null,
+        longitude: coordinates?.lng?.toString() || null,
         bedrooms: parseInt(bedrooms),
         bathrooms: parseFloat(bathrooms),
         sqft: parseInt(sqft),
@@ -154,24 +258,145 @@ export default function ListPropertyPage() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="address">Address</Label>
-              <Input id="address" value={address} onChange={(e) => setAddress(e.target.value)} required />
-            </div>
+            {/* Address Section */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label>Property Address</Label>
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="manual-override"
+                    checked={manualOverride}
+                    onCheckedChange={(checked) => setManualOverride(checked as boolean)}
+                  />
+                  <Label htmlFor="manual-override" className="text-sm">
+                    Manual Override
+                  </Label>
+                </div>
+              </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="city">City</Label>
-                <Input id="city" value={city} onChange={(e) => setCity(e.target.value)} required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="state">State</Label>
-                <Input id="state" value={state} onChange={(e) => setState(e.target.value)} required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="zipCode">Zip Code</Label>
-                <Input id="zipCode" value={zipCode} onChange={(e) => setZipCode(e.target.value)} required />
-              </div>
+              {!manualOverride ? (
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="fullAddress">Full Address</Label>
+                    <div className="relative">
+                      <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                      <Input
+                        ref={addressInputRef}
+                        id="fullAddress"
+                        value={fullAddress}
+                        onChange={(e) => setFullAddress(e.target.value)}
+                        placeholder="Start typing an address..."
+                        className="pl-10"
+                        required
+                      />
+                      {!mapsLoaded && (
+                        <div className="absolute right-3 top-3">
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div>
+                        </div>
+                      )}
+                    </div>
+                    {coordinates && (
+                      <div className="text-sm text-green-600 flex items-center gap-1">
+                        <MapPin className="h-3 w-3" />
+                        Location verified ({coordinates.lat.toFixed(6)}, {coordinates.lng.toFixed(6)})
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Auto-populated fields (read-only) */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="city">City</Label>
+                      <Input id="city" value={city} readOnly className="bg-gray-50" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="state">State</Label>
+                      <Input id="state" value={state} readOnly className="bg-gray-50" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="zipCode">Zip Code</Label>
+                      <Input id="zipCode" value={zipCode} readOnly className="bg-gray-50" />
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="manualAddress">Full Address</Label>
+                    <div className="relative">
+                      <Input
+                        id="manualAddress"
+                        value={fullAddress}
+                        onChange={(e) => setFullAddress(e.target.value)}
+                        placeholder="Enter full address manually"
+                        required
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                        onClick={handleGeocodeAddress}
+                        disabled={geocoding || !fullAddress.trim()}
+                      >
+                        {geocoding ? (
+                          <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-400"></div>
+                        ) : (
+                          <MapPin className="h-3 w-3" />
+                        )}
+                      </Button>
+                    </div>
+                    {coordinates && (
+                      <div className="text-sm text-green-600 flex items-center gap-1">
+                        <MapPin className="h-3 w-3" />
+                        Location verified ({coordinates.lat.toFixed(6)}, {coordinates.lng.toFixed(6)})
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="manualStreetAddress">Street Address</Label>
+                    <Input
+                      id="manualStreetAddress"
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
+                      placeholder="123 Main St"
+                      required
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="manualCity">City</Label>
+                      <Input
+                        id="manualCity"
+                        value={city}
+                        onChange={(e) => setCity(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="manualState">State</Label>
+                      <Input
+                        id="manualState"
+                        value={state}
+                        onChange={(e) => setState(e.target.value)}
+                        placeholder="FL"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="manualZipCode">Zip Code</Label>
+                      <Input
+                        id="manualZipCode"
+                        value={zipCode}
+                        onChange={(e) => setZipCode(e.target.value)}
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
