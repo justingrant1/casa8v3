@@ -44,49 +44,69 @@ export async function getApplicationsForLandlord(landlordId: string): Promise<Ap
       return []
     }
 
-    // Then fetch applications for those properties
-    const { data, error } = await supabase
+    // Fetch applications without joins first
+    const { data: applicationsData, error: applicationsError } = await supabase
       .from('applications')
-      .select(`
-        *,
-        profiles!tenant_id (
-          id,
-          first_name,
-          last_name,
-          email,
-          phone
-        ),
-        properties!property_id (
-          id,
-          title,
-          address,
-          city,
-          state,
-          price,
-          bedrooms,
-          bathrooms
-        )
-      `)
+      .select('*')
       .in('property_id', propertyIds)
       .order('created_at', { ascending: false })
 
-    if (error) {
-      console.error('Error fetching applications for landlord:', error)
-      throw error
+    if (applicationsError) {
+      console.error('Error fetching applications:', applicationsError)
+      throw applicationsError
     }
 
-    // Add debugging to see what we're getting
-    console.log('Raw applications data:', data)
-    
+    if (!applicationsData || applicationsData.length === 0) {
+      return []
+    }
+
+    console.log('Raw applications data:', applicationsData)
+
+    // Get unique tenant IDs and property IDs
+    const tenantIds = [...new Set(applicationsData.map(app => app.tenant_id))]
+    const applicationPropertyIds = [...new Set(applicationsData.map(app => app.property_id))]
+
+    // Fetch tenant profiles
+    const { data: tenantsData, error: tenantsError } = await supabase
+      .from('profiles')
+      .select('id, first_name, last_name, email, phone')
+      .in('id', tenantIds)
+
+    if (tenantsError) {
+      console.error('Error fetching tenant profiles:', tenantsError)
+      throw tenantsError
+    }
+
+    // Fetch property data
+    const { data: propertiesFullData, error: propertiesFullError } = await supabase
+      .from('properties')
+      .select('id, title, address, city, state, price, bedrooms, bathrooms')
+      .in('id', applicationPropertyIds)
+
+    if (propertiesFullError) {
+      console.error('Error fetching properties:', propertiesFullError)
+      throw propertiesFullError
+    }
+
+    console.log('Fetched tenant profiles:', tenantsData)
+    console.log('Fetched properties:', propertiesFullData)
+
+    // Create lookup maps
+    const tenantMap = new Map(tenantsData?.map(tenant => [tenant.id, tenant]) || [])
+    const propertyMap = new Map(propertiesFullData?.map(property => [property.id, property]) || [])
+
     // Transform the data to match our interface
-    const applications: Application[] = (data || []).map(app => {
-      console.log('Processing application:', app)
-      console.log('Tenant data:', app.profiles)
-      console.log('Properties data:', app.properties)
+    const applications: Application[] = applicationsData.map(app => {
+      const tenant = tenantMap.get(app.tenant_id)
+      const property = propertyMap.get(app.property_id)
       
-      const tenantName = app.profiles ? 
-        `${app.profiles.first_name || ''} ${app.profiles.last_name || ''}`.trim() || 
-        app.profiles.email || 'Unknown' : 'Unknown'
+      console.log('Processing application:', app)
+      console.log('Found tenant:', tenant)
+      console.log('Found property:', property)
+      
+      const tenantName = tenant ? 
+        `${tenant.first_name || ''} ${tenant.last_name || ''}`.trim() || 
+        tenant.email || 'Unknown' : 'Unknown'
       
       return {
         id: app.id,
@@ -98,9 +118,9 @@ export async function getApplicationsForLandlord(landlordId: string): Promise<Ap
         created_at: app.created_at,
         updated_at: app.updated_at,
         tenant_name: tenantName,
-        tenant_email: app.profiles?.email || 'Unknown',
-        tenant_phone: app.profiles?.phone,
-        properties: app.properties
+        tenant_email: tenant?.email || 'Unknown',
+        tenant_phone: tenant?.phone,
+        properties: property
       }
     })
     
