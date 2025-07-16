@@ -10,7 +10,7 @@ interface AuthContextType {
   profile: Profile | null
   loading: boolean
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>
-  signUp: (email: string, password: string, metadata?: any) => Promise<{ error: AuthError | null }>
+  signUp: (email: string, password: string, metadata?: any) => Promise<{ error: any }>
   signOut: () => Promise<void>
   updateProfile: (updates: Partial<Profile>) => Promise<{ error: any }>
   completeOnboarding: (data: any) => Promise<{ error: any }>
@@ -105,10 +105,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           role: metadata?.role || 'tenant',
           phone: metadata?.phone || null,
           onboarding_completed: false,
+          has_section8_voucher: false,
+          voucher_bedroom_count: null,
+          city: null,
         })
 
       if (profileError) {
         console.error('Error creating profile:', profileError)
+        return { error: profileError }
       }
     }
 
