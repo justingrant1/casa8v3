@@ -14,7 +14,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { Navbar } from "@/components/navbar"
 import { SimpleMap } from "@/components/simple-map"
-import { PropertyCardCarousel } from "@/components/property-card-carousel"
+import { PropertyCard } from "@/components/property-card"
 import { SearchForm } from "@/components/search-form"
 import { useAuth } from "@/lib/auth"
 import { useFavorites } from "@/lib/favorites-context"
@@ -140,53 +140,9 @@ function SearchPageContent() {
                   <p>Loading...</p>
                 </div>
               ) : viewMode === 'list' ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
                   {sortedProperties.map((property) => (
-                    <Card key={property.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                      <div className="relative">
-                        <PropertyCardCarousel
-                          images={getImageUrls(property.images)}
-                          propertyTitle={property.title}
-                        />
-                        <Button 
-                          size="icon" 
-                          variant="secondary" 
-                          className="absolute top-2 left-2 h-8 w-8 z-10"
-                          onClick={() => user && toggleFavorite(property.id)}
-                        >
-                          <Heart className={`h-4 w-4 ${user && isFavorite(property.id) ? 'fill-red-500 text-red-500' : ''}`} />
-                        </Button>
-                      </div>
-                      <CardHeader>
-                        <CardTitle className="text-lg">{property.title}</CardTitle>
-                        <div className="flex items-center text-sm text-gray-500">
-                          <MapPin className="h-4 w-4 mr-1" />
-                          {property.address}
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="flex justify-between items-center text-sm">
-                          <div className="flex items-center">
-                            <Bed className="h-4 w-4 mr-1" />
-                            {property.bedrooms} beds
-                          </div>
-                          <div className="flex items-center">
-                            <Bath className="h-4 w-4 mr-1" />
-                            {property.bathrooms} baths
-                          </div>
-                          <div className="flex items-center">
-                            <Square className="h-4 w-4 mr-1" />
-                            {property.sqft} sqft
-                          </div>
-                        </div>
-                      </CardContent>
-                      <CardFooter className="flex justify-between items-center">
-                        <div className="text-lg font-bold text-primary">${property.price}/mo</div>
-                        <Link href={`/property/${property.id}`}>
-                          <Button>View Details</Button>
-                        </Link>
-                      </CardFooter>
-                    </Card>
+                    <PropertyCard key={property.id} property={property} />
                   ))}
                 </div>
               ) : (

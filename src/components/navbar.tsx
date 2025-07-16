@@ -60,9 +60,6 @@ export function Navbar({ currentPage = "home" }: NavbarProps) {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">C8</span>
-            </div>
             <span className="text-xl font-bold text-gray-900">Casa8</span>
           </Link>
 
