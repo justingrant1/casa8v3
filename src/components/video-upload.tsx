@@ -232,4 +232,48 @@ export function VideoUpload({
                       <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
                         <Button
                           type="button"
-                          variant="secondary
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => toggleVideoPlay(videoUrl)}
+                          className="text-white hover:bg-white hover:text-black"
+                        >
+                          <Play className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Video Controls */}
+                <div className="p-2 bg-white">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600 truncate">
+                      Video {index + 1}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleRemoveVideo(videoUrl)}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Information */}
+      <div className="text-sm text-gray-500 space-y-1">
+        <p>• Videos help showcase your property better</p>
+        <p>• Supported formats: MP4, MOV, AVI</p>
+        <p>• Maximum file size: {maxSizeInMB}MB per video</p>
+        <p>• Maximum videos: {maxVideos} per property</p>
+      </div>
+    </div>
+  )
+}
