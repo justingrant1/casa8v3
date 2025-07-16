@@ -3,14 +3,11 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Badge } from "@/components/ui/badge"
-import { Phone, Mail, User, MessageSquare, Send, X } from "lucide-react"
-import { useAuth } from "@/lib/auth"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Phone, Mail, MessageSquare, Send, X, Copy } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { useRouter } from "next/navigation"
 
 interface ContactLandlordModalProps {
   isOpen: boolean
@@ -18,8 +15,8 @@ interface ContactLandlordModalProps {
   landlord: {
     id: string
     name: string
-    phone: string
-    email: string
+    phone?: string | null
+    email?: string | null
   }
   property: {
     id: string
@@ -33,213 +30,106 @@ export function ContactLandlordModal({
   landlord,
   property
 }: ContactLandlordModalProps) {
-  const { user } = useAuth()
   const { toast } = useToast()
-  const router = useRouter()
-  const [loading, setLoading] = useState(false)
-  const [formData, setFormData] = useState({
-    name: user?.user_metadata?.full_name || '',
-    email: user?.email || '',
-    phone: '',
-    message: `Hi ${landlord.name},\n\nI'm interested in your property listing "${property.title}". Could you please provide more information about availability and viewing times?\n\nThank you!`
-  })
+  const [activeTab, setActiveTab] = useState("chat")
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    if (!user) {
-      toast({
-        title: "Authentication Required",
-        description: "Please sign in to contact the landlord",
-        variant: "destructive"
-      })
-      router.push('/login')
-      return
-    }
-
-    setLoading(true)
-
-    try {
-      // In a real app, this would send a message through your messaging system
-      // For now, we'll simulate success
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      toast({
-        title: "Message Sent!",
-        description: "Your message has been sent to the landlord. They will contact you soon.",
-      })
-      
-      onClose()
-    } catch (error) {
-      console.error('Error sending message:', error)
-      toast({
-        title: "Error",
-        description: "Failed to send message. Please try again.",
-        variant: "destructive"
-      })
-    } finally {
-      setLoading(false)
-    }
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text)
+    toast({
+      title: "Copied to clipboard!",
+    })
   }
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }))
-  }
+  const landlordPhoneNumber = landlord.phone || "Phone not available"
+  const landlordEmail = landlord.email || "Email not available"
+
+  const emailSubject = `Inquiry about ${property.title}`
+  const emailBody = `Hi Property Owner,\n\nI'm interested in your property "${property.title}" and would like to know more details. Could we schedule a viewing?\n\nThank you!`
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle className="text-2xl font-bold">Contact Landlord</DialogTitle>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onClose}
-              className="h-8 w-8"
-            >
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader className="flex flex-row items-center justify-between">
+          <DialogTitle className="text-xl font-bold">Contact Landlord</DialogTitle>
+          <DialogClose asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
               <X className="h-4 w-4" />
             </Button>
-          </div>
+          </DialogClose>
         </DialogHeader>
-
-        <div className="space-y-6">
-          {/* Property Info */}
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h3 className="font-semibold text-gray-900 mb-2">Property</h3>
-            <p className="text-sm text-gray-700">{property.title}</p>
-          </div>
-
-          {/* Landlord Info */}
-          <div className="bg-blue-50 rounded-lg p-4">
-            <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
-              <User className="w-4 h-4 mr-2" />
-              Landlord Information
-            </h3>
-            <div className="space-y-2">
-              <div className="flex items-center text-sm">
-                <User className="w-4 h-4 mr-2 text-gray-500" />
-                <span className="font-medium">{landlord.name}</span>
-              </div>
-              {landlord.phone && landlord.phone !== "Phone not available" && (
-                <div className="flex items-center text-sm">
-                  <Phone className="w-4 h-4 mr-2 text-gray-500" />
-                  <span>{landlord.phone}</span>
-                </div>
-              )}
-              {landlord.email && landlord.email !== "Email not available" && (
-                <div className="flex items-center text-sm">
-                  <Mail className="w-4 h-4 mr-2 text-gray-500" />
-                  <span>{landlord.email}</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Contact Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="name">Your Name *</Label>
-                <Input
-                  id="name"
-                  name="name"
-                  type="text"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  required
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label htmlFor="email">Your Email *</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  required
-                  className="mt-1"
-                />
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="phone">Your Phone Number</Label>
-              <Input
-                id="phone"
-                name="phone"
-                type="tel"
-                value={formData.phone}
-                onChange={handleInputChange}
-                placeholder="(555) 123-4567"
-                className="mt-1"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="message">Message *</Label>
-              <Textarea
-                id="message"
-                name="message"
-                value={formData.message}
-                onChange={handleInputChange}
-                required
-                rows={6}
-                className="mt-1"
-                placeholder="Tell the landlord about your interest in the property..."
-              />
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onClose}
-                className="flex-1"
-                disabled={loading}
-              >
-                Cancel
+        <div className="p-6 pt-0">
+          <p className="text-gray-500 mb-6 text-center">Choose how you'd like to get in touch</p>
+          
+          <Tabs defaultValue="chat" className="w-full" onValueChange={setActiveTab}>
+            <TabsList className="grid w-full grid-cols-3 bg-gray-100">
+              <TabsTrigger value="chat"><MessageSquare className="w-4 h-4 mr-2" />Chat</TabsTrigger>
+              <TabsTrigger value="email"><Mail className="w-4 h-4 mr-2" />Email</TabsTrigger>
+              <TabsTrigger value="phone"><Phone className="w-4 h-4 mr-2" />Phone</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="chat" className="mt-6">
+              <h3 className="font-semibold mb-2">Live Chat</h3>
+              <p className="text-sm text-gray-500 mb-4">Start a real-time conversation with the landlord.</p>
+              <Button className="w-full bg-gray-900 text-white hover:bg-gray-800">
+                <MessageSquare className="w-4 h-4 mr-2" />
+                Start Chat
               </Button>
-              <Button
-                type="submit"
-                className="flex-1"
-                disabled={loading}
-              >
-                {loading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Sending...
-                  </>
-                ) : (
-                  <>
+              <p className="text-xs text-gray-400 mt-2 text-center">Messaging functionality coming soon.</p>
+            </TabsContent>
+
+            <TabsContent value="email" className="mt-6">
+              <h3 className="font-semibold mb-2">Send Email</h3>
+              <p className="text-sm text-gray-500 mb-4">Send a message to {landlordEmail}</p>
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="subject" className="text-sm font-medium text-gray-700">Subject</label>
+                  <Input id="subject" value={emailSubject} readOnly className="mt-1 bg-gray-50" />
+                </div>
+                <div>
+                  <label htmlFor="message" className="text-sm font-medium text-gray-700">Message</label>
+                  <Textarea id="message" value={emailBody} readOnly rows={5} className="mt-1 bg-gray-50" />
+                </div>
+                <a
+                  href={`mailto:${landlordEmail}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`}
+                  className="w-full"
+                >
+                  <Button className="w-full bg-gray-900 text-white hover:bg-gray-800">
                     <Send className="w-4 h-4 mr-2" />
-                    Send Message
-                  </>
-                )}
-              </Button>
-            </div>
-          </form>
+                    Send Email
+                  </Button>
+                </a>
+              </div>
+            </TabsContent>
 
-          {/* Tips */}
-          <div className="bg-green-50 rounded-lg p-4">
-            <h4 className="font-semibold text-green-900 mb-2 flex items-center">
-              <MessageSquare className="w-4 h-4 mr-2" />
-              Tips for Contacting Landlords
-            </h4>
-            <ul className="text-sm text-green-800 space-y-1">
-              <li>• Be polite and professional in your message</li>
-              <li>• Include your move-in timeline and any questions</li>
-              <li>• Mention if you have references or documentation ready</li>
-              <li>• Be prepared to schedule a viewing or phone call</li>
-            </ul>
-          </div>
+            <TabsContent value="phone" className="mt-6">
+              <h3 className="font-semibold mb-2">Call</h3>
+              <p className="text-sm text-gray-500 mb-4">Use the phone number below to call directly</p>
+              <div className="flex items-center justify-between bg-gray-100 rounded-md p-3">
+                <span className="font-mono text-sm">{landlordPhoneNumber}</span>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => handleCopy(landlordPhoneNumber)}
+                  disabled={landlordPhoneNumber === "Phone not available"}
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+              <a
+                href={`tel:${landlordPhoneNumber}`}
+                className={`w-full mt-4 inline-block ${landlordPhoneNumber === "Phone not available" ? 'pointer-events-none' : ''}`}
+              >
+                <Button
+                  className="w-full bg-gray-900 text-white hover:bg-gray-800"
+                  disabled={landlordPhoneNumber === "Phone not available"}
+                >
+                  <Phone className="w-4 h-4 mr-2" />
+                  Call Property Owner
+                </Button>
+              </a>
+              <p className="text-xs text-gray-400 mt-2 text-center">Clicking will open your phone app</p>
+            </TabsContent>
+          </Tabs>
         </div>
       </DialogContent>
     </Dialog>
