@@ -15,7 +15,12 @@ export function PropertyCardCarousel({ images, propertyTitle, className = "" }: 
   const [isDragging, setIsDragging] = useState(false)
   const [startX, setStartX] = useState(0)
   const [translateX, setTranslateX] = useState(0)
+  const [imageErrors, setImageErrors] = useState<Set<number>>(new Set())
   const containerRef = useRef<HTMLDivElement>(null)
+
+  // Add debugging
+  console.log('PropertyCardCarousel - images:', images)
+  console.log('PropertyCardCarousel - propertyTitle:', propertyTitle)
 
   if (!images || images.length === 0) {
     return (
@@ -23,6 +28,11 @@ export function PropertyCardCarousel({ images, propertyTitle, className = "" }: 
         <span className="text-gray-500">No image</span>
       </div>
     )
+  }
+
+  const handleImageError = (index: number) => {
+    console.error(`Error loading image ${index}:`, images[index])
+    setImageErrors(prev => new Set([...prev, index]))
   }
 
   if (images.length === 1) {
@@ -147,17 +157,24 @@ export function PropertyCardCarousel({ images, propertyTitle, className = "" }: 
         {images.map((image, index) => (
           <div
             key={index}
-            className="w-full h-full flex-shrink-0"
+            className="w-full h-full flex-shrink-0 relative"
             style={{ width: `${100 / images.length}%` }}
           >
-            <Image
-              src={image}
-              alt={`${propertyTitle} image ${index + 1}`}
-              fill
-              className="object-contain bg-gray-100"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              draggable={false}
-            />
+            {imageErrors.has(index) ? (
+              <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                <span className="text-gray-500 text-sm">Image unavailable</span>
+              </div>
+            ) : (
+              <Image
+                src={image}
+                alt={`${propertyTitle} image ${index + 1}`}
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                draggable={false}
+                onError={() => handleImageError(index)}
+              />
+            )}
           </div>
         ))}
       </div>
