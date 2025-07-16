@@ -11,13 +11,24 @@ import Image from "next/image"
 import { useAuth } from '@/lib/auth'
 import { useRouter } from 'next/navigation'
 
-export default function PropertyDetailsPage({ params }: { params: { id: string } }) {
+export default function PropertyDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { user } = useAuth()
   const router = useRouter()
   const [property, setProperty] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [propertyId, setPropertyId] = useState<string | null>(null)
 
   useEffect(() => {
+    const initializeParams = async () => {
+      const resolvedParams = await params
+      setPropertyId(resolvedParams.id)
+    }
+    initializeParams()
+  }, [params])
+
+  useEffect(() => {
+    if (!propertyId) return
+
     const fetchProperty = async () => {
       setLoading(true)
       const { data, error } = await supabase
@@ -29,7 +40,7 @@ export default function PropertyDetailsPage({ params }: { params: { id: string }
             avatar_url
           )
         `)
-        .eq('id', params.id)
+        .eq('id', propertyId)
         .single()
 
       if (error) {
@@ -41,7 +52,7 @@ export default function PropertyDetailsPage({ params }: { params: { id: string }
     }
 
     fetchProperty()
-  }, [params.id])
+  }, [propertyId])
 
   const handleApply = () => {
     if (!user) {
@@ -49,7 +60,7 @@ export default function PropertyDetailsPage({ params }: { params: { id: string }
       return
     }
     // Navigate to application page, passing property id
-    router.push(`/apply/${params.id}`)
+    router.push(`/apply/${propertyId}`)
   }
 
   if (loading) {

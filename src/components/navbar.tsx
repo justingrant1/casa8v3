@@ -154,7 +154,7 @@ export function Navbar({ currentPage = "home" }: NavbarProps) {
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                       <Avatar className="h-8 w-8">
-                        <AvatarImage src={profile?.avatar_url} alt={profile?.full_name || ""} />
+                <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.full_name || ""} />
                         <AvatarFallback className="bg-primary text-primary-foreground">
                           {profile?.full_name?.charAt(0).toUpperCase() || 'U'}
                         </AvatarFallback>

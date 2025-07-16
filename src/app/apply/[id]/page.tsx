@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 
-export default function ApplyPage({ params }: { params: { id: string } }) {
+export default function ApplyPage({ params }: { params: Promise<{ id: string }> }) {
   const { user } = useAuth()
   const router = useRouter()
   const [property, setProperty] = useState<any>(null)
@@ -18,13 +18,24 @@ export default function ApplyPage({ params }: { params: { id: string } }) {
   const [moveInDate, setMoveInDate] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [propertyId, setPropertyId] = useState<string | null>(null)
 
   useEffect(() => {
+    const initializeParams = async () => {
+      const resolvedParams = await params
+      setPropertyId(resolvedParams.id)
+    }
+    initializeParams()
+  }, [params])
+
+  useEffect(() => {
+    if (!propertyId) return
+
     const fetchProperty = async () => {
       const { data, error } = await supabase
         .from('properties')
         .select('title')
-        .eq('id', params.id)
+        .eq('id', propertyId)
         .single()
 
       if (error) {
@@ -35,7 +46,7 @@ export default function ApplyPage({ params }: { params: { id: string } }) {
     }
 
     fetchProperty()
-  }, [params.id])
+  }, [propertyId])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -44,12 +55,17 @@ export default function ApplyPage({ params }: { params: { id: string } }) {
       return
     }
 
+    if (!propertyId) {
+      setError('Property ID not found.')
+      return
+    }
+
     setLoading(true)
     setError(null)
 
     try {
       const { error: dbError } = await supabase.from('applications').insert({
-        property_id: params.id,
+        property_id: propertyId,
         tenant_id: user.id,
         message,
         move_in_date: moveInDate,
