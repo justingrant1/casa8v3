@@ -104,6 +104,16 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
     setError(null)
 
     try {
+      // Debug: Log form values before submission
+      console.log('=== Application Form Data ===')
+      console.log('First Name:', firstName)
+      console.log('Last Name:', lastName)
+      console.log('Email:', email)
+      console.log('Phone:', phoneNumber)
+      console.log('Message:', additionalMessage)
+      console.log('Property ID:', propertyId)
+      console.log('User ID:', user.id)
+
       // First, update user profile with form data
       const { error: profileError } = await supabase
         .from('profiles')
@@ -121,8 +131,8 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
         throw new Error('Failed to update profile information')
       }
 
-      // Then submit the application using the proper function
-      const applicationId = await submitApplication({
+      // Debug: Log application data being passed to submitApplication
+      const applicationData = {
         property_id: propertyId,
         tenant_id: user.id,
         message: additionalMessage || undefined,
@@ -130,7 +140,12 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
         tenant_last_name: lastName,
         tenant_email: email,
         tenant_phone: phoneNumber
-      })
+      }
+      console.log('=== Application Data Being Submitted ===')
+      console.log(applicationData)
+
+      // Then submit the application using the proper function
+      const applicationId = await submitApplication(applicationData)
 
       console.log('Application submitted successfully:', applicationId)
 

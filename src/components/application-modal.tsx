@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
+import { submitApplication } from '@/lib/applications'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -82,14 +83,45 @@ export function ApplicationModal({ propertyId, propertyTitle, open, onClose, onS
     setError(null)
 
     try {
-      const { error: dbError } = await supabase.from('applications').insert({
+      // Debug: Log form values before submission
+      console.log('=== Application Modal Form Data ===')
+      console.log('First Name:', firstName)
+      console.log('Last Name:', lastName)
+      console.log('Email:', email)
+      console.log('Phone:', phoneNumber)
+      console.log('Message:', additionalMessage)
+      console.log('Property ID:', propertyId)
+      console.log('User ID:', user.id)
+
+      // First, update user profile with form data
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert({
+          id: user.id,
+          first_name: firstName,
+          last_name: lastName,
+          phone: phoneNumber,
+          email: email, // Keep email in sync
+          updated_at: new Date().toISOString()
+        })
+
+      if (profileError) {
+        console.error('Error updating profile:', profileError)
+        throw new Error('Failed to update profile information')
+      }
+
+      // Use the submitApplication function with all tenant information
+      const applicationId = await submitApplication({
         property_id: propertyId,
         tenant_id: user.id,
-        message: additionalMessage,
-        status: 'pending'
+        message: additionalMessage || undefined,
+        tenant_first_name: firstName,
+        tenant_last_name: lastName,
+        tenant_email: email,
+        tenant_phone: phoneNumber
       })
 
-      if (dbError) throw dbError
+      console.log('Application submitted successfully:', applicationId)
 
       setSuccess(true)
       setTimeout(() => {
@@ -97,7 +129,8 @@ export function ApplicationModal({ propertyId, propertyTitle, open, onClose, onS
         onClose()
       }, 2000)
     } catch (error: any) {
-      setError(error.message)
+      console.error('Error submitting application:', error)
+      setError(error.message || 'Failed to submit application. Please try again.')
     } finally {
       setLoading(false)
     }

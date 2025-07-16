@@ -173,6 +173,14 @@ export async function submitApplication(applicationData: {
   tenant_phone: string
 }): Promise<string> {
   try {
+    // Debug: Log the received application data
+    console.log('=== submitApplication function called ===')
+    console.log('Received applicationData:', applicationData)
+    console.log('Type of tenant_first_name:', typeof applicationData.tenant_first_name)
+    console.log('Type of tenant_last_name:', typeof applicationData.tenant_last_name)
+    console.log('Type of tenant_email:', typeof applicationData.tenant_email)
+    console.log('Type of tenant_phone:', typeof applicationData.tenant_phone)
+
     // Check if application already exists
     const { data: existingApp, error: checkError } = await supabase
       .from('applications')
@@ -190,20 +198,26 @@ export async function submitApplication(applicationData: {
       throw new Error('You have already applied to this property')
     }
 
+    // Create the insert object
+    const insertData = {
+      property_id: applicationData.property_id,
+      tenant_id: applicationData.tenant_id,
+      message: applicationData.message,
+      move_in_date: applicationData.move_in_date,
+      status: 'pending',
+      tenant_first_name: applicationData.tenant_first_name,
+      tenant_last_name: applicationData.tenant_last_name,
+      tenant_email: applicationData.tenant_email,
+      tenant_phone: applicationData.tenant_phone
+    }
+
+    console.log('=== Data being inserted into database ===')
+    console.log('Insert data:', insertData)
+
     // Create new application with tenant information
     const { data, error } = await supabase
       .from('applications')
-      .insert([{
-        property_id: applicationData.property_id,
-        tenant_id: applicationData.tenant_id,
-        message: applicationData.message,
-        move_in_date: applicationData.move_in_date,
-        status: 'pending',
-        tenant_first_name: applicationData.tenant_first_name,
-        tenant_last_name: applicationData.tenant_last_name,
-        tenant_email: applicationData.tenant_email,
-        tenant_phone: applicationData.tenant_phone
-      }])
+      .insert([insertData])
       .select()
       .single()
 
@@ -211,6 +225,9 @@ export async function submitApplication(applicationData: {
       console.error('Error submitting application:', error)
       throw error
     }
+
+    console.log('=== Application inserted successfully ===')
+    console.log('Returned data:', data)
 
     return data.id
   } catch (error) {
