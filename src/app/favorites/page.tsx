@@ -1,10 +1,10 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/lib/auth'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Heart, MapPin, Bed, Bath, Square } from 'lucide-react'
+import { Heart, MapPin, Bed, Bath, Square, AlertTriangle } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Navbar } from '@/components/navbar'
@@ -16,29 +16,44 @@ export default function FavoritesPage() {
   const { toggleFavorite, isFavorite } = useFavorites()
   const [favorites, setFavorites] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const fetchFavorites = useCallback(async () => {
+    if (!user) {
+      setLoading(false)
+      return
+    }
+    
+    console.log('Fetching favorites for user:', user.id)
+    setLoading(true)
+    setError(null)
+    
+    // Add timeout to prevent infinite loading
+    const timeoutId = setTimeout(() => {
+      setLoading(false)
+      setError("Request timed out. Please try again.")
+    }, 30000) // 30 second timeout
+    
+    try {
+      const data = await getFavoriteProperties(user.id)
+      clearTimeout(timeoutId)
+      console.log('Favorites data received:', data)
+      
+      const formattedProperties = data.map(formatPropertyForFrontend)
+      setFavorites(formattedProperties)
+    } catch (err: any) {
+      clearTimeout(timeoutId)
+      console.error('Error fetching favorites:', err)
+      setError(err.message || "Failed to load favorites. Please try again.")
+      setFavorites([])
+    } finally {
+      setLoading(false)
+    }
+  }, [user])
 
   useEffect(() => {
-    const fetchFavorites = async () => {
-      if (!user) {
-        setLoading(false)
-        return
-      }
-      
-      setLoading(true)
-      try {
-        const data = await getFavoriteProperties(user.id)
-        const formattedProperties = data.map(formatPropertyForFrontend)
-        setFavorites(formattedProperties)
-      } catch (error) {
-        console.error('Error fetching favorites:', error)
-        setFavorites([])
-      } finally {
-        setLoading(false)
-      }
-    }
-
     fetchFavorites()
-  }, [user])
+  }, [fetchFavorites])
 
   const handleRemoveFavorite = async (propertyId: string) => {
     if (!user) return
@@ -65,6 +80,29 @@ export default function FavoritesPage() {
               <div></div>
             </div>
             <p className="mt-4 text-lg text-muted-foreground">Loading your favorite properties...</p>
+          </div>
+        </div>
+      </>
+    )
+  }
+
+  if (error) {
+    return (
+      <>
+        <Navbar />
+        <div className="container mx-auto px-4 py-8 text-center">
+          <AlertTriangle className="mx-auto h-12 w-12 text-destructive" />
+          <h1 className="mt-4 text-3xl font-bold mb-4">Failed to Load Favorites</h1>
+          <p className="text-muted-foreground mb-8">
+            {error}
+          </p>
+          <div className="flex gap-4 justify-center">
+            <Button onClick={fetchFavorites} variant="outline">
+              Try Again
+            </Button>
+            <Link href="/search">
+              <Button>Browse Properties</Button>
+            </Link>
           </div>
         </div>
       </>
