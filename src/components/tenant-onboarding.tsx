@@ -90,10 +90,10 @@ export function TenantOnboarding({ isOpen, onComplete, onSkip }: TenantOnboardin
 
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="max-w-[95vw] sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center justify-between">
-            <DialogTitle className="text-2xl font-bold">Welcome to Casa8!</DialogTitle>
+            <DialogTitle className="text-xl sm:text-2xl font-bold">Welcome to Casa8!</DialogTitle>
             <Button
               variant="ghost"
               size="icon"
@@ -105,7 +105,7 @@ export function TenantOnboarding({ isOpen, onComplete, onSkip }: TenantOnboardin
           </div>
         </DialogHeader>
 
-        <div className="space-y-8">
+        <div className="space-y-6">
           {/* Progress indicator */}
           <div className="flex items-center justify-center">
             <div className="flex items-center space-x-2 text-sm text-gray-600">
@@ -114,25 +114,25 @@ export function TenantOnboarding({ isOpen, onComplete, onSkip }: TenantOnboardin
           </div>
 
           {/* Section 8 Housing Voucher Question */}
-          <div className="space-y-6">
-            <div className="text-center mb-6">
-              <Home className="w-16 h-16 mx-auto mb-4 text-primary" />
-              <h2 className="text-2xl font-bold mb-2">Section 8 Housing Voucher</h2>
+          <div className="space-y-4">
+            <div className="text-center mb-4">
+              <Home className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 text-primary" />
+              <h2 className="text-xl sm:text-2xl font-bold mb-2">Section 8 Housing Voucher</h2>
               <p className="text-gray-600">Do you have a Section 8 housing voucher?</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Card 
                 className={`cursor-pointer transition-all hover:shadow-md ${
                   formData.hasSection8Voucher === 'yes' ? 'border-primary bg-primary/5' : 'border-gray-200'
                 }`}
                 onClick={() => handleInputChange('hasSection8Voucher', 'yes')}
               >
-                <CardContent className="p-6 text-center">
-                  <CheckCircle className={`w-12 h-12 mx-auto mb-4 ${
+                <CardContent className="p-4 sm:p-6 text-center">
+                  <CheckCircle className={`w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-3 ${
                     formData.hasSection8Voucher === 'yes' ? 'text-primary' : 'text-gray-400'
                   }`} />
-                  <h3 className="font-semibold text-lg mb-2">Yes, I have a voucher</h3>
+                  <h3 className="font-semibold text-base sm:text-lg mb-2">Yes, I have a voucher</h3>
                   <p className="text-sm text-gray-600">I have a Section 8 housing voucher</p>
                 </CardContent>
               </Card>
@@ -143,11 +143,11 @@ export function TenantOnboarding({ isOpen, onComplete, onSkip }: TenantOnboardin
                 }`}
                 onClick={() => handleInputChange('hasSection8Voucher', 'no')}
               >
-                <CardContent className="p-6 text-center">
-                  <Users className={`w-12 h-12 mx-auto mb-4 ${
+                <CardContent className="p-4 sm:p-6 text-center">
+                  <Users className={`w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-3 ${
                     formData.hasSection8Voucher === 'no' ? 'text-primary' : 'text-gray-400'
                   }`} />
-                  <h3 className="font-semibold text-lg mb-2">No, I don't have a voucher</h3>
+                  <h3 className="font-semibold text-base sm:text-lg mb-2">No, I don't have a voucher</h3>
                   <p className="text-sm text-gray-600">I'll be paying rent without assistance</p>
                 </CardContent>
               </Card>
@@ -161,7 +161,7 @@ export function TenantOnboarding({ isOpen, onComplete, onSkip }: TenantOnboardin
                   <p className="text-gray-600">How many bedrooms is your voucher approved for?</p>
                 </div>
 
-                <div className="max-w-md mx-auto">
+                <div className="w-full">
                   <Label htmlFor="bedroomCount" className="text-sm font-medium text-gray-700">
                     Bedroom Count
                   </Label>
@@ -188,12 +188,12 @@ export function TenantOnboarding({ isOpen, onComplete, onSkip }: TenantOnboardin
             {/* City Selection */}
             <div className="space-y-4">
               <div className="text-center">
-                <MapPin className="w-12 h-12 mx-auto mb-4 text-primary" />
+                <MapPin className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-3 text-primary" />
                 <h3 className="text-lg font-semibold mb-2">Select Your City</h3>
                 <p className="text-gray-600">Which city are you looking for housing in?</p>
               </div>
 
-              <div className="max-w-md mx-auto">
+              <div className="w-full">
                 <Label htmlFor="city" className="text-sm font-medium text-gray-700">
                   City
                 </Label>
@@ -219,11 +219,11 @@ export function TenantOnboarding({ isOpen, onComplete, onSkip }: TenantOnboardin
           </div>
 
           {/* Submit Button */}
-          <div className="flex justify-center pt-6">
+          <div className="flex justify-center pt-4">
             <Button
               onClick={handleSubmit}
               disabled={loading}
-              className="min-w-[200px] h-12 text-lg"
+              className="w-full sm:min-w-[200px] sm:w-auto h-12 text-lg"
             >
               {loading ? (
                 <>
