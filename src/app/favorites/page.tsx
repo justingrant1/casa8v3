@@ -10,6 +10,8 @@ import Image from 'next/image'
 import { Navbar } from '@/components/navbar'
 import { getFavoriteProperties, formatPropertyForFrontend } from '@/lib/properties'
 import { useFavorites } from '@/lib/favorites-context'
+import { PropertyCardCarousel } from '@/components/property-card-carousel'
+import { getImageUrls } from '@/lib/storage'
 
 export default function FavoritesPage() {
   const { user } = useAuth()
@@ -128,17 +130,14 @@ export default function FavoritesPage() {
             {favorites.map((property) => (
               <Card key={property.id} className="overflow-hidden hover:shadow-lg transition-shadow">
                 <div className="relative">
-                  <Image
-                    src={property.images?.[0] || '/placeholder.svg'}
-                    alt={property.title}
-                    width={400}
-                    height={250}
-                    className="object-cover w-full h-48"
+                  <PropertyCardCarousel
+                    images={getImageUrls(property.images)}
+                    propertyTitle={property.title}
                   />
                   <Button
                     size="icon"
                     variant="destructive"
-                    className="absolute top-2 right-2 h-8 w-8"
+                    className="absolute top-2 left-2 h-8 w-8 z-10"
                     onClick={() => handleRemoveFavorite(property.id)}
                   >
                     <Heart className="h-4 w-4 fill-white" />

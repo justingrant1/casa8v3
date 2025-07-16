@@ -15,9 +15,11 @@ import Image from "next/image"
 import { Navbar } from "@/components/navbar"
 import { LocationSearch } from "@/components/location-search"
 import { SimpleMap } from "@/components/simple-map"
+import { PropertyCardCarousel } from "@/components/property-card-carousel"
 import { useAuth } from "@/lib/auth"
 import { useFavorites } from "@/lib/favorites-context"
 import { getProperties, searchProperties, formatPropertyForFrontend } from "@/lib/properties"
+import { getImageUrls } from "@/lib/storage"
 
 function SearchPageContent() {
   const searchParams = useSearchParams()
@@ -214,17 +216,14 @@ function SearchPageContent() {
                     {properties.map((property) => (
                       <Card key={property.id} className="overflow-hidden hover:shadow-lg transition-shadow">
                         <div className="relative">
-                          <Image
-                            src={property.images?.[0] || '/placeholder.svg'}
-                            alt={property.title}
-                            width={400}
-                            height={250}
-                            className="object-cover w-full h-48"
+                          <PropertyCardCarousel
+                            images={getImageUrls(property.images)}
+                            propertyTitle={property.title}
                           />
                           <Button 
                             size="icon" 
                             variant="secondary" 
-                            className="absolute top-2 right-2 h-8 w-8"
+                            className="absolute top-2 left-2 h-8 w-8 z-10"
                             onClick={() => user && toggleFavorite(property.id)}
                           >
                             <Heart className={`h-4 w-4 ${user && isFavorite(property.id) ? 'fill-red-500 text-red-500' : ''}`} />
