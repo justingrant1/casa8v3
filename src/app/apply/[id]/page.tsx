@@ -125,7 +125,11 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
       const applicationId = await submitApplication({
         property_id: propertyId,
         tenant_id: user.id,
-        message: additionalMessage || undefined
+        message: additionalMessage || undefined,
+        tenant_first_name: firstName,
+        tenant_last_name: lastName,
+        tenant_email: email,
+        tenant_phone: phoneNumber
       })
 
       console.log('Application submitted successfully:', applicationId)

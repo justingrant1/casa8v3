@@ -44,10 +44,22 @@ export async function getApplicationsForLandlord(landlordId: string): Promise<Ap
       return []
     }
 
-    // Fetch applications without joins first
+    // Fetch applications with tenant info and property info
     const { data: applicationsData, error: applicationsError } = await supabase
       .from('applications')
-      .select('*')
+      .select(`
+        *,
+        properties!property_id (
+          id,
+          title,
+          address,
+          city,
+          state,
+          price,
+          bedrooms,
+          bathrooms
+        )
+      `)
       .in('property_id', propertyIds)
       .order('created_at', { ascending: false })
 
@@ -62,62 +74,14 @@ export async function getApplicationsForLandlord(landlordId: string): Promise<Ap
 
     console.log('Raw applications data:', applicationsData)
 
-    // Get unique tenant IDs and property IDs
-    const tenantIds = [...new Set(applicationsData.map(app => app.tenant_id))]
-    const applicationPropertyIds = [...new Set(applicationsData.map(app => app.property_id))]
-
-    console.log('Looking for tenant IDs:', tenantIds)
-
-    // Fetch tenant profiles
-    const { data: tenantsData, error: tenantsError } = await supabase
-      .from('profiles')
-      .select('id, first_name, last_name, email, phone')
-      .in('id', tenantIds)
-
-    if (tenantsError) {
-      console.error('Error fetching tenant profiles:', tenantsError)
-      throw tenantsError
-    }
-
-    // Also let's check if ANY profiles exist for debugging
-    const { data: allProfiles, error: allProfilesError } = await supabase
-      .from('profiles')
-      .select('id, first_name, last_name, email, phone')
-      .limit(10)
-
-    console.log('All profiles (sample):', allProfiles)
-    console.log('Found tenant profiles for IDs:', tenantsData?.map(t => t.id))
-
-    // Fetch property data
-    const { data: propertiesFullData, error: propertiesFullError } = await supabase
-      .from('properties')
-      .select('id, title, address, city, state, price, bedrooms, bathrooms')
-      .in('id', applicationPropertyIds)
-
-    if (propertiesFullError) {
-      console.error('Error fetching properties:', propertiesFullError)
-      throw propertiesFullError
-    }
-
-    console.log('Fetched tenant profiles:', tenantsData)
-    console.log('Fetched properties:', propertiesFullData)
-
-    // Create lookup maps
-    const tenantMap = new Map(tenantsData?.map(tenant => [tenant.id, tenant]) || [])
-    const propertyMap = new Map(propertiesFullData?.map(property => [property.id, property]) || [])
-
-    // Transform the data to match our interface
+    // Transform the data to match our interface - now using tenant info from applications table
     const applications: Application[] = applicationsData.map(app => {
-      const tenant = tenantMap.get(app.tenant_id)
-      const property = propertyMap.get(app.property_id)
-      
       console.log('Processing application:', app)
-      console.log('Found tenant:', tenant)
-      console.log('Found property:', property)
       
-      const tenantName = tenant ? 
-        `${tenant.first_name || ''} ${tenant.last_name || ''}`.trim() || 
-        tenant.email || 'Unknown' : 'Unknown'
+      // Get tenant name from the application record itself
+      const tenantName = app.tenant_first_name && app.tenant_last_name
+        ? `${app.tenant_first_name} ${app.tenant_last_name}`.trim()
+        : app.tenant_email || 'Unknown'
       
       return {
         id: app.id,
@@ -129,9 +93,9 @@ export async function getApplicationsForLandlord(landlordId: string): Promise<Ap
         created_at: app.created_at,
         updated_at: app.updated_at,
         tenant_name: tenantName,
-        tenant_email: tenant?.email || 'Unknown',
-        tenant_phone: tenant?.phone,
-        properties: property
+        tenant_email: app.tenant_email || 'Unknown',
+        tenant_phone: app.tenant_phone,
+        properties: app.properties
       }
     })
     
@@ -203,6 +167,10 @@ export async function submitApplication(applicationData: {
   tenant_id: string
   message?: string
   move_in_date?: string
+  tenant_first_name: string
+  tenant_last_name: string
+  tenant_email: string
+  tenant_phone: string
 }): Promise<string> {
   try {
     // Check if application already exists
@@ -222,7 +190,7 @@ export async function submitApplication(applicationData: {
       throw new Error('You have already applied to this property')
     }
 
-    // Create new application
+    // Create new application with tenant information
     const { data, error } = await supabase
       .from('applications')
       .insert([{
@@ -230,7 +198,11 @@ export async function submitApplication(applicationData: {
         tenant_id: applicationData.tenant_id,
         message: applicationData.message,
         move_in_date: applicationData.move_in_date,
-        status: 'pending'
+        status: 'pending',
+        tenant_first_name: applicationData.tenant_first_name,
+        tenant_last_name: applicationData.tenant_last_name,
+        tenant_email: applicationData.tenant_email,
+        tenant_phone: applicationData.tenant_phone
       }])
       .select()
       .single()
