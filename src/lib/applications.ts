@@ -166,7 +166,6 @@ export async function submitApplication(applicationData: {
   property_id: string
   tenant_id: string
   message?: string
-  move_in_date?: string
   tenant_first_name: string
   tenant_last_name: string
   tenant_email: string
@@ -203,7 +202,6 @@ export async function submitApplication(applicationData: {
       property_id: applicationData.property_id,
       tenant_id: applicationData.tenant_id,
       message: applicationData.message,
-      move_in_date: applicationData.move_in_date,
       status: 'pending',
       tenant_first_name: applicationData.tenant_first_name,
       tenant_last_name: applicationData.tenant_last_name,
