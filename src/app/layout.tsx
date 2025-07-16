@@ -10,6 +10,12 @@ import { Toaster } from "@/components/ui/toaster";
 export const metadata: Metadata = {
   title: "Casa8",
   description: "A modern property management platform",
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+  },
 };
 
 export default function RootLayout({
@@ -19,6 +25,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+      </head>
       <body
         className={`${Geist.variable} ${Geist_Mono.variable} antialiased`}
       >
