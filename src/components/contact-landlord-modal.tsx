@@ -31,7 +31,7 @@ export function ContactLandlordModal({
   property
 }: ContactLandlordModalProps) {
   const { toast } = useToast()
-  const [activeTab, setActiveTab] = useState("chat")
+  const [activeTab, setActiveTab] = useState("phone")
 
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text)
@@ -60,7 +60,7 @@ export function ContactLandlordModal({
         <div className="p-6 pt-0">
           <p className="text-gray-500 mb-6 text-center">Choose how you'd like to get in touch</p>
           
-          <Tabs defaultValue="chat" className="w-full" onValueChange={setActiveTab}>
+          <Tabs defaultValue="phone" className="w-full" onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-3 bg-gray-100">
               <TabsTrigger value="chat"><MessageSquare className="w-4 h-4 mr-2" />Chat</TabsTrigger>
               <TabsTrigger value="email"><Mail className="w-4 h-4 mr-2" />Email</TabsTrigger>
