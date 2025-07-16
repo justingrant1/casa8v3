@@ -1,0 +1,272 @@
+"use client"
+
+import { Application } from '@/lib/applications'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Calendar, DollarSign, MapPin, User, Mail, Phone, FileText, Building } from 'lucide-react'
+
+interface ApplicationDetailsModalProps {
+  isOpen: boolean
+  onClose: () => void
+  application: Application | null
+}
+
+export function ApplicationDetailsModal({ isOpen, onClose, application }: ApplicationDetailsModalProps) {
+  if (!application) return null
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "pending":
+        return "bg-blue-100 text-blue-800"
+      case "approved":
+        return "bg-green-100 text-green-800"
+      case "rejected":
+        return "bg-red-100 text-red-800"
+      default:
+        return "bg-gray-100 text-gray-800"
+    }
+  }
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0
+    }).format(amount)
+  }
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-3">
+            <FileText className="h-5 w-5" />
+            Application Details
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-6">
+          {/* Application Status */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Badge className={getStatusColor(application.status)}>
+                {application.status.charAt(0).toUpperCase() + application.status.slice(1)}
+              </Badge>
+              <span className="text-sm text-gray-500">
+                Applied on {formatDate(application.created_at)}
+              </span>
+            </div>
+            {application.updated_at !== application.created_at && (
+              <span className="text-sm text-gray-500">
+                Updated on {formatDate(application.updated_at)}
+              </span>
+            )}
+          </div>
+
+          {/* Applicant Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <User className="h-5 w-5" />
+                Applicant Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-start gap-4">
+                <Avatar className="h-16 w-16">
+                  <AvatarFallback className="text-lg">
+                    {application.tenant_name
+                      .split(' ')
+                      .map(n => n[0])
+                      .join('')
+                      .toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 space-y-2">
+                  <h3 className="text-lg font-semibold">{application.tenant_name}</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-gray-500" />
+                      <span className="text-sm">{application.tenant_email}</span>
+                    </div>
+                    {application.tenant_phone && (
+                      <div className="flex items-center gap-2">
+                        <Phone className="h-4 w-4 text-gray-500" />
+                        <span className="text-sm">{application.tenant_phone}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Property Information */}
+          {application.properties && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Building className="h-5 w-5" />
+                  Property Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <h3 className="font-semibold">{application.properties.title}</h3>
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <MapPin className="h-4 w-4" />
+                    <span>
+                      {application.properties.address}
+                      {(application.properties as any).city && `, ${(application.properties as any).city}`}
+                      {(application.properties as any).state && ` ${(application.properties as any).state}`}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-primary">
+                        {formatCurrency(application.properties.price)}
+                      </div>
+                      <div className="text-sm text-gray-500">Monthly Rent</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold">{application.properties.bedrooms}</div>
+                      <div className="text-sm text-gray-500">Bedrooms</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold">{application.properties.bathrooms}</div>
+                      <div className="text-sm text-gray-500">Bathrooms</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold">{application.properties.bedrooms}</div>
+                      <div className="text-sm text-gray-500">Bedrooms</div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Application Details */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Application Details
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {application.move_in_date && (
+                <div className="flex items-center gap-3">
+                  <Calendar className="h-5 w-5 text-gray-500" />
+                  <div>
+                    <div className="font-medium">Desired Move-in Date</div>
+                    <div className="text-sm text-gray-600">
+                      {formatDate(application.move_in_date)}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {application.employment_status && (
+                <div className="flex items-center gap-3">
+                  <User className="h-5 w-5 text-gray-500" />
+                  <div>
+                    <div className="font-medium">Employment Status</div>
+                    <div className="text-sm text-gray-600">
+                      {application.employment_status}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {application.monthly_income && (
+                <div className="flex items-center gap-3">
+                  <DollarSign className="h-5 w-5 text-gray-500" />
+                  <div>
+                    <div className="font-medium">Monthly Income</div>
+                    <div className="text-sm text-gray-600">
+                      {formatCurrency(application.monthly_income)}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {application.message && (
+                <div className="mt-4">
+                  <div className="font-medium mb-2">Message from Applicant</div>
+                  <div className="bg-gray-50 p-3 rounded-lg text-sm">
+                    {application.message}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Income-to-Rent Ratio */}
+          {application.monthly_income && application.properties?.price && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <DollarSign className="h-5 w-5" />
+                  Financial Assessment
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="text-center">
+                    <div className="text-xl font-bold">
+                      {formatCurrency(application.monthly_income)}
+                    </div>
+                    <div className="text-sm text-gray-500">Monthly Income</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-xl font-bold">
+                      {formatCurrency(application.properties.price)}
+                    </div>
+                    <div className="text-sm text-gray-500">Monthly Rent</div>
+                  </div>
+                  <div className="text-center">
+                    <div className={`text-xl font-bold ${
+                      (application.properties.price / application.monthly_income) <= 0.3 
+                        ? 'text-green-600' 
+                        : (application.properties.price / application.monthly_income) <= 0.4
+                        ? 'text-yellow-600'
+                        : 'text-red-600'
+                    }`}>
+                      {Math.round((application.properties.price / application.monthly_income) * 100)}%
+                    </div>
+                    <div className="text-sm text-gray-500">Rent-to-Income Ratio</div>
+                  </div>
+                </div>
+                <div className="mt-4 text-sm text-gray-600">
+                  <p>
+                    Recommended rent-to-income ratio is 30% or less. 
+                    This applicant's ratio is {Math.round((application.properties.price / application.monthly_income) * 100)}%.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Actions */}
+          <div className="flex justify-end gap-3 pt-6 border-t">
+            <Button variant="outline" onClick={onClose}>
+              Close
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
