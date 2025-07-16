@@ -101,7 +101,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Create profile if signup successful
       if (data.user) {
-        const now = new Date().toISOString()
         const { error: profileError } = await supabase
           .from('profiles')
           .insert({
@@ -111,8 +110,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             last_name: metadata?.last_name || null,
             role: metadata?.role || 'tenant',
             phone: metadata?.phone || null,
-            created_at: now,
-            updated_at: now,
             avatar_url: null,
             onboarding_completed: false,
             has_section8_voucher: false,
@@ -122,7 +119,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (profileError) {
           console.error('Error creating profile:', profileError)
-          return { error: new Error('Database error saving new user') }
+          return { error: new Error(`Database error saving new user: ${profileError.message}`) }
         }
       }
 
