@@ -264,13 +264,7 @@ function SearchPageContent() {
                 ) : (
                   <div className="h-[600px] rounded-lg overflow-hidden">
                     <SimpleMap 
-                      properties={properties.filter(p => p.latitude && p.longitude).map(p => ({
-                        ...p,
-                        coordinates: {
-                          lat: parseFloat(p.latitude),
-                          lng: parseFloat(p.longitude)
-                        }
-                      }))}
+                      properties={properties.filter(p => p.coordinates)}
                       center={searchLocation?.coordinates}
                       zoom={12}
                     />
