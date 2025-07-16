@@ -49,7 +49,7 @@ export async function getApplicationsForLandlord(landlordId: string): Promise<Ap
       .from('applications')
       .select(`
         *,
-        tenant:profiles!tenant_id (
+        profiles!tenant_id (
           id,
           first_name,
           last_name,
@@ -81,12 +81,12 @@ export async function getApplicationsForLandlord(landlordId: string): Promise<Ap
     // Transform the data to match our interface
     const applications: Application[] = (data || []).map(app => {
       console.log('Processing application:', app)
-      console.log('Tenant data:', app.tenant)
+      console.log('Tenant data:', app.profiles)
       console.log('Properties data:', app.properties)
       
-      const tenantName = app.tenant ? 
-        `${app.tenant.first_name || ''} ${app.tenant.last_name || ''}`.trim() || 
-        app.tenant.email || 'Unknown' : 'Unknown'
+      const tenantName = app.profiles ? 
+        `${app.profiles.first_name || ''} ${app.profiles.last_name || ''}`.trim() || 
+        app.profiles.email || 'Unknown' : 'Unknown'
       
       return {
         id: app.id,
@@ -98,8 +98,8 @@ export async function getApplicationsForLandlord(landlordId: string): Promise<Ap
         created_at: app.created_at,
         updated_at: app.updated_at,
         tenant_name: tenantName,
-        tenant_email: app.tenant?.email || 'Unknown',
-        tenant_phone: app.tenant?.phone,
+        tenant_email: app.profiles?.email || 'Unknown',
+        tenant_phone: app.profiles?.phone,
         properties: app.properties
       }
     })
