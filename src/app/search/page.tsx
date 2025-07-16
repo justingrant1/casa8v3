@@ -10,15 +10,23 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Search, MapPin, Bed, Bath, Square, Heart, ArrowLeft } from "lucide-react"
+import { Search, MapPin, Bed, Bath, Square, Heart, ArrowLeft, Map, List } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { Navbar } from "@/components/navbar"
+import { LocationSearch } from "@/components/location-search"
+import { SimpleMap } from "@/components/simple-map"
+import { useAuth } from "@/lib/auth"
+import { useFavorites } from "@/lib/favorites-context"
 
 function SearchPageContent() {
   const searchParams = useSearchParams()
+  const { user } = useAuth()
+  const { toggleFavorite, isFavorite } = useFavorites()
   const [properties, setProperties] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [viewMode, setViewMode] = useState<'list' | 'map'>(searchParams.get('view') === 'map' ? 'map' : 'list')
+  const [searchLocation, setSearchLocation] = useState<any>(null)
   const [filters, setFilters] = useState({
     location: searchParams.get('location') || '',
     bedrooms: searchParams.get('bedrooms') || 'any',
@@ -82,11 +90,11 @@ function SearchPageContent() {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="location">Location</Label>
-                  <Input
-                    id="location"
+                  <LocationSearch
                     placeholder="City, State, or Zip"
-                    value={filters.location}
-                    onChange={(e) => handleFilterChange('location', e.target.value)}
+                    onLocationSelect={(location) => {
+                      handleFilterChange('location', `${location.city}, ${location.state}`)
+                    }}
                   />
                 </div>
                 <div className="space-y-2">
@@ -128,7 +136,33 @@ function SearchPageContent() {
 
           {/* Properties */}
           <div className="md:col-span-3">
-            <h1 className="text-3xl font-bold mb-6">Search Results</h1>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+              <div>
+                <h1 className="text-3xl font-bold mb-2">Search Results</h1>
+                <p className="text-gray-600">
+                  {loading ? 'Loading...' : `${properties.length} properties found`}
+                </p>
+              </div>
+              
+              <div className="flex gap-2 mt-4 sm:mt-0">
+                <Button
+                  variant={viewMode === 'list' ? 'default' : 'outline'}
+                  onClick={() => setViewMode('list')}
+                  className="flex items-center gap-2"
+                >
+                  <List className="h-4 w-4" />
+                  List
+                </Button>
+                <Button
+                  variant={viewMode === 'map' ? 'default' : 'outline'}
+                  onClick={() => setViewMode('map')}
+                  className="flex items-center gap-2"
+                >
+                  <Map className="h-4 w-4" />
+                  Map
+                </Button>
+              </div>
+            </div>
             {loading ? (
               <div className="text-center">
                 <div className="loading-dots">
@@ -153,53 +187,76 @@ function SearchPageContent() {
                 </Link>
               </div>
             ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                {properties.map((property) => (
-                  <Card key={property.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                    <div className="relative">
-                      <Image
-                        src={property.images?.[0] || '/placeholder.svg'}
-                        alt={property.title}
-                        width={400}
-                        height={250}
-                        className="object-cover w-full h-48"
-                      />
-                      <Button size="icon" variant="secondary" className="absolute top-2 right-2 h-8 w-8">
-                        <Heart className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <CardHeader>
-                      <CardTitle className="text-lg">{property.title}</CardTitle>
-                      <div className="flex items-center text-sm text-gray-500">
-                        <MapPin className="h-4 w-4 mr-1" />
-                        {property.address}
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex justify-between items-center text-sm">
-                        <div className="flex items-center">
-                          <Bed className="h-4 w-4 mr-1" />
-                          {property.bedrooms} beds
+              <>
+                {viewMode === 'list' ? (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {properties.map((property) => (
+                      <Card key={property.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                        <div className="relative">
+                          <Image
+                            src={property.images?.[0] || '/placeholder.svg'}
+                            alt={property.title}
+                            width={400}
+                            height={250}
+                            className="object-cover w-full h-48"
+                          />
+                          <Button 
+                            size="icon" 
+                            variant="secondary" 
+                            className="absolute top-2 right-2 h-8 w-8"
+                            onClick={() => user && toggleFavorite(property.id)}
+                          >
+                            <Heart className={`h-4 w-4 ${user && isFavorite(property.id) ? 'fill-red-500 text-red-500' : ''}`} />
+                          </Button>
                         </div>
-                        <div className="flex items-center">
-                          <Bath className="h-4 w-4 mr-1" />
-                          {property.bathrooms} baths
-                        </div>
-                        <div className="flex items-center">
-                          <Square className="h-4 w-4 mr-1" />
-                          {property.sqft} sqft
-                        </div>
-                      </div>
-                    </CardContent>
-                    <CardFooter className="flex justify-between items-center">
-                      <div className="text-lg font-bold text-primary">${property.price}/mo</div>
-                      <Link href={`/property/${property.id}`} passHref>
-                        <Button>View Details</Button>
-                      </Link>
-                    </CardFooter>
-                  </Card>
-                ))}
-              </div>
+                        <CardHeader>
+                          <CardTitle className="text-lg">{property.title}</CardTitle>
+                          <div className="flex items-center text-sm text-gray-500">
+                            <MapPin className="h-4 w-4 mr-1" />
+                            {property.address}
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="flex justify-between items-center text-sm">
+                            <div className="flex items-center">
+                              <Bed className="h-4 w-4 mr-1" />
+                              {property.bedrooms} beds
+                            </div>
+                            <div className="flex items-center">
+                              <Bath className="h-4 w-4 mr-1" />
+                              {property.bathrooms} baths
+                            </div>
+                            <div className="flex items-center">
+                              <Square className="h-4 w-4 mr-1" />
+                              {property.sqft} sqft
+                            </div>
+                          </div>
+                        </CardContent>
+                        <CardFooter className="flex justify-between items-center">
+                          <div className="text-lg font-bold text-primary">${property.price}/mo</div>
+                          <Link href={`/property/${property.id}`}>
+                            <Button>View Details</Button>
+                          </Link>
+                        </CardFooter>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="h-[600px] rounded-lg overflow-hidden">
+                    <SimpleMap 
+                      properties={properties.filter(p => p.latitude && p.longitude).map(p => ({
+                        ...p,
+                        coordinates: {
+                          lat: parseFloat(p.latitude),
+                          lng: parseFloat(p.longitude)
+                        }
+                      }))}
+                      center={searchLocation?.coordinates}
+                      zoom={12}
+                    />
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
