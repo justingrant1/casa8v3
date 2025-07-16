@@ -194,6 +194,10 @@ export async function getPropertyById(id: string): Promise<Property | null> {
       .single()
 
     if (error) {
+      if (error.code === 'PGRST116') {
+        // This code indicates that no rows were found, which is not a true error in this case.
+        return null
+      }
       console.error('Error fetching property:', error)
       throw error
     }
