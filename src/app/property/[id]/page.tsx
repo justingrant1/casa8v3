@@ -32,14 +32,31 @@ export default function PropertyDetailsPage({ params }: { params: { id: string }
       return
     }
 
+    console.log('Fetching property with ID:', propertyId)
     setLoading(true)
     setError(null)
+    
+    // Add timeout to prevent infinite loading
+    const timeoutId = setTimeout(() => {
+      setLoading(false)
+      setError("Request timed out. Please try again.")
+    }, 30000) // 30 second timeout
+    
     try {
       const data = await getPropertyById(propertyId)
-      setProperty(data)
+      clearTimeout(timeoutId)
+      console.log('Property data received:', data)
+      
+      if (!data) {
+        setError("Property not found.")
+        setProperty(null)
+      } else {
+        setProperty(data)
+      }
     } catch (err: any) {
+      clearTimeout(timeoutId)
       console.error('Error fetching property:', err)
-      setError(err.message || "An unexpected error occurred.")
+      setError(err.message || "Failed to load property. Please try again.")
       setProperty(null)
     } finally {
       setLoading(false)
@@ -85,12 +102,17 @@ export default function PropertyDetailsPage({ params }: { params: { id: string }
           <p className="text-muted-foreground mb-8">
             {error || "The property you are looking for does not exist or may have been removed."}
           </p>
-          <Link href="/search">
-            <Button>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Search
+          <div className="flex gap-4 justify-center">
+            <Button onClick={fetchProperty} variant="outline">
+              Try Again
             </Button>
-          </Link>
+            <Link href="/search">
+              <Button>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Search
+              </Button>
+            </Link>
+          </div>
         </div>
       </>
     )
