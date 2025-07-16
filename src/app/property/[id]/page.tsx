@@ -5,46 +5,41 @@ import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { MapPin, Bed, Bath, Square, Heart, MessageSquare, Check, ArrowLeft } from "lucide-react"
+import { MapPin, Bed, Bath, Square, Heart, MessageSquare, Check, ArrowLeft, AlertTriangle } from "lucide-react"
 import Image from "next/image"
 import { useAuth } from '@/lib/auth'
 import { useRouter } from 'next/navigation'
 import { Navbar } from '@/components/navbar'
 import Link from 'next/link'
+import { getPropertyById } from '@/lib/properties'
 
 export default function PropertyDetailsPage({ params }: { params: { id: string } }) {
   const { user } = useAuth()
   const router = useRouter()
   const [property, setProperty] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const { id: propertyId } = params
 
   const fetchProperty = useCallback(async () => {
     if (!propertyId) {
       setLoading(false)
+      setError("No property ID provided.")
       return
     }
 
     setLoading(true)
-    const { data, error } = await supabase
-      .from('properties')
-      .select(`
-        *,
-        profiles (
-          full_name,
-          avatar_url
-        )
-      `)
-      .eq('id', propertyId)
-      .single()
-
-    if (error) {
-      console.error('Error fetching property:', error)
-      setProperty(null)
-    } else {
+    setError(null)
+    try {
+      const data = await getPropertyById(propertyId)
       setProperty(data)
+    } catch (err: any) {
+      console.error('Error fetching property:', err)
+      setError(err.message || "An unexpected error occurred.")
+      setProperty(null)
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }, [propertyId])
 
   useEffect(() => {
@@ -76,14 +71,15 @@ export default function PropertyDetailsPage({ params }: { params: { id: string }
     )
   }
 
-  if (!property) {
+  if (error || !property) {
     return (
       <>
         <Navbar />
         <div className="container mx-auto px-4 py-8 text-center">
-          <h1 className="text-3xl font-bold mb-4">Property Not Found</h1>
+          <AlertTriangle className="mx-auto h-12 w-12 text-destructive" />
+          <h1 className="mt-4 text-3xl font-bold mb-4">Property Not Found</h1>
           <p className="text-muted-foreground mb-8">
-            The property you are looking for does not exist or may have been removed.
+            {error || "The property you are looking for does not exist or may have been removed."}
           </p>
           <Link href="/search">
             <Button>
