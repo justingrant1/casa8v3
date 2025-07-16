@@ -4,16 +4,19 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
+import { submitApplication } from '@/lib/applications'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Navbar } from '@/components/navbar'
+import { useToast } from '@/hooks/use-toast'
 
 export default function ApplyPage({ params }: { params: Promise<{ id: string }> }) {
   const { user } = useAuth()
   const router = useRouter()
+  const { toast } = useToast()
   const [property, setProperty] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -101,18 +104,49 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
     setError(null)
 
     try {
-      const { error: dbError } = await supabase.from('applications').insert({
+      // First, update user profile with form data
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert({
+          id: user.id,
+          first_name: firstName,
+          last_name: lastName,
+          phone: phoneNumber,
+          email: email, // Keep email in sync
+          updated_at: new Date().toISOString()
+        })
+
+      if (profileError) {
+        console.error('Error updating profile:', profileError)
+        throw new Error('Failed to update profile information')
+      }
+
+      // Then submit the application using the proper function
+      const applicationId = await submitApplication({
         property_id: propertyId,
         tenant_id: user.id,
-        message: additionalMessage,
-        status: 'pending'
+        message: additionalMessage || undefined
       })
 
-      if (dbError) throw dbError
+      console.log('Application submitted successfully:', applicationId)
 
+      // Show success message
+      toast({
+        title: "Application Submitted Successfully!",
+        description: "Your rental application has been sent to the landlord. You'll be notified of any updates.",
+      })
+
+      // Redirect to dashboard or applications page
       router.push('/dashboard')
     } catch (error: any) {
-      setError(error.message)
+      console.error('Error submitting application:', error)
+      setError(error.message || 'Failed to submit application. Please try again.')
+      
+      toast({
+        title: "Application Submission Failed",
+        description: error.message || 'There was an error submitting your application. Please try again.',
+        variant: "destructive"
+      })
     } finally {
       setLoading(false)
     }

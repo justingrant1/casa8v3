@@ -15,13 +15,15 @@ export interface Message {
   updated_at: string
   sender?: {
     id: string
-    full_name: string
+    first_name: string
+    last_name: string
     email: string
     phone?: string
   }
   recipient?: {
     id: string
-    full_name: string
+    first_name: string
+    last_name: string
     email: string
     phone?: string
   }
@@ -84,13 +86,15 @@ export async function getMessages(userId: string): Promise<Message[]> {
         *,
         sender:profiles!sender_id (
           id,
-          full_name,
+          first_name,
+          last_name,
           email,
           phone
         ),
         recipient:profiles!recipient_id (
           id,
-          full_name,
+          first_name,
+          last_name,
           email,
           phone
         )
@@ -246,13 +250,15 @@ export async function getConversationMessages(
         *,
         sender:profiles!sender_id (
           id,
-          full_name,
+          first_name,
+          last_name,
           email,
           phone
         ),
         recipient:profiles!recipient_id (
           id,
-          full_name,
+          first_name,
+          last_name,
           email,
           phone
         )

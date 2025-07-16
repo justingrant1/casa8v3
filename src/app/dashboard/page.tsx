@@ -115,9 +115,9 @@ export default function LandlordDashboard() {
 
   const getSenderName = (message: any, userId: string) => {
     if (message.sender_id === userId) return 'You'
-    return message.sender?.full_name || 
+    return message.sender ? `${message.sender.first_name || ''} ${message.sender.last_name || ''}`.trim() || 
            message.sender?.email || 
-           'Unknown User'
+           'Unknown User' : 'Unknown User'
   }
 
   const getOtherParticipantName = (thread: MessageThread) => {
@@ -125,8 +125,8 @@ export default function LandlordDashboard() {
     const senderName = getSenderName(lastMessage, user?.id || '')
     
     return senderName === 'You' 
-      ? (lastMessage.recipient?.full_name || 
-         lastMessage.recipient?.email || 'Unknown User')
+      ? (lastMessage.recipient ? `${lastMessage.recipient.first_name || ''} ${lastMessage.recipient.last_name || ''}`.trim() || 
+         lastMessage.recipient?.email || 'Unknown User' : 'Unknown User')
       : senderName
   }
 
@@ -837,20 +837,16 @@ export default function LandlordDashboard() {
                           <div className="flex items-start space-x-4 flex-1">
                             <Avatar>
                               <AvatarFallback>
-                                {(lastMessage.sender?.full_name || 
-                                  lastMessage.sender?.email || 'U')
-                                  .split(' ')
-                                  .map((n: string) => n[0])
-                                  .join('')
-                                  .toUpperCase()}
+                                {lastMessage.sender ? `${lastMessage.sender.first_name || ''} ${lastMessage.sender.last_name || ''}`.trim() || 
+                                  lastMessage.sender.email || 'U' : 'U'}
                               </AvatarFallback>
                             </Avatar>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center space-x-2 mb-1">
                                 <div className="font-semibold truncate">
                                   {senderName === 'You' 
-                                    ? (lastMessage.recipient?.full_name || 
-                                       lastMessage.recipient?.email || 'Unknown User')
+                                    ? (lastMessage.recipient ? `${lastMessage.recipient.first_name || ''} ${lastMessage.recipient.last_name || ''}`.trim() || 
+                                       lastMessage.recipient.email || 'Unknown User' : 'Unknown User')
                                     : senderName
                                   }
                                 </div>

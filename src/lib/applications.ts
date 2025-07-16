@@ -8,8 +8,6 @@ export interface Application {
   status: 'pending' | 'approved' | 'rejected'
   message?: string
   move_in_date?: string
-  employment_status?: string
-  monthly_income?: number
   created_at: string
   updated_at: string
   tenant_name: string
@@ -35,7 +33,8 @@ export async function getApplicationsForLandlord(landlordId: string): Promise<Ap
         *,
         tenant:profiles!tenant_id (
           id,
-          full_name,
+          first_name,
+          last_name,
           email,
           phone
         ),
@@ -66,11 +65,9 @@ export async function getApplicationsForLandlord(landlordId: string): Promise<Ap
       status: app.status,
       message: app.message,
       move_in_date: app.move_in_date,
-      employment_status: app.employment_status,
-      monthly_income: app.monthly_income,
       created_at: app.created_at,
       updated_at: app.updated_at,
-      tenant_name: app.tenant?.full_name || 'Unknown',
+      tenant_name: app.tenant ? `${app.tenant.first_name || ''} ${app.tenant.last_name || ''}`.trim() || 'Unknown' : 'Unknown',
       tenant_email: app.tenant?.email || 'Unknown',
       tenant_phone: app.tenant?.phone,
       properties: app.properties
@@ -99,7 +96,8 @@ export async function getApplicationsForTenant(tenantId: string): Promise<Applic
           bedrooms,
           bathrooms,
           landlord:profiles!landlord_id (
-            full_name,
+            first_name,
+            last_name,
             email,
             phone
           )
@@ -121,8 +119,6 @@ export async function getApplicationsForTenant(tenantId: string): Promise<Applic
       status: app.status,
       message: app.message,
       move_in_date: app.move_in_date,
-      employment_status: app.employment_status,
-      monthly_income: app.monthly_income,
       created_at: app.created_at,
       updated_at: app.updated_at,
       tenant_name: 'You', // Since this is for the tenant
@@ -143,8 +139,6 @@ export async function submitApplication(applicationData: {
   tenant_id: string
   message?: string
   move_in_date?: string
-  employment_status?: string
-  monthly_income?: number
 }): Promise<string> {
   try {
     // Check if application already exists
@@ -172,8 +166,6 @@ export async function submitApplication(applicationData: {
         tenant_id: applicationData.tenant_id,
         message: applicationData.message,
         move_in_date: applicationData.move_in_date,
-        employment_status: applicationData.employment_status,
-        monthly_income: applicationData.monthly_income,
         status: 'pending'
       }])
       .select()
@@ -222,7 +214,8 @@ export async function getApplication(applicationId: string): Promise<Application
         *,
         tenant:profiles!tenant_id (
           id,
-          full_name,
+          first_name,
+          last_name,
           email,
           phone
         ),
@@ -255,11 +248,9 @@ export async function getApplication(applicationId: string): Promise<Application
       status: data.status,
       message: data.message,
       move_in_date: data.move_in_date,
-      employment_status: data.employment_status,
-      monthly_income: data.monthly_income,
       created_at: data.created_at,
       updated_at: data.updated_at,
-      tenant_name: data.tenant?.full_name || 'Unknown',
+      tenant_name: data.tenant ? `${data.tenant.first_name || ''} ${data.tenant.last_name || ''}`.trim() || 'Unknown' : 'Unknown',
       tenant_email: data.tenant?.email || 'Unknown',
       tenant_phone: data.tenant?.phone,
       properties: data.properties
