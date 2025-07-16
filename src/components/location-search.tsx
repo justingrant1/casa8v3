@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { Input } from "@/components/ui/input"
 import { Search, MapPin, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { geocodeAddress } from "@/lib/location"
+import { loadGoogleMaps, initializeAutocomplete, parsePlaceResult, geocodeAddress } from "@/lib/google-maps"
 
 interface LocationSearchProps {
   placeholder?: string
@@ -99,13 +99,13 @@ export function LocationSearch({
 
     try {
       const [city, state] = location.split(", ")
-      const coordinates = await geocodeAddress(location)
+      const result = await geocodeAddress(location)
       
-      if (coordinates && onLocationSelect) {
+      if (result && onLocationSelect) {
         onLocationSelect({
           city: city.trim(),
           state: state.trim(),
-          coordinates
+          coordinates: { lat: result.lat, lng: result.lng }
         })
       }
     } catch (error) {

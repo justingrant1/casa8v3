@@ -1,11 +1,12 @@
 "use client"
 
-import React from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { MapPin, Bed, Bath, Square, Heart } from 'lucide-react'
 import Link from 'next/link'
+import { loadGoogleMaps, useGoogleMaps, createStaticMapUrl } from '@/lib/google-maps'
 
 interface Property {
   id: string
@@ -26,19 +27,155 @@ interface Property {
 interface SimpleMapProps {
   properties: Property[]
   className?: string
+  center?: { lat: number; lng: number }
+  zoom?: number
+  onMarkerClick?: (property: Property) => void
 }
 
-export function SimpleMap({ properties, className = "" }: SimpleMapProps) {
-  return (
-    <div className={`w-full h-96 bg-gray-100 rounded-lg flex items-center justify-center ${className}`}>
-      <div className="text-center">
-        <MapPin className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-        <h3 className="text-lg font-medium text-gray-700 mb-2">Map View</h3>
-        <p className="text-gray-500 mb-4">Interactive map with {properties.length} properties</p>
-        <Badge variant="outline" className="bg-blue-50 text-blue-700">
-          Google Maps Integration Coming Soon
-        </Badge>
+export function SimpleMap({ 
+  properties, 
+  className = "",
+  center,
+  zoom = 12,
+  onMarkerClick
+}: SimpleMapProps) {
+  const { isLoaded, error } = useGoogleMaps()
+  const mapRef = useRef<HTMLDivElement>(null)
+  const [map, setMap] = useState<google.maps.Map | null>(null)
+  const [markers, setMarkers] = useState<google.maps.Marker[]>([])
+
+  // Calculate center if not provided
+  const mapCenter = center || (() => {
+    const validProperties = properties.filter(p => p.coordinates)
+    if (validProperties.length === 0) {
+      return { lat: 39.8283, lng: -98.5795 } // Center of US
+    }
+    
+    const avgLat = validProperties.reduce((sum, p) => sum + (p.coordinates?.lat || 0), 0) / validProperties.length
+    const avgLng = validProperties.reduce((sum, p) => sum + (p.coordinates?.lng || 0), 0) / validProperties.length
+    
+    return { lat: avgLat, lng: avgLng }
+  })()
+
+  // Initialize map
+  useEffect(() => {
+    if (!isLoaded || !mapRef.current) return
+
+    const mapInstance = new google.maps.Map(mapRef.current, {
+      center: mapCenter,
+      zoom,
+      styles: [
+        {
+          featureType: "poi",
+          elementType: "labels",
+          stylers: [{ visibility: "off" }]
+        }
+      ]
+    })
+
+    setMap(mapInstance)
+
+    return () => {
+      // Cleanup
+      setMap(null)
+    }
+  }, [isLoaded, mapCenter, zoom])
+
+  // Add markers
+  useEffect(() => {
+    if (!map || !isLoaded) return
+
+    // Clear existing markers
+    markers.forEach(marker => marker.setMap(null))
+    const newMarkers: google.maps.Marker[] = []
+
+    properties.forEach(property => {
+      if (!property.coordinates) return
+
+      const marker = new google.maps.Marker({
+        position: property.coordinates,
+        map,
+        title: property.title,
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 12,
+          fillColor: '#3b82f6',
+          fillOpacity: 0.8,
+          strokeColor: '#ffffff',
+          strokeWeight: 2
+        }
+      })
+
+      // Add click handler
+      marker.addListener('click', () => {
+        if (onMarkerClick) {
+          onMarkerClick(property)
+        }
+      })
+
+      // Create info window
+      const infoWindow = new google.maps.InfoWindow({
+        content: `
+          <div class="p-3 max-w-xs">
+            <h3 class="font-semibold text-sm mb-1">${property.title}</h3>
+            <p class="text-xs text-gray-600 mb-2">${property.location}</p>
+            <div class="flex justify-between items-center">
+              <span class="text-sm font-bold text-blue-600">$${property.price.toLocaleString()}/mo</span>
+              <span class="text-xs text-gray-500">${property.bedrooms}br/${property.bathrooms}ba</span>
+            </div>
+          </div>
+        `
+      })
+
+      marker.addListener('mouseover', () => {
+        infoWindow.open(map, marker)
+      })
+
+      marker.addListener('mouseout', () => {
+        infoWindow.close()
+      })
+
+      newMarkers.push(marker)
+    })
+
+    setMarkers(newMarkers)
+
+    return () => {
+      newMarkers.forEach(marker => marker.setMap(null))
+    }
+  }, [map, properties, onMarkerClick])
+
+  // Show loading state
+  if (!isLoaded) {
+    return (
+      <div className={`w-full h-96 bg-gray-100 rounded-lg flex items-center justify-center ${className}`}>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-gray-500">Loading map...</p>
+        </div>
       </div>
+    )
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className={`w-full h-96 bg-gray-100 rounded-lg flex items-center justify-center ${className}`}>
+        <div className="text-center">
+          <MapPin className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+          <h3 className="text-lg font-medium text-gray-700 mb-2">Map Unavailable</h3>
+          <p className="text-gray-500 mb-4">Unable to load Google Maps</p>
+          <Badge variant="outline" className="bg-red-50 text-red-700">
+            {error}
+          </Badge>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className={`w-full h-96 rounded-lg overflow-hidden ${className}`}>
+      <div ref={mapRef} className="w-full h-full" />
     </div>
   )
 }
