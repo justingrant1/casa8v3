@@ -15,6 +15,7 @@ import { getPropertyById } from '@/lib/properties'
 import { getImageUrls } from '@/lib/storage'
 import { ImageCarousel } from '@/components/image-carousel'
 import { ApplicationModal } from '@/components/application-modal'
+import { ContactLandlordModal } from '@/components/contact-landlord-modal'
 
 export default function PropertyDetailsPage({ params }: { params: { id: string } }) {
   const { user } = useAuth()
@@ -23,6 +24,7 @@ export default function PropertyDetailsPage({ params }: { params: { id: string }
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showApplicationModal, setShowApplicationModal] = useState(false)
+  const [showContactModal, setShowContactModal] = useState(false)
   const { id: propertyId } = params
 
   const fetchProperty = useCallback(async () => {
@@ -192,7 +194,11 @@ export default function PropertyDetailsPage({ params }: { params: { id: string }
                     <div className="text-sm text-gray-500">Landlord</div>
                   </div>
                 </div>
-                <Button variant="outline" className="w-full mt-2 h-12 text-lg">
+                <Button 
+                  variant="outline" 
+                  className="w-full mt-2 h-12 text-lg"
+                  onClick={() => setShowContactModal(true)}
+                >
                   <MessageSquare className="h-5 w-5 mr-2" />
                   Contact Landlord
                 </Button>
@@ -211,6 +217,24 @@ export default function PropertyDetailsPage({ params }: { params: { id: string }
         onSuccess={() => {
           // Optionally redirect to dashboard or show success message
           router.push('/dashboard')
+        }}
+      />
+
+      {/* Contact Landlord Modal */}
+      <ContactLandlordModal
+        isOpen={showContactModal}
+        onClose={() => setShowContactModal(false)}
+        landlord={{
+          id: property.landlord_id,
+          name: property.profiles 
+            ? `${property.profiles.first_name || ''} ${property.profiles.last_name || ''}`.trim() || 'Property Owner'
+            : 'Property Owner',
+          phone: property.profiles?.phone,
+          email: property.profiles?.email
+        }}
+        property={{
+          id: property.id,
+          title: property.title
         }}
       />
     </>
