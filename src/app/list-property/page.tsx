@@ -298,7 +298,7 @@ export default function ListPropertyPage() {
                     {coordinates && (
                       <div className="text-sm text-green-600 flex items-center gap-1">
                         <MapPin className="h-3 w-3" />
-                        Location verified ({coordinates.lat.toFixed(6)}, {coordinates.lng.toFixed(6)})
+                        Location verified
                       </div>
                     )}
                   </div>
@@ -349,7 +349,7 @@ export default function ListPropertyPage() {
                     {coordinates && (
                       <div className="text-sm text-green-600 flex items-center gap-1">
                         <MapPin className="h-3 w-3" />
-                        Location verified ({coordinates.lat.toFixed(6)}, {coordinates.lng.toFixed(6)})
+                        Location verified
                       </div>
                     )}
                   </div>
