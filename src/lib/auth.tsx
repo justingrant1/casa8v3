@@ -85,38 +85,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signUp = async (email: string, password: string, metadata?: any) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: metadata,
-      },
-    })
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: metadata,
+        },
+      })
 
-    // Create profile if signup successful
-    if (data.user && !error) {
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          id: data.user.id,
-          email: data.user.email!,
-          first_name: metadata?.first_name || null,
-          last_name: metadata?.last_name || null,
-          role: metadata?.role || 'tenant',
-          phone: metadata?.phone || null,
-          onboarding_completed: false,
-          has_section8_voucher: false,
-          voucher_bedroom_count: null,
-          city: null,
-        })
-
-      if (profileError) {
-        console.error('Error creating profile:', profileError)
-        return { error: profileError }
+      if (error) {
+        console.error('Auth signup error:', error)
+        return { error }
       }
-    }
 
-    return { error }
+      // Create profile if signup successful
+      if (data.user) {
+        const now = new Date().toISOString()
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: data.user.id,
+            email: data.user.email!,
+            first_name: metadata?.first_name || null,
+            last_name: metadata?.last_name || null,
+            role: metadata?.role || 'tenant',
+            phone: metadata?.phone || null,
+            created_at: now,
+            updated_at: now,
+            avatar_url: null,
+            onboarding_completed: false,
+            has_section8_voucher: false,
+            voucher_bedroom_count: null,
+            city: null,
+          })
+
+        if (profileError) {
+          console.error('Error creating profile:', profileError)
+          return { error: new Error('Database error saving new user') }
+        }
+      }
+
+      return { error: null }
+    } catch (err) {
+      console.error('Signup error:', err)
+      return { error: err }
+    }
   }
 
   const signOut = async () => {

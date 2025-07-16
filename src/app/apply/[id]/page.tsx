@@ -82,10 +82,21 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
     }
   }
 
+  // Debug function to help identify click issues
+  const handleDebugClick = (e: React.MouseEvent) => {
+    console.log('Click event details:', {
+      target: e.target,
+      currentTarget: e.currentTarget,
+      tagName: (e.target as HTMLElement).tagName,
+      className: (e.target as HTMLElement).className,
+      type: (e.target as HTMLInputElement).type,
+    })
+  }
+
   return (
     <>
       <Navbar />
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8" onClick={handleDebugClick}>
         <Card className="max-w-2xl mx-auto">
         <CardHeader>
           <CardTitle>Apply for {property?.title || 'Property'}</CardTitle>
