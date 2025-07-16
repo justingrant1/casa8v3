@@ -11,7 +11,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
 export default function ProfilePage() {
   const { user, profile, updateProfile } = useAuth()
-  const [fullName, setFullName] = useState('')
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
   const [phone, setPhone] = useState('')
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
@@ -19,7 +20,8 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (profile) {
-      setFullName(profile.full_name || '')
+      setFirstName(profile.first_name || '')
+      setLastName(profile.last_name || '')
       setPhone(profile.phone || '')
     }
   }, [profile])
@@ -45,7 +47,8 @@ export default function ProfilePage() {
     }
 
     const { error } = await updateProfile({
-      full_name: fullName,
+      first_name: firstName,
+      last_name: lastName,
       phone,
       avatar_url,
     })
@@ -71,7 +74,7 @@ export default function ProfilePage() {
             <div className="flex items-center space-x-4">
               <Avatar className="h-20 w-20">
                 <AvatarImage src={profile?.avatar_url || undefined} />
-                <AvatarFallback>{profile?.full_name?.[0]}</AvatarFallback>
+                <AvatarFallback>{profile?.first_name?.[0]}</AvatarFallback>
               </Avatar>
               <div className="space-y-2">
                 <Label htmlFor="avatar">Update Profile Picture</Label>
@@ -88,14 +91,25 @@ export default function ProfilePage() {
               <Input id="email" type="email" value={user?.email || ''} disabled />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="fullName">Full Name</Label>
-              <Input
-                id="fullName"
-                type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="firstName">First Name</Label>
+                <Input
+                  id="firstName"
+                  type="text"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Last Name</Label>
+                <Input
+                  id="lastName"
+                  type="text"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                />
+              </div>
             </div>
 
             <div className="space-y-2">

@@ -154,9 +154,9 @@ export function Navbar({ currentPage = "home" }: NavbarProps) {
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                       <Avatar className="h-8 w-8">
-                <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.full_name || ""} />
+                <AvatarImage src={profile?.avatar_url || undefined} alt={`${profile?.first_name || ''} ${profile?.last_name || ''}`.trim() || ""} />
                         <AvatarFallback className="bg-primary text-primary-foreground">
-                          {profile?.full_name?.charAt(0).toUpperCase() || 'U'}
+                          {profile?.first_name?.charAt(0).toUpperCase() || 'U'}
                         </AvatarFallback>
                       </Avatar>
                     </Button>
@@ -165,7 +165,7 @@ export function Navbar({ currentPage = "home" }: NavbarProps) {
                     <DropdownMenuLabel className="font-normal">
                       <div className="flex flex-col space-y-1">
                         <p className="text-sm font-medium leading-none">
-                          {profile?.full_name || 'User'}
+                          {`${profile?.first_name || ''} ${profile?.last_name || ''}`.trim() || 'User'}
                         </p>
                         <p className="text-xs leading-none text-muted-foreground">
                           {user.email}

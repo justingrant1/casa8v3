@@ -100,7 +100,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .insert({
           id: data.user.id,
           email: data.user.email!,
-          full_name: metadata?.full_name || null,
+          first_name: metadata?.first_name || null,
+          last_name: metadata?.last_name || null,
           role: metadata?.role || 'tenant',
           phone: metadata?.phone || null,
           onboarding_completed: false,

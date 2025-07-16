@@ -13,35 +13,47 @@ export interface Database {
         Row: {
           id: string
           email: string
-          full_name: string | null
+          first_name: string | null
+          last_name: string | null
           role: 'tenant' | 'landlord' | 'admin'
           phone: string | null
           created_at: string
           updated_at: string
           avatar_url: string | null
           onboarding_completed: boolean
+          has_section8_voucher: boolean
+          voucher_bedroom_count: number | null
+          city: string | null
         }
         Insert: {
           id: string
           email: string
-          full_name?: string | null
+          first_name?: string | null
+          last_name?: string | null
           role: 'tenant' | 'landlord' | 'admin'
           phone?: string | null
           created_at?: string
           updated_at?: string
           avatar_url?: string | null
           onboarding_completed?: boolean
+          has_section8_voucher?: boolean
+          voucher_bedroom_count?: number | null
+          city?: string | null
         }
         Update: {
           id?: string
           email?: string
-          full_name?: string | null
+          first_name?: string | null
+          last_name?: string | null
           role?: 'tenant' | 'landlord' | 'admin'
           phone?: string | null
           created_at?: string
           updated_at?: string
           avatar_url?: string | null
           onboarding_completed?: boolean
+          has_section8_voucher?: boolean
+          voucher_bedroom_count?: number | null
+          city?: string | null
         }
       }
       properties: {
