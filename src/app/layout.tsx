@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { GeistSans as Geist } from "geist/font/sans";
+import { GeistMono as Geist_Mono } from "geist/font/mono";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth";
 import { FavoritesProvider } from "@/lib/favorites-context";
