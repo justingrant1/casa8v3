@@ -15,11 +15,16 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
   const { user } = useAuth()
   const router = useRouter()
   const [property, setProperty] = useState<any>(null)
-  const [message, setMessage] = useState('')
-  const [moveInDate, setMoveInDate] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [propertyId, setPropertyId] = useState<string | null>(null)
+  
+  // Form fields - auto-populated from user profile
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
+  const [email, setEmail] = useState('')
+  const [phoneNumber, setPhoneNumber] = useState('')
+  const [additionalMessage, setAdditionalMessage] = useState('')
 
   useEffect(() => {
     const initializeParams = async () => {
@@ -49,6 +54,37 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
     fetchProperty()
   }, [propertyId])
 
+  // Auto-populate form fields with user data
+  useEffect(() => {
+    if (!user) return
+
+    const fetchUserProfile = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('first_name, last_name, phone')
+          .eq('id', user.id)
+          .single()
+
+        if (error) {
+          console.error('Error fetching user profile:', error)
+        } else {
+          setFirstName(data.first_name || '')
+          setLastName(data.last_name || '')
+          setPhoneNumber(data.phone || '')
+        }
+      } catch (error) {
+        console.error('Error fetching user profile:', error)
+      }
+    }
+
+    // Set email from user object
+    setEmail(user.email || '')
+    
+    // Fetch other profile data
+    fetchUserProfile()
+  }, [user])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user) {
@@ -68,8 +104,8 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
       const { error: dbError } = await supabase.from('applications').insert({
         property_id: propertyId,
         tenant_id: user.id,
-        message,
-        move_in_date: moveInDate,
+        message: additionalMessage,
+        status: 'pending'
       })
 
       if (dbError) throw dbError
@@ -82,53 +118,88 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
     }
   }
 
-  // Debug function to help identify click issues
-  const handleDebugClick = (e: React.MouseEvent) => {
-    console.log('Click event details:', {
-      target: e.target,
-      currentTarget: e.currentTarget,
-      tagName: (e.target as HTMLElement).tagName,
-      className: (e.target as HTMLElement).className,
-      type: (e.target as HTMLInputElement).type,
-    })
-  }
-
   return (
     <>
       <Navbar />
-      <div className="container mx-auto px-4 py-8" onClick={handleDebugClick}>
+      <div className="container mx-auto px-4 py-8">
         <Card className="max-w-2xl mx-auto">
-        <CardHeader>
-          <CardTitle>Apply for {property?.title || 'Property'}</CardTitle>
-          <CardDescription>Submit your application for this property.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="moveInDate">Desired Move-in Date</Label>
-              <Input
-                id="moveInDate"
-                type="date"
-                value={moveInDate}
-                onChange={(e) => setMoveInDate(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="message">Message to Landlord</Label>
-              <Textarea
-                id="message"
-                placeholder="Tell the landlord a bit about yourself..."
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-              />
-            </div>
-            {error && <p className="text-sm text-red-500">{error}</p>}
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Submitting...' : 'Submit Application'}
-            </Button>
-          </form>
-        </CardContent>
+          <CardHeader>
+            <CardTitle>Apply for this Property</CardTitle>
+            <CardDescription>Please fill out the form below to apply for this rental property.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Personal Information Section */}
+              <div className="space-y-4">
+                <div className="border-b pb-2">
+                  <h3 className="text-lg font-semibold">Personal Information</h3>
+                  <p className="text-sm text-muted-foreground">Provide your contact details for the application.</p>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName">First Name</Label>
+                    <Input
+                      id="firstName"
+                      type="text"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName">Last Name</Label>
+                    <Input
+                      id="lastName"
+                      type="text"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email Address</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="phoneNumber">Phone Number</Label>
+                  <Input
+                    id="phoneNumber"
+                    type="tel"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="additionalMessage">Additional Message (Optional)</Label>
+                  <Textarea
+                    id="additionalMessage"
+                    placeholder="Any additional information you'd like to provide..."
+                    value={additionalMessage}
+                    onChange={(e) => setAdditionalMessage(e.target.value)}
+                    rows={4}
+                  />
+                </div>
+              </div>
+
+              {error && <p className="text-sm text-red-500">{error}</p>}
+              
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? 'Submitting...' : 'Submit Application'}
+              </Button>
+            </form>
+          </CardContent>
         </Card>
       </div>
     </>
