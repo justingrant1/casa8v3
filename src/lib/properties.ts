@@ -37,7 +37,8 @@ export async function getProperties(filters?: PropertyFilter): Promise<Property[
       .select(`
         *,
         profiles!properties_landlord_id_fkey (
-          full_name,
+          first_name,
+          last_name,
           email,
           phone
         )
@@ -124,7 +125,8 @@ export async function searchProperties(searchTerm: string, filters?: PropertyFil
       .select(`
         *,
         profiles!properties_landlord_id_fkey (
-          full_name,
+          first_name,
+          last_name,
           email,
           phone
         )
@@ -185,7 +187,8 @@ export async function getPropertyById(id: string): Promise<Property | null> {
       .select(`
         *,
         profiles!properties_landlord_id_fkey (
-          full_name,
+          first_name,
+          last_name,
           email,
           phone
         )
@@ -210,6 +213,10 @@ export async function getPropertyById(id: string): Promise<Property | null> {
 }
 
 export function formatPropertyForFrontend(property: any) {
+  const landlordName = property.profiles 
+    ? `${property.profiles.first_name || ''} ${property.profiles.last_name || ''}`.trim() || 'Property Owner'
+    : 'Property Owner'
+
   return {
     id: property.id,
     title: property.title,
@@ -227,7 +234,7 @@ export function formatPropertyForFrontend(property: any) {
     image: property.images?.[0] || '/placeholder.svg',
     amenities: property.amenities || [],
     available: property.is_active,
-    landlord: property.profiles?.full_name || 'Property Owner',
+    landlord: landlordName,
     landlord_email: property.profiles?.email,
     landlord_phone: property.profiles?.phone,
     landlord_id: property.landlord_id,
@@ -250,7 +257,8 @@ export async function getFavoriteProperties(userId: string): Promise<Property[]>
         properties (
           *,
           profiles!properties_landlord_id_fkey (
-            full_name,
+            first_name,
+            last_name,
             email,
             phone
           )
