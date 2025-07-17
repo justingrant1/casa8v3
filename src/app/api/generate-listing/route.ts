@@ -64,7 +64,13 @@ Please find and extract the following information about this property:
 
 Based on the information you find, create an appealing RENTAL LISTING with:
 
-1. An attractive, marketing-focused title that would appeal to potential renters (not just "Property at [address]")
+1. An attractive, marketing-focused title that would appeal to potential renters - BE CREATIVE AND VARIED:
+   - DO NOT use repetitive words like "Cozy", "Charming", "Spacious" for every listing
+   - DO NOT mention neighborhood names or city names in the title
+   - Focus on unique features, style, or selling points of THIS specific property
+   - Use varied vocabulary and different approaches for each property
+   - Examples of diverse styles: "Modern 3BR with Updated Kitchen", "Bright Corner Unit with Balcony", "Recently Renovated Family Home", "Stunning Hardwood Floors Throughout", "Pet-Friendly with Fenced Yard", "Move-in Ready with All Appliances"
+
 2. A compelling rental description that includes:
    - Key features and selling points
    - Physical characteristics (layout, features, condition)
@@ -74,7 +80,7 @@ Based on the information you find, create an appealing RENTAL LISTING with:
 
 Please respond with a JSON object in this exact format:
 {
-  "title": "Attractive rental listing title (e.g., 'Charming 3BR Home in Quiet Neighborhood with Modern Updates') - KEEP UNDER 200 CHARACTERS",
+  "title": "Creative, varied rental listing title that highlights unique features - AVOID repetitive words, NO neighborhood names, KEEP UNDER 200 CHARACTERS",
   "description": "Compelling rental description with specific details about the property, its features, and neighborhood appeal. Write as if creating a rental listing that would attract quality tenants. KEEP UNDER 1500 CHARACTERS - be concise but engaging.",
   "bedrooms": number,
   "bathrooms": number,
@@ -84,7 +90,13 @@ Please respond with a JSON object in this exact format:
   "amenities": ["amenity1", "amenity2", "amenity3"]
 }
 
-IMPORTANT: Keep the description concise and under 1500 characters. Focus on the most important selling points rather than lengthy details. Create marketing copy that highlights the property's best features and appeals to potential renters. If you cannot find specific information for some fields, use reasonable estimates based on similar properties in the area. Always return valid JSON format.`
+IMPORTANT: 
+- CREATE UNIQUE, VARIED TITLES that avoid repetitive patterns
+- NO neighborhood or city names in titles
+- Focus on what makes THIS property special
+- Keep the description concise and under 1500 characters
+- Use different vocabulary and approaches for variety
+- Always return valid JSON format.`
 
     // Make request to Perplexity API
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
@@ -106,7 +118,7 @@ IMPORTANT: Keep the description concise and under 1500 characters. Focus on the 
           }
         ],
         max_tokens: 800,
-        temperature: 0.2,
+        temperature: 0.7,
         top_p: 0.9,
         return_citations: true,
         search_domain_filter: ['realtor.com', 'zillow.com', 'apartments.com', 'rent.com', 'trulia.com'],
