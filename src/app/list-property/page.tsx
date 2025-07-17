@@ -38,7 +38,7 @@ export default function ListPropertyPage() {
   const [bedrooms, setBedrooms] = useState('')
   const [bathrooms, setBathrooms] = useState('')
   const [sqft, setSqft] = useState('')
-  const [amenities, setAmenities] = useState<string[]>(['Refrigerator', 'Stove'])
+  const [amenities, setAmenities] = useState<string[]>(['Central Air Conditioning', 'Refrigerator', 'Stove'])
   const [images, setImages] = useState<File[]>([])
   const [videos, setVideos] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
