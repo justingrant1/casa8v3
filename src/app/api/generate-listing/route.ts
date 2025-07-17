@@ -1,9 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import OpenAI from 'openai'
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,52 +10,67 @@ export async function POST(request: NextRequest) {
 
     console.log('Generating property listing for:', address)
 
-    // Use OpenAI to generate property data based on the address
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [
-        {
-          role: 'system',
-          content: `You are a real estate expert AI that generates property listing data based on addresses. You have extensive knowledge of real estate markets, property types, and typical rental rates across different areas. Create realistic and appealing property listings that would be competitive in the local market.`
-        },
-        {
-          role: 'user',
-          content: `Generate a comprehensive property listing for the address: "${address}". 
-          
-          Please analyze the location, neighborhood characteristics, and typical property features for this area to create realistic listing details.
-          
-          Return the data in the following JSON format:
+    // Use Perplexity API to search for real property data
+    const response = await fetch('https://api.perplexity.ai/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.PERPLEXITY_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'llama-3.1-sonar-small-128k-online',
+        messages: [
           {
-            "title": "Attractive property title that highlights key selling points",
-            "description": "Detailed property description (3-4 sentences) highlighting key features, neighborhood benefits, and what makes it special",
-            "bedrooms": number,
-            "bathrooms": number,
-            "sqft": number,
-            "propertyType": "House|Apartment|Condo|Townhouse",
-            "estimatedRent": number,
-            "amenities": ["amenity1", "amenity2", "amenity3"],
-            "features": ["feature1", "feature2", "feature3"],
-            "confidence": "high|medium|low"
+            role: 'system',
+            content: 'You are a real estate data analyst that searches for current property information using internet sources. You provide accurate, real-time property data based on actual listings, recent sales, and market information.'
+          },
+          {
+            role: 'user',
+            content: `Search for current property information for the address: "${address}". 
+            
+            Look for:
+            - Current or recent property listings at this address
+            - Property details (bedrooms, bathrooms, square footage, type)
+            - Recent sale prices or current rental rates
+            - Property features and amenities
+            - Neighborhood information
+            - Property history and characteristics
+            
+            Return ONLY a JSON object with the following format (no additional text):
+            {
+              "title": "Property title based on actual listing or create appropriate title",
+              "description": "Property description based on actual features and neighborhood",
+              "bedrooms": number,
+              "bathrooms": number,
+              "sqft": number,
+              "propertyType": "House|Apartment|Condo|Townhouse",
+              "estimatedRent": number,
+              "amenities": ["amenity1", "amenity2", "amenity3"],
+              "features": ["feature1", "feature2", "feature3"],
+              "confidence": "high|medium|low",
+              "dataSource": "Brief description of where the data came from"
+            }
+            
+            Use actual property data found online. If no specific data is found for this exact address, use comparable properties in the same area/neighborhood. Set confidence level based on data availability.`
           }
-          
-          Guidelines:
-          - Make realistic estimates based on the location and area
-          - Include 3-5 relevant amenities from: ["Washer/Dryer", "Air Conditioning", "Parking", "Dishwasher", "Pet Friendly", "Gym", "Pool", "Balcony", "Garden", "Fireplace"]
-          - Include 3-5 appealing features
-          - Set confidence to "medium" since this is AI-generated without direct property inspection
-          - Ensure all fields are filled with appropriate data
-          - Make the title and description appealing but realistic`
-        }
-      ],
-      max_tokens: 1000,
-      temperature: 0.7
+        ],
+        temperature: 0.2,
+        max_tokens: 1000
+      })
     })
 
-    const aiResponse = response.choices[0]?.message?.content
+    if (!response.ok) {
+      throw new Error(`Perplexity API error: ${response.status} ${response.statusText}`)
+    }
+
+    const data = await response.json()
+    const aiResponse = data.choices[0]?.message?.content
     
     if (!aiResponse) {
-      throw new Error('No response from AI')
+      throw new Error('No response from Perplexity API')
     }
+
+    console.log('Perplexity raw response:', aiResponse)
 
     // Try to parse JSON response
     let propertyData
@@ -70,17 +80,18 @@ export async function POST(request: NextRequest) {
       if (jsonMatch) {
         propertyData = JSON.parse(jsonMatch[0])
       } else {
-        throw new Error('No JSON found in AI response')
+        // Try parsing the entire response as JSON
+        propertyData = JSON.parse(aiResponse)
       }
     } catch (parseError) {
-      console.error('Error parsing AI response:', parseError)
-      console.error('Raw AI response:', aiResponse)
+      console.error('Error parsing Perplexity response:', parseError)
+      console.error('Raw Perplexity response:', aiResponse)
       
       // Fallback: create a basic response using the address
       const cityState = address.split(',').slice(-2).join(',').trim()
       propertyData = {
-        title: `Beautiful Property in ${cityState}`,
-        description: `This well-maintained property offers comfortable living in a desirable location. Features modern amenities and is conveniently located near local attractions, shopping, and dining. Perfect for those seeking quality housing in ${cityState}.`,
+        title: `Property at ${address}`,
+        description: `Property located at ${address}. Please verify details and update listing information as needed.`,
         bedrooms: 3,
         bathrooms: 2,
         sqft: 1200,
@@ -88,7 +99,8 @@ export async function POST(request: NextRequest) {
         estimatedRent: 2500,
         amenities: ['Parking', 'Air Conditioning', 'Washer/Dryer'],
         features: ['Modern Kitchen', 'Spacious Rooms', 'Updated Fixtures'],
-        confidence: 'low'
+        confidence: 'low',
+        dataSource: 'Fallback data - please verify property details'
       }
     }
 
@@ -100,7 +112,7 @@ export async function POST(request: NextRequest) {
       console.error('Missing required fields:', missingFields)
       // Fill in missing fields with defaults
       if (!propertyData.title) propertyData.title = `Property at ${address}`
-      if (!propertyData.description) propertyData.description = 'Beautiful property in a great location with modern amenities.'
+      if (!propertyData.description) propertyData.description = 'Property details to be verified and updated.'
       if (!propertyData.bedrooms) propertyData.bedrooms = 3
       if (!propertyData.bathrooms) propertyData.bathrooms = 2
       if (!propertyData.sqft) propertyData.sqft = 1200
@@ -112,6 +124,16 @@ export async function POST(request: NextRequest) {
     if (!propertyData.amenities) propertyData.amenities = ['Parking', 'Air Conditioning']
     if (!propertyData.features) propertyData.features = ['Modern Kitchen', 'Spacious Rooms']
     if (!propertyData.confidence) propertyData.confidence = 'medium'
+    if (!propertyData.dataSource) propertyData.dataSource = 'Internet search results'
+
+    // Filter amenities to match available form options
+    const availableAmenities = ['Washer/Dryer', 'Air Conditioning', 'Parking', 'Dishwasher', 'Pet Friendly', 'Gym', 'Pool', 'Balcony', 'Garden', 'Fireplace']
+    propertyData.amenities = propertyData.amenities.filter((amenity: string) => {
+      return availableAmenities.some(available => 
+        available.toLowerCase().includes(amenity.toLowerCase()) ||
+        amenity.toLowerCase().includes(available.toLowerCase())
+      )
+    }).slice(0, 5) // Limit to 5 amenities
 
     console.log('Generated property data:', propertyData)
 
