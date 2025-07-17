@@ -49,13 +49,8 @@ export function ContactLandlordModal({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
-        <DialogHeader className="flex flex-row items-center justify-between">
+        <DialogHeader>
           <DialogTitle className="text-xl font-bold">Contact Landlord</DialogTitle>
-          <DialogClose asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <X className="h-4 w-4" />
-            </Button>
-          </DialogClose>
         </DialogHeader>
         <div className="p-6 pt-0">
           <p className="text-gray-500 mb-6 text-center">Choose how you'd like to get in touch</p>
