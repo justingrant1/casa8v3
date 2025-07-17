@@ -67,7 +67,7 @@ export function Navbar({ currentPage = "home" }: NavbarProps) {
           <div className="hidden md:flex items-center space-x-8">
             <Link 
               href="/" 
-              className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+              className={`flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium transition-colors ${
                 currentPage === "home" 
                   ? "text-primary bg-primary/10" 
                   : "text-gray-700 hover:text-primary hover:bg-gray-100"
@@ -79,7 +79,7 @@ export function Navbar({ currentPage = "home" }: NavbarProps) {
 
             <Link 
               href="/search" 
-              className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+              className={`flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium transition-colors ${
                 currentPage === "search" 
                   ? "text-primary bg-primary/10" 
                   : "text-gray-700 hover:text-primary hover:bg-gray-100"
@@ -92,7 +92,7 @@ export function Navbar({ currentPage = "home" }: NavbarProps) {
             {user && isTenant && (
               <Link 
                 href="/favorites" 
-                className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                className={`flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium transition-colors ${
                   currentPage === "favorites" 
                     ? "text-primary bg-primary/10" 
                     : "text-gray-700 hover:text-primary hover:bg-gray-100"
@@ -106,7 +106,7 @@ export function Navbar({ currentPage = "home" }: NavbarProps) {
             {user && (
               <Link 
                 href="/messages" 
-                className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                className={`flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium transition-colors ${
                   currentPage === "messages" 
                     ? "text-primary bg-primary/10" 
                     : "text-gray-700 hover:text-primary hover:bg-gray-100"
@@ -120,7 +120,7 @@ export function Navbar({ currentPage = "home" }: NavbarProps) {
             {user && isLandlord && (
               <Link 
                 href="/dashboard" 
-                className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                className={`flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium transition-colors ${
                   currentPage === "dashboard" 
                     ? "text-primary bg-primary/10" 
                     : "text-gray-700 hover:text-primary hover:bg-gray-100"
