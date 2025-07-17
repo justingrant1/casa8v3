@@ -61,8 +61,6 @@ export function EnhancedImageUpload({
   const mountedRef = useRef(true)
   const imagesRef = useRef<ImageFile[]>([])
   const cleanupRef = useRef<() => void>()
-  const callbacksRef = useRef({ onImagesChange, onMainImageChange })
-  const pendingCallbackRef = useRef(false)
 
   // Initialize with existing images
   useEffect(() => {
@@ -222,11 +220,6 @@ export function EnhancedImageUpload({
     }
   }, [images, maxImages, maxSizeInMB, acceptedFormats, showProgress])
 
-  // Update callbacks ref
-  useEffect(() => {
-    callbacksRef.current = { onImagesChange, onMainImageChange }
-  }, [onImagesChange, onMainImageChange])
-
   // Update parent component and images ref
   useEffect(() => {
     if (!mountedRef.current) return
@@ -234,23 +227,18 @@ export function EnhancedImageUpload({
     imagesRef.current = images
     const files = images.map(img => img.file)
     
-    // Prevent concurrent callbacks
-    if (pendingCallbackRef.current) return
-    pendingCallbackRef.current = true
-    
     // Schedule parent callbacks to happen after render to prevent React error #185
     setTimeout(() => {
       if (mountedRef.current) {
-        callbacksRef.current.onImagesChange(files)
+        onImagesChange(files)
         
         const mainImageIndex = images.findIndex(img => img.isMain)
-        if (mainImageIndex !== -1 && callbacksRef.current.onMainImageChange) {
-          callbacksRef.current.onMainImageChange(mainImageIndex)
+        if (mainImageIndex !== -1 && onMainImageChange) {
+          onMainImageChange(mainImageIndex)
         }
       }
-      pendingCallbackRef.current = false
     }, 0)
-  }, [images]) // Only depend on images, not callbacks
+  }, [images, onImagesChange, onMainImageChange])
 
   // Drag and drop handlers
   const handleDragEnter = (e: React.DragEvent) => {
