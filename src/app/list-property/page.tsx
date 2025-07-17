@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox'
 import { VideoUpload } from '@/components/video-upload'
 import { useGoogleMaps, geocodeAddress, initializeAutocomplete, parsePlaceResult } from '@/lib/google-maps'
-import { MapPin, Upload, Star } from 'lucide-react'
+import { MapPin, Star } from 'lucide-react'
 
 export default function ListPropertyPage() {
   const { user } = useAuth()
@@ -499,28 +499,13 @@ export default function ListPropertyPage() {
         {/* Property Videos Section */}
         <Card className="border border-gray-200">
           <CardContent className="p-6">
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Property Videos (Optional)</h2>
-            </div>
-
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-12">
-              <div className="text-center">
-                <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <p className="text-lg text-gray-600 mb-2">
-                  <span className="font-medium">Click to upload videos</span> or drag and drop
-                </p>
-                <p className="text-sm text-gray-500">
-                  MP4, MOV, AVI up to <span className="font-medium">100MB</span> each
-                </p>
-                <VideoUpload 
-                  onVideoUpload={(videoUrl) => setVideos(prev => [...prev, videoUrl])}
-                  onVideoRemove={(videoUrl) => setVideos(prev => prev.filter(url => url !== videoUrl))}
-                  existingVideos={videos}
-                  maxVideos={5}
-                  maxSizeInMB={100}
-                />
-              </div>
-            </div>
+            <VideoUpload 
+              onVideoUpload={(videoUrl) => setVideos(prev => [...prev, videoUrl])}
+              onVideoRemove={(videoUrl) => setVideos(prev => prev.filter(url => url !== videoUrl))}
+              existingVideos={videos}
+              maxVideos={5}
+              maxSizeInMB={100}
+            />
           </CardContent>
         </Card>
 
