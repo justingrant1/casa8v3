@@ -24,7 +24,7 @@ export function clearPropertiesCache() {
   cacheTimestamp = 0
 }
 
-export async function getProperties(filters?: PropertyFilter): Promise<Property[]> {
+export async function getProperties(filters?: PropertyFilter): Promise<any[]> {
   try {
     // Check cache first
     const now = Date.now()
@@ -34,15 +34,7 @@ export async function getProperties(filters?: PropertyFilter): Promise<Property[
 
     let query = supabase
       .from('properties')
-      .select(`
-        *,
-        profiles!properties_landlord_id_fkey (
-          first_name,
-          last_name,
-          email,
-          phone
-        )
-      `)
+      .select('*')
       .eq('is_active', true)
       .order('created_at', { ascending: false })
 
@@ -79,18 +71,51 @@ export async function getProperties(filters?: PropertyFilter): Promise<Property[
       query = query.limit(filters.limit)
     }
 
-    const { data, error } = await query
+    const { data: properties, error } = await query
 
     if (error) {
       console.error('Error fetching properties:', error)
       throw error
     }
 
+    if (!properties || properties.length === 0) {
+      propertiesCache = []
+      cacheTimestamp = now
+      return []
+    }
+
+    // Get all unique landlord IDs
+    const landlordIds = [...new Set(properties.map(p => p.landlord_id))]
+
+    // Fetch all landlord profiles in one query
+    const { data: profiles, error: profileError } = await supabase
+      .from('profiles')
+      .select('id, first_name, last_name, email, phone, avatar_url')
+      .in('id', landlordIds)
+
+    if (profileError) {
+      console.error('Error fetching landlord profiles:', profileError)
+    }
+
+    // Create a lookup map for profiles
+    const profileMap = new Map()
+    if (profiles) {
+      profiles.forEach(profile => {
+        profileMap.set(profile.id, profile)
+      })
+    }
+
+    // Combine properties with their landlord profiles
+    const enrichedProperties = properties.map(property => ({
+      ...property,
+      profiles: profileMap.get(property.landlord_id) || null
+    }))
+
     // Update cache
-    propertiesCache = data || []
+    propertiesCache = enrichedProperties
     cacheTimestamp = now
 
-    return data || []
+    return enrichedProperties
   } catch (error) {
     console.error('Error in getProperties:', error)
     throw error
@@ -118,19 +143,11 @@ function applyFilters(properties: Property[], filters?: PropertyFilter): Propert
   return filtered
 }
 
-export async function searchProperties(searchTerm: string, filters?: PropertyFilter): Promise<Property[]> {
+export async function searchProperties(searchTerm: string, filters?: PropertyFilter): Promise<any[]> {
   try {
     let query = supabase
       .from('properties')
-      .select(`
-        *,
-        profiles!properties_landlord_id_fkey (
-          first_name,
-          last_name,
-          email,
-          phone
-        )
-      `)
+      .select('*')
       .eq('is_active', true)
 
     // Search across multiple fields
@@ -166,14 +183,45 @@ export async function searchProperties(searchTerm: string, filters?: PropertyFil
       query = query.limit(filters.limit)
     }
 
-    const { data, error } = await query
+    const { data: properties, error } = await query
 
     if (error) {
       console.error('Error searching properties:', error)
       throw error
     }
 
-    return data || []
+    if (!properties || properties.length === 0) {
+      return []
+    }
+
+    // Get all unique landlord IDs
+    const landlordIds = [...new Set(properties.map(p => p.landlord_id))]
+
+    // Fetch all landlord profiles in one query
+    const { data: profiles, error: profileError } = await supabase
+      .from('profiles')
+      .select('id, first_name, last_name, email, phone, avatar_url')
+      .in('id', landlordIds)
+
+    if (profileError) {
+      console.error('Error fetching landlord profiles:', profileError)
+    }
+
+    // Create a lookup map for profiles
+    const profileMap = new Map()
+    if (profiles) {
+      profiles.forEach(profile => {
+        profileMap.set(profile.id, profile)
+      })
+    }
+
+    // Combine properties with their landlord profiles
+    const enrichedProperties = properties.map(property => ({
+      ...property,
+      profiles: profileMap.get(property.landlord_id) || null
+    }))
+
+    return enrichedProperties
   } catch (error) {
     console.error('Error in searchProperties:', error)
     throw error
