@@ -55,6 +55,9 @@ export function EnhancedImageUpload({
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const dragCounter = useRef(0)
+  const timeoutsRef = useRef<NodeJS.Timeout[]>([])
+  const intervalsRef = useRef<NodeJS.Timeout[]>([])
+  const mountedRef = useRef(true)
 
   // Initialize with existing images
   useEffect(() => {
@@ -70,9 +73,14 @@ export function EnhancedImageUpload({
     }
   }, [existingImages])
 
-  // Cleanup object URLs on unmount
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
+      mountedRef.current = false
+      // Clear all timeouts and intervals
+      timeoutsRef.current.forEach(clearTimeout)
+      intervalsRef.current.forEach(clearInterval)
+      // Cleanup object URLs
       images.forEach(img => {
         if (img.preview.startsWith('blob:')) {
           URL.revokeObjectURL(img.preview)
@@ -140,8 +148,15 @@ export function EnhancedImageUpload({
       // Simulate upload progress for bulk uploads
       if (processedImages.length >= 10 && showProgress) {
         processedImages.forEach((img, index) => {
-          setTimeout(() => {
+          const timeout = setTimeout(() => {
+            if (!mountedRef.current) return
+            
             const progressInterval = setInterval(() => {
+              if (!mountedRef.current) {
+                clearInterval(progressInterval)
+                return
+              }
+              
               setImages(prev => 
                 prev.map(prevImg => 
                   prevImg.id === img.id 
@@ -151,7 +166,11 @@ export function EnhancedImageUpload({
               )
             }, 100)
             
-            setTimeout(() => {
+            intervalsRef.current.push(progressInterval)
+            
+            const cleanupTimeout = setTimeout(() => {
+              if (!mountedRef.current) return
+              
               clearInterval(progressInterval)
               setImages(prev => 
                 prev.map(prevImg => 
@@ -161,7 +180,11 @@ export function EnhancedImageUpload({
                 )
               )
             }, 1000)
+            
+            timeoutsRef.current.push(cleanupTimeout)
           }, index * 100)
+          
+          timeoutsRef.current.push(timeout)
         })
       } else {
         processedImages.forEach(img => {
