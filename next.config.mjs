@@ -16,6 +16,25 @@ const nextConfig = {
       },
     ],
   },
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      // Exclude puppeteer from webpack bundling
+      config.externals = [
+        ...(config.externals || []),
+        'puppeteer',
+        'puppeteer-extra',
+        'puppeteer-extra-plugin-stealth',
+      ];
+    }
+    return config;
+  },
+  experimental: {
+    serverComponentsExternalPackages: [
+      'puppeteer',
+      'puppeteer-extra',
+      'puppeteer-extra-plugin-stealth',
+    ],
+  },
 };
 
 export default nextConfig;
