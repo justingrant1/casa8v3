@@ -54,6 +54,8 @@ export function EnhancedImageUpload({
   const [images, setImages] = useState<ImageFile[]>([])
   const [dragActive, setDragActive] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const dragCounter = useRef(0)
   const timeoutsRef = useRef<NodeJS.Timeout[]>([])
@@ -342,6 +344,88 @@ export function EnhancedImageUpload({
     })
   }
 
+  // Image drag handlers
+  const handleImageDragStart = (e: React.DragEvent, index: number) => {
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/html', '')
+    setDraggedIndex(index)
+  }
+
+  const handleImageDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    setDragOverIndex(index)
+  }
+
+  const handleImageDragEnter = (e: React.DragEvent, index: number) => {
+    e.preventDefault()
+    setDragOverIndex(index)
+  }
+
+  const handleImageDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    // Only clear drag over if we're leaving the entire card
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setDragOverIndex(null)
+    }
+  }
+
+  const handleImageDrop = (e: React.DragEvent, index: number) => {
+    e.preventDefault()
+    
+    if (draggedIndex !== null && draggedIndex !== index) {
+      moveImage(draggedIndex, index)
+      
+      if (mountedRef.current) {
+        toast({
+          title: "Images reordered",
+          description: "Images have been reordered successfully"
+        })
+      }
+    }
+    
+    setDraggedIndex(null)
+    setDragOverIndex(null)
+  }
+
+  const handleImageDragEnd = () => {
+    setDraggedIndex(null)
+    setDragOverIndex(null)
+  }
+
+  // Touch handlers for mobile
+  const handleTouchStart = (e: React.TouchEvent, index: number) => {
+    setDraggedIndex(index)
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    e.preventDefault()
+    const touch = e.touches[0]
+    const element = document.elementFromPoint(touch.clientX, touch.clientY)
+    const card = element?.closest('[data-image-index]')
+    
+    if (card) {
+      const index = parseInt(card.getAttribute('data-image-index') || '0', 10)
+      setDragOverIndex(index)
+    }
+  }
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (draggedIndex !== null && dragOverIndex !== null && draggedIndex !== dragOverIndex) {
+      moveImage(draggedIndex, dragOverIndex)
+      
+      if (mountedRef.current) {
+        toast({
+          title: "Images reordered",
+          description: "Images have been reordered successfully"
+        })
+      }
+    }
+    
+    setDraggedIndex(null)
+    setDragOverIndex(null)
+  }
+
   const canUploadMore = images.length < maxImages
 
   return (
@@ -443,16 +527,44 @@ export function EnhancedImageUpload({
       {images.length > 0 && (
         <div className="space-y-2">
           <Label className="text-sm font-medium">Selected Images</Label>
+          <p className="text-xs text-gray-500">Drag and drop images to reorder them</p>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {images.map((image, index) => (
-              <div key={image.id} className="relative group">
-                <Card className="overflow-hidden">
+              <div 
+                key={image.id} 
+                className="relative group"
+                data-image-index={index}
+              >
+                <Card 
+                  className={cn(
+                    "overflow-hidden transition-all duration-200 cursor-move",
+                    draggedIndex === index && "opacity-50 scale-95",
+                    dragOverIndex === index && draggedIndex !== index && "ring-2 ring-blue-500 ring-opacity-50 scale-105"
+                  )}
+                  draggable
+                  onDragStart={(e) => handleImageDragStart(e, index)}
+                  onDragOver={(e) => handleImageDragOver(e, index)}
+                  onDragEnter={(e) => handleImageDragEnter(e, index)}
+                  onDragLeave={handleImageDragLeave}
+                  onDrop={(e) => handleImageDrop(e, index)}
+                  onDragEnd={handleImageDragEnd}
+                  onTouchStart={(e) => handleTouchStart(e, index)}
+                  onTouchMove={handleTouchMove}
+                  onTouchEnd={handleTouchEnd}
+                >
                   <div className="aspect-square bg-gray-100 relative">
                     <img
                       src={image.preview}
                       alt={`Preview ${index + 1}`}
                       className="w-full h-full object-cover"
                     />
+                    
+                    {/* Drag handle */}
+                    <div className="absolute top-1 left-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="w-6 h-6 bg-black bg-opacity-50 rounded flex items-center justify-center">
+                        <GripVertical className="h-3 w-3 text-white" />
+                      </div>
+                    </div>
                     
                     {/* Loading overlay */}
                     {(image.uploadProgress || 0) < 100 && (
@@ -542,6 +654,7 @@ export function EnhancedImageUpload({
       {/* Information */}
       <div className="text-sm text-gray-500 space-y-1">
         <p>• Drag and drop multiple images at once</p>
+        <p>• Drag images to reorder them (desktop and mobile)</p>
         <p>• First image is automatically set as main image</p>
         <p>• Click the star icon to change the main image</p>
         <p>• Supported formats: JPEG, PNG, WebP</p>
