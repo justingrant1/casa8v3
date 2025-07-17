@@ -24,6 +24,9 @@ export function clearPropertiesCache() {
   cacheTimestamp = 0
 }
 
+// Clear cache immediately to force fresh data with new RLS policy
+clearPropertiesCache()
+
 export async function getProperties(filters?: PropertyFilter): Promise<any[]> {
   try {
     // Check cache first
