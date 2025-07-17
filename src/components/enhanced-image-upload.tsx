@@ -516,35 +516,28 @@ export function EnhancedImageUpload({
                   onDrop={(e) => handleImageDrop(e, index)}
                   onDragEnd={handleImageDragEnd}
                 >
-                  <div 
-                    className="aspect-square bg-gray-100 relative"
-                    onClick={() => !image.isMain && setMainImage(image.id)}
-                  >
+                  <div className="aspect-square bg-gray-100 relative">
                     <img
                       src={image.preview}
                       alt={`Preview ${index + 1}`}
                       className="w-full h-full object-cover"
                     />
                     
-                    {/* Main image overlay on hover */}
+                    {/* Make main button in upper left */}
                     {!image.isMain && (
-                      <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-40 transition-all duration-200 flex items-center justify-center group">
-                        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                          <div className="bg-yellow-500 text-white px-2 py-1 rounded-full text-xs md:text-sm font-medium flex items-center">
-                            <Star className="h-3 w-3 md:h-4 md:w-4 mr-1" />
-                            <span className="hidden sm:inline">Click to make main</span>
-                            <span className="sm:hidden">Make main</span>
-                          </div>
-                        </div>
+                      <div className="absolute top-2 left-2">
+                        <Button
+                          type="button"
+                          variant="default"
+                          size="sm"
+                          onClick={() => setMainImage(image.id)}
+                          className="h-8 w-8 p-0 bg-yellow-500 hover:bg-yellow-600 text-white rounded-full shadow-md"
+                          title="Make main image"
+                        >
+                          <Star className="h-4 w-4" />
+                        </Button>
                       </div>
                     )}
-                    
-                    {/* Drag handle */}
-                    <div className="absolute top-1 left-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <div className="w-6 h-6 bg-black bg-opacity-50 rounded flex items-center justify-center">
-                        <GripVertical className="h-3 w-3 text-white" />
-                      </div>
-                    </div>
                     
                     {/* Loading overlay */}
                     {(image.uploadProgress || 0) < 100 && (
@@ -585,52 +578,50 @@ export function EnhancedImageUpload({
                     )}
                   </div>
                   
-                  <CardContent className="p-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-1">
-                        {/* Mobile reorder buttons */}
-                        <div className="flex items-center space-x-1 md:hidden">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => moveImageUp(index)}
-                            disabled={index === 0}
-                            className="p-1 h-6 w-6 text-gray-500 hover:text-blue-500 disabled:opacity-30"
-                            title="Move up"
-                          >
-                            <ChevronUp className="h-3 w-3" />
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => moveImageDown(index)}
-                            disabled={index === images.length - 1}
-                            className="p-1 h-6 w-6 text-gray-500 hover:text-blue-500 disabled:opacity-30"
-                            title="Move down"
-                          >
-                            <ChevronDown className="h-3 w-3" />
-                          </Button>
-                        </div>
-                        
-                        {/* Remove button */}
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-center gap-3">
+                      {/* Mobile reorder buttons - larger and more accessible */}
+                      <div className="flex items-center gap-2 md:hidden">
                         <Button
                           type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeImage(image.id)}
-                          className="p-1 h-6 w-6 text-gray-500 hover:text-red-500"
-                          title="Remove image"
+                          variant="outline"
+                          size="default"
+                          onClick={() => moveImageUp(index)}
+                          disabled={index === 0}
+                          className="h-10 w-10 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50 disabled:opacity-30 disabled:cursor-not-allowed"
+                          title="Move up"
                         >
-                          <X className="h-3 w-3" />
+                          <ChevronUp className="h-5 w-5" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="default"
+                          onClick={() => moveImageDown(index)}
+                          disabled={index === images.length - 1}
+                          className="h-10 w-10 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50 disabled:opacity-30 disabled:cursor-not-allowed"
+                          title="Move down"
+                        >
+                          <ChevronDown className="h-5 w-5" />
                         </Button>
                       </div>
+                      
+                      {/* Remove button - larger and more accessible */}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="default"
+                        onClick={() => removeImage(image.id)}
+                        className="h-10 w-10 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 hover:border-red-300"
+                        title="Remove image"
+                      >
+                        <X className="h-5 w-5" />
+                      </Button>
                     </div>
                     
                     {/* Error message */}
                     {image.error && (
-                      <p className="text-xs text-red-500 mt-1">{image.error}</p>
+                      <p className="text-xs text-red-500 mt-2">{image.error}</p>
                     )}
                   </CardContent>
                 </Card>
@@ -645,7 +636,7 @@ export function EnhancedImageUpload({
         <p>• Drag and drop multiple images at once</p>
         <p>• Drag images to reorder them (desktop) or use up/down arrows (mobile)</p>
         <p>• First image is automatically set as main image</p>
-        <p>• Click on any image to make it the main image</p>
+        <p>• Click the yellow star button to make any image the main image</p>
         <p>• Supported formats: JPEG, PNG, WebP</p>
         <p>• Maximum file size: {maxSizeInMB}MB per image</p>
         <p>• Maximum images: {maxImages} per property</p>
