@@ -118,13 +118,6 @@ export function EnhancedImageUpload({
     const newFiles = Array.from(files)
     
     if (images.length + newFiles.length > maxImages) {
-      if (mountedRef.current) {
-        toast({
-          title: "Too many images",
-          description: `You can only upload up to ${maxImages} images`,
-          variant: "destructive"
-        })
-      }
       return
     }
 
@@ -140,13 +133,6 @@ export function EnhancedImageUpload({
       
       if (error) {
         hasErrors = true
-        if (mountedRef.current) {
-          toast({
-            title: "Invalid file",
-            description: `${file.name}: ${error}`,
-            variant: "destructive"
-          })
-        }
         return
       }
 
@@ -212,13 +198,6 @@ export function EnhancedImageUpload({
       }
 
       setImages(prev => [...prev, ...processedImages])
-      
-      if (mountedRef.current) {
-        toast({
-          title: "Images uploaded",
-          description: `Successfully uploaded ${processedImages.length} image${processedImages.length > 1 ? 's' : ''}`,
-        })
-      }
     }
 
     if (mountedRef.current) {
@@ -315,13 +294,6 @@ export function EnhancedImageUpload({
       
       return filtered
     })
-    
-    if (mountedRef.current) {
-      toast({
-        title: "Image removed",
-        description: "Image has been removed successfully"
-      })
-    }
   }
 
   // Set main image and move to first position
@@ -396,13 +368,6 @@ export function EnhancedImageUpload({
     
     if (draggedIndex !== null && draggedIndex !== index) {
       moveImage(draggedIndex, index)
-      
-      if (mountedRef.current) {
-        toast({
-          title: "Images reordered",
-          description: "Images have been reordered successfully"
-        })
-      }
     }
     
     setDraggedIndex(null)
@@ -418,26 +383,12 @@ export function EnhancedImageUpload({
   const moveImageUp = (index: number) => {
     if (index > 0) {
       moveImage(index, index - 1)
-      
-      if (mountedRef.current) {
-        toast({
-          title: "Image moved up",
-          description: "Image has been moved up in the order"
-        })
-      }
     }
   }
 
   const moveImageDown = (index: number) => {
     if (index < images.length - 1) {
       moveImage(index, index + 1)
-      
-      if (mountedRef.current) {
-        toast({
-          title: "Image moved down",
-          description: "Image has been moved down in the order"
-        })
-      }
     }
   }
 
