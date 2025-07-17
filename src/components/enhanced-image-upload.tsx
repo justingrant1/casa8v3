@@ -16,7 +16,9 @@ import {
   StarOff, 
   GripVertical,
   AlertCircle,
-  Check
+  Check,
+  ChevronUp,
+  ChevronDown
 } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
 import { cn } from '@/lib/utils'
@@ -393,37 +395,31 @@ export function EnhancedImageUpload({
     setDragOverIndex(null)
   }
 
-  // Touch handlers for mobile
-  const handleTouchStart = (e: React.TouchEvent, index: number) => {
-    setDraggedIndex(index)
-  }
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    e.preventDefault()
-    const touch = e.touches[0]
-    const element = document.elementFromPoint(touch.clientX, touch.clientY)
-    const card = element?.closest('[data-image-index]')
-    
-    if (card) {
-      const index = parseInt(card.getAttribute('data-image-index') || '0', 10)
-      setDragOverIndex(index)
-    }
-  }
-
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (draggedIndex !== null && dragOverIndex !== null && draggedIndex !== dragOverIndex) {
-      moveImage(draggedIndex, dragOverIndex)
+  // Mobile-friendly reorder functions
+  const moveImageUp = (index: number) => {
+    if (index > 0) {
+      moveImage(index, index - 1)
       
       if (mountedRef.current) {
         toast({
-          title: "Images reordered",
-          description: "Images have been reordered successfully"
+          title: "Image moved up",
+          description: "Image has been moved up in the order"
         })
       }
     }
-    
-    setDraggedIndex(null)
-    setDragOverIndex(null)
+  }
+
+  const moveImageDown = (index: number) => {
+    if (index < images.length - 1) {
+      moveImage(index, index + 1)
+      
+      if (mountedRef.current) {
+        toast({
+          title: "Image moved down",
+          description: "Image has been moved down in the order"
+        })
+      }
+    }
   }
 
   const canUploadMore = images.length < maxImages
@@ -537,7 +533,7 @@ export function EnhancedImageUpload({
               >
                 <Card 
                   className={cn(
-                    "overflow-hidden transition-all duration-200 cursor-move",
+                    "overflow-hidden transition-all duration-200",
                     draggedIndex === index && "opacity-50 scale-95",
                     dragOverIndex === index && draggedIndex !== index && "ring-2 ring-blue-500 ring-opacity-50 scale-105"
                   )}
@@ -548,9 +544,6 @@ export function EnhancedImageUpload({
                   onDragLeave={handleImageDragLeave}
                   onDrop={(e) => handleImageDrop(e, index)}
                   onDragEnd={handleImageDragEnd}
-                  onTouchStart={(e) => handleTouchStart(e, index)}
-                  onTouchMove={handleTouchMove}
-                  onTouchEnd={handleTouchEnd}
                 >
                   <div className="aspect-square bg-gray-100 relative">
                     <img
@@ -611,6 +604,32 @@ export function EnhancedImageUpload({
                         {image.file.name}
                       </span>
                       <div className="flex items-center space-x-1">
+                        {/* Mobile reorder buttons */}
+                        <div className="flex items-center space-x-1 md:hidden">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => moveImageUp(index)}
+                            disabled={index === 0}
+                            className="p-1 h-6 w-6 text-gray-500 hover:text-blue-500 disabled:opacity-30"
+                            title="Move up"
+                          >
+                            <ChevronUp className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => moveImageDown(index)}
+                            disabled={index === images.length - 1}
+                            className="p-1 h-6 w-6 text-gray-500 hover:text-blue-500 disabled:opacity-30"
+                            title="Move down"
+                          >
+                            <ChevronDown className="h-3 w-3" />
+                          </Button>
+                        </div>
+                        
                         {/* Set as main button */}
                         {!image.isMain && (
                           <Button
@@ -654,7 +673,7 @@ export function EnhancedImageUpload({
       {/* Information */}
       <div className="text-sm text-gray-500 space-y-1">
         <p>• Drag and drop multiple images at once</p>
-        <p>• Drag images to reorder them (desktop and mobile)</p>
+        <p>• Drag images to reorder them (desktop) or use up/down arrows (mobile)</p>
         <p>• First image is automatically set as main image</p>
         <p>• Click the star icon to change the main image</p>
         <p>• Supported formats: JPEG, PNG, WebP</p>
