@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create a detailed prompt for property information extraction
-    const prompt = `Search for detailed information about the property at this address: ${address}
+    const prompt = `Search for detailed information about the rental property at this address: ${address}
 
 Please find and extract the following information about this property:
 - Property type (House, Apartment, Condo, Townhouse)
@@ -59,13 +59,23 @@ Please find and extract the following information about this property:
 - Estimated rental price range
 - Key amenities and features
 - Property description and notable characteristics
+- Neighborhood information and nearby attractions/amenities
+- Physical features of the property
 
-Search real estate websites, property listings, public records, and any available information about this specific address. 
+Based on the information you find, create an appealing RENTAL LISTING with:
+
+1. An attractive, marketing-focused title that would appeal to potential renters (not just "Property at [address]")
+2. A compelling rental description that includes:
+   - Key features and selling points
+   - Physical characteristics (layout, features, condition)
+   - Neighborhood highlights and nearby amenities (schools, shopping, dining, parks, transportation)
+   - What makes this property desirable for renters
+   - Use engaging, descriptive language that would attract tenants
 
 Please respond with a JSON object in this exact format:
 {
-  "title": "Descriptive property title",
-  "description": "Detailed property description highlighting key features",
+  "title": "Attractive rental listing title (e.g., 'Charming 3BR Home in Quiet Neighborhood with Modern Updates')",
+  "description": "Compelling rental description with specific details about the property, its features, and neighborhood appeal. Write as if creating a rental listing that would attract quality tenants.",
   "bedrooms": number,
   "bathrooms": number,
   "sqft": number,
@@ -74,7 +84,7 @@ Please respond with a JSON object in this exact format:
   "amenities": ["amenity1", "amenity2", "amenity3"]
 }
 
-If you cannot find specific information for some fields, use reasonable estimates based on similar properties in the area. Always return valid JSON format.`
+Focus on creating marketing copy that highlights the property's best features and appeals to potential renters. If you cannot find specific information for some fields, use reasonable estimates based on similar properties in the area. Always return valid JSON format.`
 
     // Make request to Perplexity API
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
