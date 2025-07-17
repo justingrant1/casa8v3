@@ -48,6 +48,7 @@ export default function PropertyDetailsPage({ params }: { params: { id: string }
       const data = await getPropertyById(propertyId)
       clearTimeout(timeoutId)
       console.log('Property data received:', data)
+      console.log('Landlord profile data:', (data as any)?.profiles)
       
       if (!data) {
         setError("Property not found.")
@@ -186,11 +187,17 @@ export default function PropertyDetailsPage({ params }: { params: { id: string }
 
                 <div className="flex items-center pt-4 border-t">
                   <Avatar className="h-12 w-12">
-                    <AvatarImage src={property.profiles?.avatar_url} />
-                    <AvatarFallback>{property.profiles?.full_name?.[0]}</AvatarFallback>
+                    <AvatarImage src={(property as any).profiles?.avatar_url} />
+                    <AvatarFallback>
+                      {(property as any).profiles?.first_name?.[0] || 'L'}
+                    </AvatarFallback>
                   </Avatar>
                   <div className="ml-4">
-                    <div className="font-bold">{property.profiles?.full_name}</div>
+                    <div className="font-bold">
+                      {(property as any).profiles 
+                        ? `${(property as any).profiles.first_name || ''} ${(property as any).profiles.last_name || ''}`.trim() || 'Property Owner'
+                        : 'Property Owner'}
+                    </div>
                     <div className="text-sm text-gray-500">Landlord</div>
                   </div>
                 </div>
@@ -226,11 +233,11 @@ export default function PropertyDetailsPage({ params }: { params: { id: string }
         onClose={() => setShowContactModal(false)}
         landlord={{
           id: property.landlord_id,
-          name: property.profiles 
-            ? `${property.profiles.first_name || ''} ${property.profiles.last_name || ''}`.trim() || 'Property Owner'
+          name: (property as any).profiles 
+            ? `${(property as any).profiles.first_name || ''} ${(property as any).profiles.last_name || ''}`.trim() || 'Property Owner'
             : 'Property Owner',
-          phone: property.profiles?.phone,
-          email: property.profiles?.email
+          phone: (property as any).profiles?.phone,
+          email: (property as any).profiles?.email
         }}
         property={{
           id: property.id,
