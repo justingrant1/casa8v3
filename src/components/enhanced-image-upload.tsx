@@ -58,6 +58,7 @@ export function EnhancedImageUpload({
   const timeoutsRef = useRef<NodeJS.Timeout[]>([])
   const intervalsRef = useRef<NodeJS.Timeout[]>([])
   const mountedRef = useRef(true)
+  const imagesRef = useRef<ImageFile[]>([])
 
   // Initialize with existing images
   useEffect(() => {
@@ -73,21 +74,21 @@ export function EnhancedImageUpload({
     }
   }, [existingImages])
 
-  // Cleanup on unmount
+  // Cleanup on unmount only - no dependencies to prevent running while mounted
   useEffect(() => {
     return () => {
       mountedRef.current = false
       // Clear all timeouts and intervals
       timeoutsRef.current.forEach(clearTimeout)
       intervalsRef.current.forEach(clearInterval)
-      // Cleanup object URLs
-      images.forEach(img => {
+      // Cleanup object URLs for current images using ref
+      imagesRef.current.forEach(img => {
         if (img.preview.startsWith('blob:')) {
           URL.revokeObjectURL(img.preview)
         }
       })
     }
-  }, [])
+  }, []) // No dependencies - only runs on mount/unmount
 
   // File validation
   const validateFile = (file: File): string | null => {
@@ -203,8 +204,9 @@ export function EnhancedImageUpload({
     setUploading(false)
   }, [images, maxImages, maxSizeInMB, acceptedFormats, showProgress])
 
-  // Update parent component
+  // Update parent component and images ref
   useEffect(() => {
+    imagesRef.current = images
     const files = images.map(img => img.file)
     onImagesChange(files)
     
