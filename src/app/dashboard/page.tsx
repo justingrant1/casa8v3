@@ -24,6 +24,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Navbar } from "@/components/navbar"
 import { ApplicationDetailsModal } from "@/components/application-details-modal"
+import { GoogleSignupComplete } from "@/components/google-signup-complete"
+import { TenantOnboarding } from "@/components/tenant-onboarding"
 
 export default function LandlordDashboard() {
   const { user, profile, loading: authLoading } = useAuth()
@@ -224,6 +226,35 @@ export default function LandlordDashboard() {
           <p className="text-muted-foreground">Redirecting to login...</p>
         </div>
       </div>
+    )
+  }
+
+  // Handle Google OAuth users who need to complete profile setup
+  if (user && profile && !profile.phone && user.app_metadata?.provider === 'google') {
+    return (
+      <GoogleSignupComplete 
+        onComplete={() => {
+          // Refresh the profile after completing Google signup
+          window.location.reload()
+        }}
+      />
+    )
+  }
+
+  // Handle users who need to complete onboarding (including Google users)
+  if (user && profile && !profile.onboarding_completed) {
+    return (
+      <TenantOnboarding 
+        isOpen={true}
+        onComplete={() => {
+          // Refresh the page after completing onboarding
+          window.location.reload()
+        }}
+        onSkip={() => {
+          // For now, just complete the onboarding
+          window.location.reload()
+        }}
+      />
     )
   }
 

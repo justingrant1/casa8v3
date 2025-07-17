@@ -11,6 +11,8 @@ interface AuthContextType {
   loading: boolean
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>
   signUp: (email: string, password: string, metadata?: any) => Promise<{ error: any }>
+  signInWithGoogle: () => Promise<{ error: AuthError | null }>
+  handleGoogleSignupComplete: (userData: any) => Promise<{ error: any }>
   signOut: () => Promise<void>
   updateProfile: (updates: Partial<Profile>) => Promise<{ error: any }>
   completeOnboarding: (data: any) => Promise<{ error: any }>
@@ -107,6 +109,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const signInWithGoogle = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/dashboard`,
+      },
+    })
+
+    return { error }
+  }
+
+  const handleGoogleSignupComplete = async (userData: any) => {
+    if (!user) return { error: 'Not authenticated' }
+
+    try {
+      // Get the pending role from localStorage
+      const pendingRole = localStorage.getItem('pendingRole') || 'tenant'
+      localStorage.removeItem('pendingRole')
+
+      // Update the user's profile with additional info
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          first_name: userData.first_name || user.user_metadata?.given_name,
+          last_name: userData.last_name || user.user_metadata?.family_name,
+          phone: userData.phone,
+          role: pendingRole,
+          onboarding_completed: false, // They still need to complete onboarding
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', user.id)
+
+      if (!error) {
+        await fetchProfile(user.id)
+      }
+
+      return { error }
+    } catch (err) {
+      console.error('Error completing Google signup:', err)
+      return { error: err }
+    }
+  }
+
   const signOut = async () => {
     await supabase.auth.signOut()
     setUser(null)
@@ -155,6 +200,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loading,
     signIn,
     signUp,
+    signInWithGoogle,
+    handleGoogleSignupComplete,
     signOut,
     updateProfile,
     completeOnboarding,
