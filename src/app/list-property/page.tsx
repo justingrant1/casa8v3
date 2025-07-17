@@ -38,7 +38,7 @@ export default function ListPropertyPage() {
   const [bedrooms, setBedrooms] = useState('')
   const [bathrooms, setBathrooms] = useState('')
   const [sqft, setSqft] = useState('')
-  const [amenities, setAmenities] = useState<string[]>([])
+  const [amenities, setAmenities] = useState<string[]>(['Refrigerator', 'Stove'])
   const [images, setImages] = useState<File[]>([])
   const [videos, setVideos] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
@@ -492,7 +492,7 @@ export default function ListPropertyPage() {
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-gray-700">Amenities</Label>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {['Washer/Dryer', 'Air Conditioning', 'Parking', 'Dishwasher', 'Pet Friendly', 'Gym'].map((amenity) => (
+                  {['Central Air Conditioning', 'Window AC Units', 'Dishwasher', 'Pet Friendly', 'Refrigerator', 'Stove'].map((amenity) => (
                     <div key={amenity} className="flex items-center space-x-2">
                       <Checkbox
                         id={amenity}
