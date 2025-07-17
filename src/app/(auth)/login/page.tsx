@@ -36,7 +36,10 @@ export default function LoginPage() {
     if (error) {
       setError(error.message)
     } else {
-      router.push('/dashboard')
+      // Redirect based on user role
+      // For now, redirect all users to home page
+      // The dashboard will be accessible via navbar for landlords
+      router.push('/')
     }
 
     setLoading(false)
