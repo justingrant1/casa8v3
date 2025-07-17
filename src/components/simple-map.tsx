@@ -199,7 +199,7 @@ export function SimpleMap({
       newMarkers.forEach(marker => marker.setMap(null))
       newInfoWindows.forEach(infoWindow => infoWindow.close())
     }
-  }, [map, properties, onMarkerClick, infoWindows])
+  }, [map, properties, onMarkerClick])
 
   // Show loading state
   if (!isLoaded) {
