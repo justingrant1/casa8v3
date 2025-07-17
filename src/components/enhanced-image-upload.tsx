@@ -59,6 +59,7 @@ export function EnhancedImageUpload({
   const intervalsRef = useRef<NodeJS.Timeout[]>([])
   const mountedRef = useRef(true)
   const imagesRef = useRef<ImageFile[]>([])
+  const cleanupRef = useRef<() => void>()
 
   // Initialize with existing images
   useEffect(() => {
@@ -105,18 +106,24 @@ export function EnhancedImageUpload({
 
   // Process files
   const processFiles = useCallback((files: FileList) => {
+    if (!mountedRef.current) return
+    
     const newFiles = Array.from(files)
     
     if (images.length + newFiles.length > maxImages) {
-      toast({
-        title: "Too many images",
-        description: `You can only upload up to ${maxImages} images`,
-        variant: "destructive"
-      })
+      if (mountedRef.current) {
+        toast({
+          title: "Too many images",
+          description: `You can only upload up to ${maxImages} images`,
+          variant: "destructive"
+        })
+      }
       return
     }
 
-    setUploading(true)
+    if (mountedRef.current) {
+      setUploading(true)
+    }
     
     const processedImages: ImageFile[] = []
     let hasErrors = false
@@ -126,11 +133,13 @@ export function EnhancedImageUpload({
       
       if (error) {
         hasErrors = true
-        toast({
-          title: "Invalid file",
-          description: `${file.name}: ${error}`,
-          variant: "destructive"
-        })
+        if (mountedRef.current) {
+          toast({
+            title: "Invalid file",
+            description: `${file.name}: ${error}`,
+            variant: "destructive"
+          })
+        }
         return
       }
 
@@ -145,7 +154,7 @@ export function EnhancedImageUpload({
       processedImages.push(imageFile)
     })
 
-    if (processedImages.length > 0) {
+    if (processedImages.length > 0 && mountedRef.current) {
       // Simulate upload progress for bulk uploads
       if (processedImages.length >= 10 && showProgress) {
         processedImages.forEach((img, index) => {
@@ -173,13 +182,15 @@ export function EnhancedImageUpload({
               if (!mountedRef.current) return
               
               clearInterval(progressInterval)
-              setImages(prev => 
-                prev.map(prevImg => 
-                  prevImg.id === img.id 
-                    ? { ...prevImg, uploadProgress: 100 }
-                    : prevImg
+              if (mountedRef.current) {
+                setImages(prev => 
+                  prev.map(prevImg => 
+                    prevImg.id === img.id 
+                      ? { ...prevImg, uploadProgress: 100 }
+                      : prevImg
+                  )
                 )
-              )
+              }
             }, 1000)
             
             timeoutsRef.current.push(cleanupTimeout)
@@ -195,24 +206,34 @@ export function EnhancedImageUpload({
 
       setImages(prev => [...prev, ...processedImages])
       
-      toast({
-        title: "Images uploaded",
-        description: `Successfully uploaded ${processedImages.length} image${processedImages.length > 1 ? 's' : ''}`,
-      })
+      if (mountedRef.current) {
+        toast({
+          title: "Images uploaded",
+          description: `Successfully uploaded ${processedImages.length} image${processedImages.length > 1 ? 's' : ''}`,
+        })
+      }
     }
 
-    setUploading(false)
+    if (mountedRef.current) {
+      setUploading(false)
+    }
   }, [images, maxImages, maxSizeInMB, acceptedFormats, showProgress])
 
   // Update parent component and images ref
   useEffect(() => {
+    if (!mountedRef.current) return
+    
     imagesRef.current = images
     const files = images.map(img => img.file)
-    onImagesChange(files)
     
-    const mainImageIndex = images.findIndex(img => img.isMain)
-    if (mainImageIndex !== -1 && onMainImageChange) {
-      onMainImageChange(mainImageIndex)
+    // Only call parent callbacks if component is still mounted
+    if (mountedRef.current) {
+      onImagesChange(files)
+      
+      const mainImageIndex = images.findIndex(img => img.isMain)
+      if (mainImageIndex !== -1 && onMainImageChange) {
+        onMainImageChange(mainImageIndex)
+      }
     }
   }, [images, onImagesChange, onMainImageChange])
 
@@ -265,12 +286,10 @@ export function EnhancedImageUpload({
 
   // Remove image
   const removeImage = (id: string) => {
+    if (!mountedRef.current) return
+    
     setImages(prev => {
       const imageToRemove = prev.find(img => img.id === id)
-      if (imageToRemove?.preview.startsWith('blob:')) {
-        URL.revokeObjectURL(imageToRemove.preview)
-      }
-      
       const filtered = prev.filter(img => img.id !== id)
       
       // If we removed the main image, make the first remaining image the main one
@@ -278,17 +297,28 @@ export function EnhancedImageUpload({
         filtered[0].isMain = true
       }
       
+      // Schedule blob URL cleanup for next tick to avoid rendering issues
+      if (imageToRemove?.preview.startsWith('blob:')) {
+        setTimeout(() => {
+          URL.revokeObjectURL(imageToRemove.preview)
+        }, 0)
+      }
+      
       return filtered
     })
     
-    toast({
-      title: "Image removed",
-      description: "Image has been removed successfully"
-    })
+    if (mountedRef.current) {
+      toast({
+        title: "Image removed",
+        description: "Image has been removed successfully"
+      })
+    }
   }
 
   // Set main image
   const setMainImage = (id: string) => {
+    if (!mountedRef.current) return
+    
     setImages(prev => 
       prev.map(img => ({ ...img, isMain: img.id === id }))
     )
@@ -296,6 +326,8 @@ export function EnhancedImageUpload({
 
   // Move image (for reordering)
   const moveImage = (dragIndex: number, hoverIndex: number) => {
+    if (!mountedRef.current) return
+    
     setImages(prev => {
       const newImages = [...prev]
       const draggedImage = newImages[dragIndex]
