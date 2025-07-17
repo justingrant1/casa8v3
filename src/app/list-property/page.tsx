@@ -269,6 +269,109 @@ export default function ListPropertyPage() {
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Location Section */}
+        <Card className="border border-gray-200">
+          <CardContent className="p-6">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Location</h2>
+              <p className="text-gray-600">Where is your property located?</p>
+            </div>
+
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="address" className="text-sm font-medium text-gray-700">Property Address</Label>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="manual-override"
+                      checked={manualOverride}
+                      onCheckedChange={(checked) => setManualOverride(checked as boolean)}
+                    />
+                    <Label htmlFor="manual-override" className="text-sm text-gray-600">
+                      Enter manually
+                    </Label>
+                  </div>
+                </div>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                  <Input
+                    ref={addressInputRef}
+                    id="address"
+                    value={fullAddress}
+                    onChange={(e) => setFullAddress(e.target.value)}
+                    placeholder="2712 Rutland St, Opa-locka, FL 33054, USA"
+                    className="pl-12 h-12"
+                    required
+                  />
+                </div>
+              </div>
+
+              {manualOverride && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="city" className="text-sm font-medium text-gray-700">City</Label>
+                    <Input
+                      id="city"
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                      placeholder="Miami"
+                      className="h-12"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="state" className="text-sm font-medium text-gray-700">State</Label>
+                    <Input
+                      id="state"
+                      value={state}
+                      onChange={(e) => setState(e.target.value)}
+                      placeholder="FL"
+                      className="h-12"
+                      maxLength={2}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="zipCode" className="text-sm font-medium text-gray-700">ZIP Code</Label>
+                    <Input
+                      id="zipCode"
+                      value={zipCode}
+                      onChange={(e) => setZipCode(e.target.value)}
+                      placeholder="33054"
+                      className="h-12"
+                      maxLength={5}
+                      required
+                    />
+                  </div>
+                </div>
+              )}
+
+              {coordinates && (
+                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                  <h3 className="font-semibold text-gray-900 mb-3">Parsed Address:</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="font-medium text-gray-700">Street:</span> {address}
+                    </div>
+                    <div>
+                      <span className="font-medium text-gray-700">City:</span> {city}
+                    </div>
+                    <div>
+                      <span className="font-medium text-gray-700">State:</span> {state}
+                    </div>
+                    <div>
+                      <span className="font-medium text-gray-700">ZIP:</span> {zipCode}
+                    </div>
+                  </div>
+                  <div className="mt-2 text-sm text-gray-600">
+                    <span className="font-medium">Coordinates:</span> {coordinates.lat.toFixed(6)}, {coordinates.lng.toFixed(6)}
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Basic Information Section */}
         <Card className="border border-gray-200">
           <CardContent className="p-6">
@@ -347,69 +450,6 @@ export default function ListPropertyPage() {
           </CardContent>
         </Card>
 
-        {/* Location Section */}
-        <Card className="border border-gray-200">
-          <CardContent className="p-6">
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Location</h2>
-              <p className="text-gray-600">Where is your property located?</p>
-            </div>
-
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="address" className="text-sm font-medium text-gray-700">Property Address</Label>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="manual-override"
-                      checked={manualOverride}
-                      onCheckedChange={(checked) => setManualOverride(checked as boolean)}
-                    />
-                    <Label htmlFor="manual-override" className="text-sm text-gray-600">
-                      Enter manually
-                    </Label>
-                  </div>
-                </div>
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                  <Input
-                    ref={addressInputRef}
-                    id="address"
-                    value={fullAddress}
-                    onChange={(e) => setFullAddress(e.target.value)}
-                    placeholder="2712 Rutland St, Opa-locka, FL 33054, USA"
-                    className="pl-12 h-12"
-                    required
-                  />
-                </div>
-              </div>
-
-              {coordinates && (
-                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                  <h3 className="font-semibold text-gray-900 mb-3">Parsed Address:</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="font-medium text-gray-700">Street:</span> {address}
-                    </div>
-                    <div>
-                      <span className="font-medium text-gray-700">City:</span> {city}
-                    </div>
-                    <div>
-                      <span className="font-medium text-gray-700">State:</span> {state}
-                    </div>
-                    <div>
-                      <span className="font-medium text-gray-700">ZIP:</span> {zipCode}
-                    </div>
-                  </div>
-                  <div className="mt-2 text-sm text-gray-600">
-                    <span className="font-medium">Coordinates:</span> {coordinates.lat.toFixed(6)}, {coordinates.lng.toFixed(6)}
-                  </div>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Property Details Section */}
         <Card className="border border-gray-200">
           <CardContent className="p-6">
@@ -477,21 +517,100 @@ export default function ListPropertyPage() {
         {/* Property Images Section */}
         <Card className="border border-gray-200">
           <CardContent className="p-6">
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Property Images</h2>
-              <p className="text-gray-600">Upload photos of your property</p>
-            </div>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label className="text-base font-medium">Property Images</Label>
+                <span className="text-sm text-gray-500">
+                  {images.length} images selected
+                </span>
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="images" className="text-sm font-medium text-gray-700">Images</Label>
-              <Input 
-                id="images" 
-                type="file" 
-                multiple 
-                accept="image/*" 
-                onChange={handleImageChange}
-                className="h-12"
-              />
+              {/* Upload Area */}
+              <div className="space-y-2">
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors relative">
+                  <div className="mx-auto h-12 w-12 text-gray-400 mb-4">
+                    <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-600">
+                      Click to upload images or drag and drop
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      PNG, JPG, GIF up to 10MB each
+                    </p>
+                  </div>
+                  <Input
+                    id="images"
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  />
+                </div>
+                
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => document.getElementById('images')?.click()}
+                  className="w-full"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                  </svg>
+                  Choose Image Files
+                </Button>
+              </div>
+
+              {/* Selected Images Preview */}
+              {images.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Selected Images</Label>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {images.map((image, index) => (
+                      <div key={index} className="relative group bg-gray-50 rounded-lg overflow-hidden">
+                        <div className="aspect-square bg-gray-100 flex items-center justify-center">
+                          <img
+                            src={URL.createObjectURL(image)}
+                            alt={`Preview ${index + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="p-2 bg-white">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-gray-600 truncate">
+                              {image.name}
+                            </span>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setImages(prev => prev.filter((_, i) => i !== index))
+                              }}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Information */}
+              <div className="text-sm text-gray-500 space-y-1">
+                <p>• Images help showcase your property better</p>
+                <p>• Supported formats: PNG, JPG, GIF</p>
+                <p>• Maximum file size: 10MB per image</p>
+                <p>• Multiple images can be selected at once</p>
+              </div>
             </div>
           </CardContent>
         </Card>
