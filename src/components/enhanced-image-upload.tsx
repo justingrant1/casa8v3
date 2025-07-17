@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { flushSync } from 'react-dom'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { Label } from './ui/label'
@@ -61,7 +60,6 @@ export function EnhancedImageUpload({
   const intervalsRef = useRef<NodeJS.Timeout[]>([])
   const mountedRef = useRef(true)
   const imagesRef = useRef<ImageFile[]>([])
-  const cleanupRef = useRef<() => void>()
   const initializedRef = useRef(false)
 
   // Initialize with existing images only once on mount
