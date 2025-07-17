@@ -33,26 +33,26 @@ export function PropertyCard({ property }: PropertyCardProps) {
 
   return (
     <>
-      <Card className="w-full max-w-sm rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out transform hover:-translate-y-1">
-        <div className="relative">
-          <PropertyCardCarousel
-            images={getImageUrls(property.images)}
-            propertyTitle={property.title}
-          />
-          <Badge variant="secondary" className="absolute top-4 left-4 bg-white/80 backdrop-blur-sm">
-            {property.type}
-          </Badge>
-          <Button
-            size="icon"
-            variant="secondary"
-            className="absolute top-4 right-4 h-10 w-10 rounded-full bg-white/80 backdrop-blur-sm"
-            onClick={() => user && toggleFavorite(property.id)}
-          >
-            <Heart className={`h-5 w-5 ${user && isFavorite(property.id) ? 'fill-red-500 text-red-500' : 'text-gray-700'}`} />
-          </Button>
-        </div>
-        <CardContent className="p-0 bg-white">
-          <div className="p-6 pb-4">
+      <div className="w-full max-w-sm">
+        <Card className="w-full rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out transform hover:-translate-y-1">
+          <div className="relative">
+            <PropertyCardCarousel
+              images={getImageUrls(property.images)}
+              propertyTitle={property.title}
+            />
+            <Badge variant="secondary" className="absolute top-4 left-4 bg-white/80 backdrop-blur-sm">
+              {property.type}
+            </Badge>
+            <Button
+              size="icon"
+              variant="secondary"
+              className="absolute top-4 right-4 h-10 w-10 rounded-full bg-white/80 backdrop-blur-sm"
+              onClick={() => user && toggleFavorite(property.id)}
+            >
+              <Heart className={`h-5 w-5 ${user && isFavorite(property.id) ? 'fill-red-500 text-red-500' : 'text-gray-700'}`} />
+            </Button>
+          </div>
+          <CardContent className="p-6 bg-white">
             <div className="flex justify-between items-start mb-2">
               <h3 className="text-xl font-bold text-gray-900 truncate pr-2">{property.title}</h3>
               <div className="text-right">
@@ -85,28 +85,29 @@ export function PropertyCard({ property }: PropertyCardProps) {
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-2 mb-6">
+            <div className="flex flex-wrap gap-2 mb-0">
               {property.amenities?.slice(0, 3).map((amenity: string) => (
                 <Badge key={amenity} variant="outline" className="font-normal bg-gray-100 text-gray-700">
                   {amenity}
                 </Badge>
               ))}
             </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2 px-3 pb-3">
-            <Link href={`/property/${property.id}`} passHref>
-              <Button variant="outline" className="w-full h-12 text-base">View Details</Button>
-            </Link>
-            <Button 
-              className="w-full h-12 text-base bg-gray-900 text-white hover:bg-gray-800"
-              onClick={() => setIsContactModalOpen(true)}
-            >
-              Contact Now
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+        
+        {/* Buttons positioned outside the card to match reference design */}
+        <div className="grid grid-cols-2 gap-2 mt-4">
+          <Link href={`/property/${property.id}`} passHref>
+            <Button variant="outline" className="w-full h-12 text-base">View Details</Button>
+          </Link>
+          <Button 
+            className="w-full h-12 text-base bg-gray-900 text-white hover:bg-gray-800"
+            onClick={() => setIsContactModalOpen(true)}
+          >
+            Contact Now
+          </Button>
+        </div>
+      </div>
 
       <ContactLandlordModal
         isOpen={isContactModalOpen}
