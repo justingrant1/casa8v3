@@ -535,7 +535,8 @@ export function EnhancedImageUpload({
                   className={cn(
                     "overflow-hidden transition-all duration-200",
                     draggedIndex === index && "opacity-50 scale-95",
-                    dragOverIndex === index && draggedIndex !== index && "ring-2 ring-blue-500 ring-opacity-50 scale-105"
+                    dragOverIndex === index && draggedIndex !== index && "ring-2 ring-blue-500 ring-opacity-50 scale-105",
+                    !image.isMain && "cursor-pointer hover:ring-2 hover:ring-yellow-400 hover:ring-opacity-60"
                   )}
                   draggable
                   onDragStart={(e) => handleImageDragStart(e, index)}
@@ -545,12 +546,27 @@ export function EnhancedImageUpload({
                   onDrop={(e) => handleImageDrop(e, index)}
                   onDragEnd={handleImageDragEnd}
                 >
-                  <div className="aspect-square bg-gray-100 relative">
+                  <div 
+                    className="aspect-square bg-gray-100 relative"
+                    onClick={() => !image.isMain && setMainImage(image.id)}
+                  >
                     <img
                       src={image.preview}
                       alt={`Preview ${index + 1}`}
                       className="w-full h-full object-cover"
                     />
+                    
+                    {/* Main image overlay on hover */}
+                    {!image.isMain && (
+                      <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-40 transition-all duration-200 flex items-center justify-center group">
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                          <div className="bg-yellow-500 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center">
+                            <Star className="h-4 w-4 mr-1" />
+                            Click to make main
+                          </div>
+                        </div>
+                      </div>
+                    )}
                     
                     {/* Drag handle */}
                     <div className="absolute top-1 left-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -675,7 +691,7 @@ export function EnhancedImageUpload({
         <p>• Drag and drop multiple images at once</p>
         <p>• Drag images to reorder them (desktop) or use up/down arrows (mobile)</p>
         <p>• First image is automatically set as main image</p>
-        <p>• Click the star icon to change the main image</p>
+        <p>• Click on any image to make it the main image</p>
         <p>• Supported formats: JPEG, PNG, WebP</p>
         <p>• Maximum file size: {maxSizeInMB}MB per image</p>
         <p>• Maximum images: {maxImages} per property</p>
