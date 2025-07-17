@@ -43,8 +43,7 @@ export default function ListPropertyPage() {
   const [videos, setVideos] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [generatingAI, setGeneratingAI] = useState(false)
-  const [aiError, setAiError] = useState<string | null>(null)
+  const [aiGenerating, setAiGenerating] = useState(false)
 
   const addressInputRef = useRef<HTMLInputElement>(null)
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null)
@@ -152,12 +151,12 @@ export default function ListPropertyPage() {
 
   const handleGenerateWithAI = async () => {
     if (!fullAddress.trim()) {
-      setAiError('Please enter a property address first')
+      setError('Please enter a property address first.')
       return
     }
 
-    setGeneratingAI(true)
-    setAiError(null)
+    setAiGenerating(true)
+    setError(null)
 
     try {
       const response = await fetch('/api/generate-listing', {
@@ -165,55 +164,50 @@ export default function ListPropertyPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ address: fullAddress }),
+        body: JSON.stringify({
+          address: fullAddress
+        })
       })
 
+      const result = await response.json()
+
       if (!response.ok) {
-        throw new Error('Failed to generate listing')
+        throw new Error(result.error || 'Failed to generate listing')
       }
 
-      const data = await response.json()
-      
-      // Populate form fields with AI-generated data
-      setTitle(data.title || '')
-      setDescription(data.description || '')
-      setBedrooms(data.bedrooms?.toString() || '')
-      setBathrooms(data.bathrooms?.toString() || '')
-      setSqft(data.sqft?.toString() || '')
-      setPropertyType(data.propertyType?.charAt(0).toUpperCase() + data.propertyType?.slice(1) || '')
-      setPrice(data.price?.toString() || '')
-      
-      // Set amenities if they exist
-      if (data.amenities && Array.isArray(data.amenities)) {
-        const formattedAmenities = data.amenities.map((amenity: string) => {
-          // Convert common amenity names to match form options
-          const amenityMap: { [key: string]: string } = {
-            'parking': 'Parking',
-            'laundry': 'Washer/Dryer',
-            'ac': 'Air Conditioning',
-            'dishwasher': 'Dishwasher',
-            'gym': 'Gym',
-            'pet friendly': 'Pet Friendly'
-          }
-          return amenityMap[amenity.toLowerCase()] || amenity
-        })
+      if (result.success && result.data) {
+        const data = result.data
         
-        // Only set amenities that exist in our form
+        // Update form fields with AI-generated data
+        setTitle(data.title || '')
+        setDescription(data.description || '')
+        setPropertyType(data.propertyType || '')
+        setPrice(data.estimatedRent ? data.estimatedRent.toString() : '')
+        setBedrooms(data.bedrooms ? data.bedrooms.toString() : '')
+        setBathrooms(data.bathrooms ? data.bathrooms.toString() : '')
+        setSqft(data.sqft ? data.sqft.toString() : '')
+        
+        // Update amenities - map AI amenities to our available ones
         const availableAmenities = ['Washer/Dryer', 'Air Conditioning', 'Parking', 'Dishwasher', 'Pet Friendly', 'Gym']
-        const validAmenities = formattedAmenities.filter((amenity: string) => availableAmenities.includes(amenity))
-        setAmenities(validAmenities)
+        const aiAmenities = data.amenities || []
+        const mappedAmenities = availableAmenities.filter(amenity => 
+          aiAmenities.some((aiAmenity: string) => 
+            aiAmenity.toLowerCase().includes(amenity.toLowerCase()) ||
+            amenity.toLowerCase().includes(aiAmenity.toLowerCase())
+          )
+        )
+        setAmenities(mappedAmenities)
+        
+        // Show success message
+        console.log('AI generation completed successfully', data)
+      } else {
+        throw new Error('Invalid response from AI service')
       }
-
-      // Show success message if data source is available
-      if (data.source && data.source !== 'AI Generated' && data.source !== 'Fallback') {
-        console.log('Generated listing using real data from:', data.source)
-      }
-
-    } catch (error) {
-      console.error('Error generating listing:', error)
-      setAiError('Failed to generate listing. Please try again.')
+    } catch (error: any) {
+      console.error('Error generating listing with AI:', error)
+      setError(error.message || 'Failed to generate listing with AI')
     } finally {
-      setGeneratingAI(false)
+      setAiGenerating(false)
     }
   }
 
@@ -307,10 +301,10 @@ export default function ListPropertyPage() {
                     size="sm" 
                     className="text-sm"
                     onClick={handleGenerateWithAI}
-                    disabled={generatingAI}
+                    disabled={aiGenerating || !fullAddress.trim()}
                   >
                     <Star className="h-4 w-4 mr-1" />
-                    {generatingAI ? 'Generating...' : 'Complete with AI'}
+                    {aiGenerating ? 'Generating...' : 'Complete with AI'}
                   </Button>
                 </div>
                 <Input 
@@ -321,11 +315,6 @@ export default function ListPropertyPage() {
                   className="h-12"
                   required 
                 />
-                {aiError && (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                    <p className="text-sm text-red-600">{aiError}</p>
-                  </div>
-                )}
               </div>
 
               <div className="space-y-2">

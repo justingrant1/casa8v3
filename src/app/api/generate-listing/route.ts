@@ -1,297 +1,169 @@
 import { NextRequest, NextResponse } from 'next/server'
+import puppeteer from 'puppeteer-extra'
+import StealthPlugin from 'puppeteer-extra-plugin-stealth'
 import OpenAI from 'openai'
-import FirecrawlApp from '@mendable/firecrawl-js'
+
+// Add stealth plugin to puppeteer
+puppeteer.use(StealthPlugin())
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 })
 
-const firecrawl = new FirecrawlApp({
-  apiKey: process.env.FIRECRAWL_API_KEY,
-})
-
-interface PropertyData {
-  title?: string
-  bedrooms?: number
-  bathrooms?: number
-  sqft?: number
-  price?: number
-  propertyType?: string
-  amenities?: string[]
-  description?: string
-  source?: string
-}
-
-// Property data extraction patterns
-const extractionPatterns = {
-  beds: /(\d+)\s*(?:bed|br|bedroom)/i,
-  baths: /(\d+(?:\.\d+)?)\s*(?:bath|ba|bathroom)/i,
-  sqft: /(\d+(?:,\d+)?)\s*(?:sq\.?\s*ft|sqft|square\s*feet)/i,
-  price: /\$(\d+(?:,\d+)?)\s*(?:\/month|mo|monthly)?/i,
-  propertyType: /(?:apartment|house|condo|townhouse|studio)/i,
-  amenities: /(?:parking|laundry|pool|gym|dishwasher|ac|heating|balcony|patio|fireplace|hardwood|carpet|tile)/gi
-}
-
-async function scrapePropertyData(address: string): Promise<PropertyData> {
-  const searchQueries = [
-    `${address} zillow`,
-    `${address} apartments for rent`,
-    `${address} property details`,
-    `${address} real estate`
-  ]
-
-  for (const query of searchQueries) {
-    try {
-      console.log(`Searching for: ${query}`)
-      
-      // Search for property information
-      const searchResult = await firecrawl.search(query, {
-        limit: 3
-      })
-
-      if (searchResult.success && searchResult.data && searchResult.data.length > 0) {
-        // Process the first few results
-        for (const result of searchResult.data.slice(0, 3)) {
-          const extractedData = extractDataFromContent(result.markdown || result.html || '', result.url || '')
-          
-          if (extractedData.bedrooms || extractedData.bathrooms || extractedData.sqft) {
-            console.log(`Found property data from: ${result.url}`)
-            return extractedData
-          }
-        }
-      }
-    } catch (error) {
-      console.error(`Error searching for "${query}":`, error)
-      continue
-    }
-  }
-
-  // If no specific property data found, try direct URL scraping
-  const directUrls = [
-    `https://www.zillow.com/homes/${encodeURIComponent(address)}_rb/`,
-    `https://www.apartments.com/search?q=${encodeURIComponent(address)}`,
-    `https://www.rent.com/search?q=${encodeURIComponent(address)}`
-  ]
-
-  for (const url of directUrls) {
-    try {
-      console.log(`Scraping direct URL: ${url}`)
-      
-      const scrapeResult = await firecrawl.scrapeUrl(url, {
-        formats: ['markdown', 'html'],
-        onlyMainContent: true,
-        includeTags: ['title', 'meta', 'span', 'div', 'p', 'h1', 'h2', 'h3'],
-        excludeTags: ['script', 'style', 'nav', 'footer', 'header'],
-        waitFor: 2000
-      })
-
-      if (scrapeResult.success && scrapeResult.markdown) {
-        const content = scrapeResult.markdown || scrapeResult.html || ''
-        const extractedData = extractDataFromContent(content, url)
-        
-        if (extractedData.bedrooms || extractedData.bathrooms || extractedData.sqft) {
-          console.log(`Found property data from direct scrape: ${url}`)
-          return extractedData
-        }
-      }
-    } catch (error) {
-      console.error(`Error scraping "${url}":`, error)
-      continue
-    }
-  }
-
-  return {}
-}
-
-function extractDataFromContent(content: string, source: string): PropertyData {
-  const data: PropertyData = { source }
-
-  // Extract bedrooms
-  const bedsMatch = content.match(extractionPatterns.beds)
-  if (bedsMatch) {
-    data.bedrooms = parseInt(bedsMatch[1])
-  }
-
-  // Extract bathrooms
-  const bathsMatch = content.match(extractionPatterns.baths)
-  if (bathsMatch) {
-    data.bathrooms = parseFloat(bathsMatch[1])
-  }
-
-  // Extract square footage
-  const sqftMatch = content.match(extractionPatterns.sqft)
-  if (sqftMatch) {
-    data.sqft = parseInt(sqftMatch[1].replace(/,/g, ''))
-  }
-
-  // Extract price
-  const priceMatch = content.match(extractionPatterns.price)
-  if (priceMatch) {
-    data.price = parseInt(priceMatch[1].replace(/,/g, ''))
-  }
-
-  // Extract property type
-  const typeMatch = content.match(extractionPatterns.propertyType)
-  if (typeMatch) {
-    data.propertyType = typeMatch[0].toLowerCase()
-  }
-
-  // Extract amenities
-  const amenityMatches = content.match(extractionPatterns.amenities)
-  if (amenityMatches) {
-    data.amenities = [...new Set(amenityMatches.map(a => a.toLowerCase()))]
-  }
-
-  return data
-}
-
-function validatePropertyData(data: PropertyData): boolean {
-  return (
-    (data.bedrooms !== undefined && data.bedrooms > 0 && data.bedrooms <= 10) ||
-    (data.bathrooms !== undefined && data.bathrooms > 0 && data.bathrooms <= 8) ||
-    (data.sqft !== undefined && data.sqft > 200 && data.sqft <= 10000) ||
-    (data.price !== undefined && data.price > 500 && data.price <= 50000)
-  )
-}
-
-async function generateAIContent(address: string, scrapedData: PropertyData): Promise<any> {
-  const hasRealData = validatePropertyData(scrapedData)
-  
-  const systemPrompt = hasRealData 
-    ? `You are an expert real estate assistant specializing in rental properties.
-
-TASK: Use the provided REAL property data to generate an engaging rental listing for ${address}.
-
-REAL PROPERTY DATA PROVIDED:
-${JSON.stringify(scrapedData, null, 2)}
-
-YOUR ROLE:
-1. Use the factual data as the foundation
-2. Generate compelling, renter-focused descriptions
-3. Highlight the most attractive features
-4. Add neighborhood context and lifestyle benefits
-5. Create engaging titles that sell the lifestyle
-
-DESCRIPTION GUIDELINES:
-- Build on the REAL data provided
-- Focus on renter benefits and lifestyle
-- Mention verified amenities and features
-- Use engaging but honest language
-- Keep to 2-3 sentences
-- Avoid exaggeration or false claims
-
-OUTPUT FORMAT: Respond with ONLY this JSON structure:
-{
-  "title": "Engaging property title based on real features",
-  "bedrooms": ${scrapedData.bedrooms || 2},
-  "bathrooms": ${scrapedData.bathrooms || 1},
-  "sqft": ${scrapedData.sqft || 1000},
-  "description": "Compelling description highlighting real amenities",
-  "propertyType": "${scrapedData.propertyType || 'apartment'}",
-  "amenities": ${JSON.stringify(scrapedData.amenities || ['parking', 'laundry'])},
-  "price": ${scrapedData.price || 2000},
-  "source": "${scrapedData.source || ''}"
-}`
-    : `You are an expert real estate assistant specializing in rental properties.
-
-TASK: Generate a compelling rental listing for ${address}. No specific property data was found, so create reasonable estimates based on the location and market.
-
-YOUR ROLE:
-1. Generate realistic property details based on the address location
-2. Create compelling, renter-focused descriptions
-3. Provide reasonable estimates for beds, baths, sqft, and price
-4. Add neighborhood context and lifestyle benefits
-5. Create engaging titles that sell the lifestyle
-
-DESCRIPTION GUIDELINES:
-- Focus on renter benefits and lifestyle
-- Use engaging but honest language
-- Keep to 2-3 sentences
-- Provide realistic estimates for the area
-
-OUTPUT FORMAT: Respond with ONLY this JSON structure:
-{
-  "title": "Engaging property title for the location",
-  "bedrooms": 2,
-  "bathrooms": 1,
-  "sqft": 1000,
-  "description": "Compelling description highlighting location benefits",
-  "propertyType": "apartment",
-  "amenities": ["parking", "laundry", "ac"],
-  "price": 2000,
-  "source": "AI Generated"
-}`
-
-  try {
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: `Generate a rental listing for ${address}` }
-      ],
-      temperature: 0.7,
-      max_tokens: 800,
-    })
-
-    const response = completion.choices[0]?.message?.content
-    if (!response) {
-      throw new Error('No response from OpenAI')
-    }
-
-    // Parse JSON response
-    const parsedResponse = JSON.parse(response)
-    
-    // Validate response structure
-    if (!parsedResponse.title || !parsedResponse.description) {
-      throw new Error('Invalid response structure')
-    }
-
-    return parsedResponse
-  } catch (error) {
-    console.error('Error generating AI content:', error)
-    
-    // Fallback response
-    return {
-      title: "Beautiful Property for Rent",
-      bedrooms: scrapedData.bedrooms || 2,
-      bathrooms: scrapedData.bathrooms || 1,
-      sqft: scrapedData.sqft || 1000,
-      description: "This lovely property offers comfortable living in a great location. Perfect for those seeking quality housing with modern amenities.",
-      propertyType: scrapedData.propertyType || "apartment",
-      amenities: scrapedData.amenities || ["parking", "laundry"],
-      price: scrapedData.price || 2000,
-      source: scrapedData.source || "Fallback"
-    }
-  }
-}
-
 export async function POST(request: NextRequest) {
   try {
     const { address } = await request.json()
-
+    
     if (!address) {
-      return NextResponse.json(
-        { error: 'Address is required' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Address is required' }, { status: 400 })
     }
 
-    console.log(`Generating listing for address: ${address}`)
+    console.log('Searching for property:', address)
 
-    // Step 1: Scrape property data
-    const scrapedData = await scrapePropertyData(address)
-    console.log('Scraped data:', scrapedData)
+    // Launch puppeteer with stealth mode
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--no-first-run',
+        '--no-zygote',
+        '--single-process',
+        '--disable-gpu',
+        '--disable-web-security',
+        '--disable-features=VizDisplayCompositor',
+        '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      ]
+    })
 
-    // Step 2: Generate AI content
-    const aiContent = await generateAIContent(address, scrapedData)
-    console.log('AI generated content:', aiContent)
+    const page = await browser.newPage()
+    
+    // Set viewport and user agent
+    await page.setViewport({ width: 1920, height: 1080 })
+    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36')
 
-    return NextResponse.json(aiContent)
+    // Navigate to Google and search for the property
+    await page.goto('https://www.google.com', { waitUntil: 'networkidle2' })
+    
+    // Wait for search box and enter the address
+    await page.waitForSelector('input[name="q"]')
+    await page.type('input[name="q"]', `${address} real estate property details`)
+    await page.keyboard.press('Enter' as any)
+    
+    // Wait for results to load
+    await page.waitForSelector('#search', { timeout: 10000 })
+    
+    // Take a screenshot of the search results
+    const screenshot = await page.screenshot({ 
+      fullPage: true,
+      type: 'png'
+    } as any)
+    
+    await browser.close()
+
+    // Convert screenshot to base64
+    const base64Screenshot = Buffer.from(screenshot).toString('base64')
+
+    // Send to OpenAI Vision API
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text: `Please analyze this Google search results screenshot for the property address: "${address}". 
+              
+              Extract the following information if available:
+              - Property title (create an attractive title if not explicitly shown)
+              - Property description (summarize key features and selling points)
+              - Number of bedrooms
+              - Number of bathrooms
+              - Square footage
+              - Property type (House, Apartment, Condo, Townhouse)
+              - Estimated monthly rent (if available, otherwise provide a reasonable estimate based on the area)
+              - Amenities (parking, laundry, pool, etc.)
+              - Key features and highlights
+              
+              Please return the data in the following JSON format:
+              {
+                "title": "Attractive property title",
+                "description": "Detailed property description highlighting key features",
+                "bedrooms": number,
+                "bathrooms": number,
+                "sqft": number,
+                "propertyType": "House|Apartment|Condo|Townhouse",
+                "estimatedRent": number,
+                "amenities": ["amenity1", "amenity2"],
+                "features": ["feature1", "feature2"],
+                "confidence": "high|medium|low"
+              }
+              
+              If specific information is not available, make reasonable estimates based on typical properties in the area and property type. Always provide a complete response with all fields filled.`
+            },
+            {
+              type: 'image_url',
+              image_url: {
+                url: `data:image/png;base64,${base64Screenshot}`
+              }
+            }
+          ]
+        }
+      ],
+      max_tokens: 1000,
+      temperature: 0.7
+    })
+
+    const aiResponse = response.choices[0]?.message?.content
+    
+    if (!aiResponse) {
+      return NextResponse.json({ error: 'No response from AI' }, { status: 500 })
+    }
+
+    // Try to parse JSON response
+    let propertyData
+    try {
+      // Extract JSON from response (in case there's additional text)
+      const jsonMatch = aiResponse.match(/\{[\s\S]*\}/)
+      if (jsonMatch) {
+        propertyData = JSON.parse(jsonMatch[0])
+      } else {
+        throw new Error('No JSON found in AI response')
+      }
+    } catch (parseError) {
+      console.error('Error parsing AI response:', parseError)
+      console.error('Raw AI response:', aiResponse)
+      
+      // Fallback: create a basic response
+      propertyData = {
+        title: `Property at ${address}`,
+        description: 'Beautiful property in a great location with modern amenities and comfortable living spaces.',
+        bedrooms: 3,
+        bathrooms: 2,
+        sqft: 1200,
+        propertyType: 'House',
+        estimatedRent: 2500,
+        amenities: ['Parking', 'Laundry'],
+        features: ['Modern Kitchen', 'Spacious Rooms'],
+        confidence: 'low'
+      }
+    }
+
+    console.log('Generated property data:', propertyData)
+
+    return NextResponse.json({
+      success: true,
+      data: propertyData
+    })
+
   } catch (error) {
     console.error('Error in generate-listing API:', error)
-    return NextResponse.json(
-      { error: 'Failed to generate listing' },
-      { status: 500 }
-    )
+    return NextResponse.json({ 
+      error: 'Failed to generate listing', 
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 })
   }
 }
