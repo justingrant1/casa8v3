@@ -13,14 +13,11 @@ import {
   Upload, 
   Image as ImageIcon, 
   Star, 
-  StarOff, 
-  GripVertical,
   AlertCircle,
   Check,
   ChevronUp,
   ChevronDown
 } from 'lucide-react'
-import { toast } from '@/hooks/use-toast'
 import { cn } from '@/lib/utils'
 
 interface ImageFile {
