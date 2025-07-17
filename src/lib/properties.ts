@@ -180,32 +180,44 @@ export async function searchProperties(searchTerm: string, filters?: PropertyFil
   }
 }
 
-export async function getPropertyById(id: string): Promise<Property | null> {
+export async function getPropertyById(id: string): Promise<any | null> {
   try {
-    const { data, error } = await supabase
+    // First get the property
+    const { data: property, error: propertyError } = await supabase
       .from('properties')
-      .select(`
-        *,
-        profiles!properties_landlord_id_fkey (
-          first_name,
-          last_name,
-          email,
-          phone
-        )
-      `)
+      .select('*')
       .eq('id', id)
       .single()
 
-    if (error) {
-      if (error.code === 'PGRST116') {
-        // This code indicates that no rows were found, which is not a true error in this case.
+    if (propertyError) {
+      if (propertyError.code === 'PGRST116') {
         return null
       }
-      console.error('Error fetching property:', error)
-      throw error
+      console.error('Error fetching property:', propertyError)
+      throw propertyError
     }
 
-    return data
+    if (!property) {
+      return null
+    }
+
+    // Then get the landlord profile
+    const { data: landlordProfile, error: profileError } = await supabase
+      .from('profiles')
+      .select('first_name, last_name, email, phone, avatar_url')
+      .eq('id', property.landlord_id)
+      .single()
+
+    if (profileError) {
+      console.error('Error fetching landlord profile:', profileError)
+      // Don't throw error, just log it and continue without profile data
+    }
+
+    // Combine the data
+    return {
+      ...property,
+      profiles: landlordProfile || null
+    }
   } catch (error) {
     console.error('Error in getPropertyById:', error)
     throw error
