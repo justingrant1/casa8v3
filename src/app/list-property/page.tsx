@@ -12,6 +12,7 @@ import { Textarea } from '../../components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
 import { VideoUpload } from '@/components/video-upload'
+import { EnhancedImageUpload } from '@/components/enhanced-image-upload'
 import { useGoogleMaps, geocodeAddress, initializeAutocomplete, parsePlaceResult } from '@/lib/google-maps'
 import { MapPin, Star, ArrowLeft } from 'lucide-react'
 
@@ -509,101 +510,14 @@ export default function ListPropertyPage() {
         {/* Property Images Section */}
         <Card className="border border-gray-200">
           <CardContent className="p-6">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Label className="text-base font-medium">Property Images</Label>
-                <span className="text-sm text-gray-500">
-                  {images.length} images selected
-                </span>
-              </div>
-
-              {/* Upload Area */}
-              <div className="space-y-2">
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors relative">
-                  <div className="mx-auto h-12 w-12 text-gray-400 mb-4">
-                    <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                  <div className="space-y-2">
-                    <p className="text-sm text-gray-600">
-                      Click to upload images or drag and drop
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      PNG, JPG, GIF up to 10MB each
-                    </p>
-                  </div>
-                  <Input
-                    id="images"
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  />
-                </div>
-                
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => document.getElementById('images')?.click()}
-                  className="w-full"
-                >
-                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                  </svg>
-                  Choose Image Files
-                </Button>
-              </div>
-
-              {/* Selected Images Preview */}
-              {images.length > 0 && (
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Selected Images</Label>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {images.map((image, index) => (
-                      <div key={index} className="relative group bg-gray-50 rounded-lg overflow-hidden">
-                        <div className="aspect-square bg-gray-100 flex items-center justify-center">
-                          <img
-                            src={URL.createObjectURL(image)}
-                            alt={`Preview ${index + 1}`}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                        <div className="p-2 bg-white">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs text-gray-600 truncate">
-                              {image.name}
-                            </span>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                setImages(prev => prev.filter((_, i) => i !== index))
-                              }}
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                              </svg>
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Information */}
-              <div className="text-sm text-gray-500 space-y-1">
-                <p>• Images help showcase your property better</p>
-                <p>• Supported formats: PNG, JPG, GIF</p>
-                <p>• Maximum file size: 10MB per image</p>
-                <p>• Multiple images can be selected at once</p>
-              </div>
-            </div>
+            <EnhancedImageUpload
+              onImagesChange={setImages}
+              existingImages={images}
+              maxImages={20}
+              maxSizeInMB={10}
+              acceptedFormats={['image/jpeg', 'image/png', 'image/webp']}
+              showProgress={true}
+            />
           </CardContent>
         </Card>
 
