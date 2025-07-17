@@ -43,6 +43,8 @@ export default function ListPropertyPage() {
   const [videos, setVideos] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [generatingAI, setGeneratingAI] = useState(false)
+  const [aiError, setAiError] = useState<string | null>(null)
 
   const addressInputRef = useRef<HTMLInputElement>(null)
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null)
@@ -148,6 +150,73 @@ export default function ListPropertyPage() {
     }
   }
 
+  const handleGenerateWithAI = async () => {
+    if (!fullAddress.trim()) {
+      setAiError('Please enter a property address first')
+      return
+    }
+
+    setGeneratingAI(true)
+    setAiError(null)
+
+    try {
+      const response = await fetch('/api/generate-listing', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ address: fullAddress }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to generate listing')
+      }
+
+      const data = await response.json()
+      
+      // Populate form fields with AI-generated data
+      setTitle(data.title || '')
+      setDescription(data.description || '')
+      setBedrooms(data.bedrooms?.toString() || '')
+      setBathrooms(data.bathrooms?.toString() || '')
+      setSqft(data.sqft?.toString() || '')
+      setPropertyType(data.propertyType?.charAt(0).toUpperCase() + data.propertyType?.slice(1) || '')
+      setPrice(data.price?.toString() || '')
+      
+      // Set amenities if they exist
+      if (data.amenities && Array.isArray(data.amenities)) {
+        const formattedAmenities = data.amenities.map((amenity: string) => {
+          // Convert common amenity names to match form options
+          const amenityMap: { [key: string]: string } = {
+            'parking': 'Parking',
+            'laundry': 'Washer/Dryer',
+            'ac': 'Air Conditioning',
+            'dishwasher': 'Dishwasher',
+            'gym': 'Gym',
+            'pet friendly': 'Pet Friendly'
+          }
+          return amenityMap[amenity.toLowerCase()] || amenity
+        })
+        
+        // Only set amenities that exist in our form
+        const availableAmenities = ['Washer/Dryer', 'Air Conditioning', 'Parking', 'Dishwasher', 'Pet Friendly', 'Gym']
+        const validAmenities = formattedAmenities.filter((amenity: string) => availableAmenities.includes(amenity))
+        setAmenities(validAmenities)
+      }
+
+      // Show success message if data source is available
+      if (data.source && data.source !== 'AI Generated' && data.source !== 'Fallback') {
+        console.log('Generated listing using real data from:', data.source)
+      }
+
+    } catch (error) {
+      console.error('Error generating listing:', error)
+      setAiError('Failed to generate listing. Please try again.')
+    } finally {
+      setGeneratingAI(false)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user) {
@@ -232,9 +301,16 @@ export default function ListPropertyPage() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="title" className="text-sm font-medium text-gray-700">Property Title</Label>
-                  <Button type="button" variant="outline" size="sm" className="text-sm">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm" 
+                    className="text-sm"
+                    onClick={handleGenerateWithAI}
+                    disabled={generatingAI}
+                  >
                     <Star className="h-4 w-4 mr-1" />
-                    Complete with AI
+                    {generatingAI ? 'Generating...' : 'Complete with AI'}
                   </Button>
                 </div>
                 <Input 
@@ -245,6 +321,11 @@ export default function ListPropertyPage() {
                   className="h-12"
                   required 
                 />
+                {aiError && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                    <p className="text-sm text-red-600">{aiError}</p>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
