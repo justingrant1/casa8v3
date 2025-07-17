@@ -42,8 +42,8 @@ export default function ListPropertyPage() {
   const [images, setImages] = useState<File[]>([])
   const [videos, setVideos] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [aiGenerating, setAiGenerating] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const addressInputRef = useRef<HTMLInputElement>(null)
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null)
@@ -143,15 +143,9 @@ export default function ListPropertyPage() {
     )
   }
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setImages(Array.from(e.target.files))
-    }
-  }
-
   const handleGenerateWithAI = async () => {
     if (!fullAddress.trim()) {
-      setError('Please enter a property address first.')
+      setError('Please enter a property address first before generating with AI.')
       return
     }
 
@@ -178,36 +172,28 @@ export default function ListPropertyPage() {
       if (result.success && result.data) {
         const data = result.data
         
-        // Update form fields with AI-generated data
-        setTitle(data.title || '')
-        setDescription(data.description || '')
-        setPropertyType(data.propertyType || '')
-        setPrice(data.estimatedRent ? data.estimatedRent.toString() : '')
-        setBedrooms(data.bedrooms ? data.bedrooms.toString() : '')
-        setBathrooms(data.bathrooms ? data.bathrooms.toString() : '')
-        setSqft(data.sqft ? data.sqft.toString() : '')
+        // Populate form fields with AI-generated data
+        setTitle(data.title)
+        setDescription(data.description)
+        setBedrooms(data.bedrooms.toString())
+        setBathrooms(data.bathrooms.toString())
+        setSqft(data.sqft.toString())
+        setPropertyType(data.propertyType)
+        setPrice(data.price.toString())
         
-        // Update amenities - map AI amenities to our available ones
-        const availableAmenities = ['Washer/Dryer', 'Air Conditioning', 'Parking', 'Dishwasher', 'Pet Friendly', 'Gym']
-        const aiAmenities = data.amenities || []
-        const mappedAmenities = availableAmenities.filter(amenity => 
-          aiAmenities.some((aiAmenity: string) => 
-            aiAmenity.toLowerCase().includes(amenity.toLowerCase()) ||
-            amenity.toLowerCase().includes(aiAmenity.toLowerCase())
-          )
-        )
-        setAmenities(mappedAmenities)
-        
-        // Show success message
-        console.log('AI generation completed successfully', data)
-      } else {
-        throw new Error('Invalid response from AI service')
+        // Update amenities
+        setAmenities(data.amenities)
       }
     } catch (error: any) {
-      console.error('Error generating listing with AI:', error)
-      setError(error.message || 'Failed to generate listing with AI')
+      setError(error.message)
     } finally {
       setAiGenerating(false)
+    }
+  }
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setImages(Array.from(e.target.files))
     }
   }
 
