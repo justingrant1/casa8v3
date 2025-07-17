@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '../../components/ui/textarea'
@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox'
 import { VideoUpload } from '@/components/video-upload'
 import { useGoogleMaps, geocodeAddress, initializeAutocomplete, parsePlaceResult } from '@/lib/google-maps'
-import { MapPin, Settings } from 'lucide-react'
+import { MapPin, Upload, Star } from 'lucide-react'
 
 export default function ListPropertyPage() {
   const { user } = useAuth()
@@ -148,7 +148,6 @@ export default function ListPropertyPage() {
     }
   }
 
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user) {
@@ -219,241 +218,270 @@ export default function ListPropertyPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <Card className="max-w-3xl mx-auto">
-        <CardHeader>
-          <CardTitle>List a New Property</CardTitle>
-          <CardDescription>Fill out the details of your property to get it listed.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="title">Property Title</Label>
-              <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} required />
+    <div className="max-w-4xl mx-auto p-6 space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Basic Information Section */}
+        <Card className="border border-gray-200">
+          <CardContent className="p-6">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Basic Information</h2>
+              <p className="text-gray-600">Provide basic details about your property</p>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea id="description" value={description} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value)} />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="price">Price (per month)</Label>
-                <Input id="price" type="number" value={price} onChange={(e) => setPrice(e.target.value)} required />
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="title" className="text-sm font-medium text-gray-700">Property Title</Label>
+                  <Button type="button" variant="outline" size="sm" className="text-sm">
+                    <Star className="h-4 w-4 mr-1" />
+                    Complete with AI
+                  </Button>
+                </div>
+                <Input 
+                  id="title" 
+                  value={title} 
+                  onChange={(e) => setTitle(e.target.value)} 
+                  placeholder="e.g., Modern Downtown Apartment"
+                  className="h-12"
+                  required 
+                />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="propertyType">Property Type</Label>
-                <Select value={propertyType} onValueChange={(value: string) => setPropertyType(value)}>
-                  <SelectTrigger id="propertyType">
-                    <SelectValue placeholder="Select a type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Apartment">Apartment</SelectItem>
-                    <SelectItem value="House">House</SelectItem>
-                    <SelectItem value="Condo">Condo</SelectItem>
-                    <SelectItem value="Townhouse">Townhouse</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
 
-            {/* Address Section */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Label>Property Address</Label>
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="manual-override"
-                    checked={manualOverride}
-                    onCheckedChange={(checked) => setManualOverride(checked as boolean)}
+              <div className="space-y-2">
+                <Label htmlFor="description" className="text-sm font-medium text-gray-700">Description</Label>
+                <Textarea 
+                  id="description" 
+                  value={description} 
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value)}
+                  placeholder="Describe your property, its features, and what makes it special..."
+                  className="min-h-32 resize-none"
+                  rows={4}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="propertyType" className="text-sm font-medium text-gray-700">Property Type</Label>
+                  <Select value={propertyType} onValueChange={(value: string) => setPropertyType(value)}>
+                    <SelectTrigger id="propertyType" className="h-12">
+                      <SelectValue placeholder="Select property type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Apartment">Apartment</SelectItem>
+                      <SelectItem value="House">House</SelectItem>
+                      <SelectItem value="Condo">Condo</SelectItem>
+                      <SelectItem value="Townhouse">Townhouse</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="price" className="text-sm font-medium text-gray-700">Monthly Rent ($)</Label>
+                  <Input 
+                    id="price" 
+                    type="number" 
+                    value={price} 
+                    onChange={(e) => setPrice(e.target.value)} 
+                    placeholder="2500"
+                    className="h-12"
+                    required 
                   />
-                  <Label htmlFor="manual-override" className="text-sm">
-                    Manual Override
-                  </Label>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Location Section */}
+        <Card className="border border-gray-200">
+          <CardContent className="p-6">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Location</h2>
+              <p className="text-gray-600">Where is your property located?</p>
+            </div>
+
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="address" className="text-sm font-medium text-gray-700">Property Address</Label>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="manual-override"
+                      checked={manualOverride}
+                      onCheckedChange={(checked) => setManualOverride(checked as boolean)}
+                    />
+                    <Label htmlFor="manual-override" className="text-sm text-gray-600">
+                      Enter manually
+                    </Label>
+                  </div>
+                </div>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                  <Input
+                    ref={addressInputRef}
+                    id="address"
+                    value={fullAddress}
+                    onChange={(e) => setFullAddress(e.target.value)}
+                    placeholder="2712 Rutland St, Opa-locka, FL 33054, USA"
+                    className="pl-12 h-12"
+                    required
+                  />
                 </div>
               </div>
 
-              {!manualOverride ? (
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="fullAddress">Full Address</Label>
-                    <div className="relative">
-                      <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                      <Input
-                        ref={addressInputRef}
-                        id="fullAddress"
-                        value={fullAddress}
-                        onChange={(e) => setFullAddress(e.target.value)}
-                        placeholder="Start typing an address..."
-                        className="pl-10"
-                        required
-                      />
-                      {!mapsLoaded && (
-                        <div className="absolute right-3 top-3">
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div>
-                        </div>
-                      )}
+              {coordinates && (
+                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                  <h3 className="font-semibold text-gray-900 mb-3">Parsed Address:</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="font-medium text-gray-700">Street:</span> {address}
                     </div>
-                    {coordinates && (
-                      <div className="text-sm text-green-600 flex items-center gap-1">
-                        <MapPin className="h-3 w-3" />
-                        Location verified
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Auto-populated fields (read-only) */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="city">City</Label>
-                      <Input id="city" value={city} readOnly className="bg-gray-50" />
+                    <div>
+                      <span className="font-medium text-gray-700">City:</span> {city}
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="state">State</Label>
-                      <Input id="state" value={state} readOnly className="bg-gray-50" />
+                    <div>
+                      <span className="font-medium text-gray-700">State:</span> {state}
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="zipCode">Zip Code</Label>
-                      <Input id="zipCode" value={zipCode} readOnly className="bg-gray-50" />
+                    <div>
+                      <span className="font-medium text-gray-700">ZIP:</span> {zipCode}
                     </div>
                   </div>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="manualAddress">Full Address</Label>
-                    <div className="relative">
-                      <Input
-                        id="manualAddress"
-                        value={fullAddress}
-                        onChange={(e) => setFullAddress(e.target.value)}
-                        placeholder="Enter full address manually"
-                        required
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="absolute right-2 top-1/2 transform -translate-y-1/2"
-                        onClick={handleGeocodeAddress}
-                        disabled={geocoding || !fullAddress.trim()}
-                      >
-                        {geocoding ? (
-                          <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-400"></div>
-                        ) : (
-                          <MapPin className="h-3 w-3" />
-                        )}
-                      </Button>
-                    </div>
-                    {coordinates && (
-                      <div className="text-sm text-green-600 flex items-center gap-1">
-                        <MapPin className="h-3 w-3" />
-                        Location verified
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="manualStreetAddress">Street Address</Label>
-                    <Input
-                      id="manualStreetAddress"
-                      value={address}
-                      onChange={(e) => setAddress(e.target.value)}
-                      placeholder="123 Main St"
-                      required
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="manualCity">City</Label>
-                      <Input
-                        id="manualCity"
-                        value={city}
-                        onChange={(e) => setCity(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="manualState">State</Label>
-                      <Input
-                        id="manualState"
-                        value={state}
-                        onChange={(e) => setState(e.target.value)}
-                        placeholder="FL"
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="manualZipCode">Zip Code</Label>
-                      <Input
-                        id="manualZipCode"
-                        value={zipCode}
-                        onChange={(e) => setZipCode(e.target.value)}
-                        required
-                      />
-                    </div>
+                  <div className="mt-2 text-sm text-gray-600">
+                    <span className="font-medium">Coordinates:</span> {coordinates.lat.toFixed(6)}, {coordinates.lng.toFixed(6)}
                   </div>
                 </div>
               )}
             </div>
+          </CardContent>
+        </Card>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="bedrooms">Bedrooms</Label>
-                <Input id="bedrooms" type="number" value={bedrooms} onChange={(e) => setBedrooms(e.target.value)} required />
+        {/* Property Details Section */}
+        <Card className="border border-gray-200">
+          <CardContent className="p-6">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Property Details</h2>
+              <p className="text-gray-600">Add details about your property</p>
+            </div>
+
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="bedrooms" className="text-sm font-medium text-gray-700">Bedrooms</Label>
+                  <Input 
+                    id="bedrooms" 
+                    type="number" 
+                    value={bedrooms} 
+                    onChange={(e) => setBedrooms(e.target.value)} 
+                    className="h-12"
+                    required 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="bathrooms" className="text-sm font-medium text-gray-700">Bathrooms</Label>
+                  <Input 
+                    id="bathrooms" 
+                    type="number" 
+                    step="0.5" 
+                    value={bathrooms} 
+                    onChange={(e) => setBathrooms(e.target.value)} 
+                    className="h-12"
+                    required 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="sqft" className="text-sm font-medium text-gray-700">Square Feet</Label>
+                  <Input 
+                    id="sqft" 
+                    type="number" 
+                    value={sqft} 
+                    onChange={(e) => setSqft(e.target.value)} 
+                    className="h-12"
+                  />
+                </div>
               </div>
+
               <div className="space-y-2">
-                <Label htmlFor="bathrooms">Bathrooms</Label>
-                <Input id="bathrooms" type="number" step="0.5" value={bathrooms} onChange={(e) => setBathrooms(e.target.value)} required />
+                <Label className="text-sm font-medium text-gray-700">Amenities</Label>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {['Washer/Dryer', 'Air Conditioning', 'Parking', 'Dishwasher', 'Pet Friendly', 'Gym'].map((amenity) => (
+                    <div key={amenity} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={amenity}
+                        checked={amenities.includes(amenity)}
+                        onCheckedChange={() => handleAmenityChange(amenity)}
+                      />
+                      <Label htmlFor={amenity} className="text-sm text-gray-700">{amenity}</Label>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="sqft">Square Feet</Label>
-                <Input id="sqft" type="number" value={sqft} onChange={(e) => setSqft(e.target.value)} />
-              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Property Images Section */}
+        <Card className="border border-gray-200">
+          <CardContent className="p-6">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Property Images</h2>
+              <p className="text-gray-600">Upload photos of your property</p>
             </div>
 
             <div className="space-y-2">
-              <Label>Amenities</Label>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {['Washer/Dryer', 'Air Conditioning', 'Parking', 'Dishwasher', 'Pet Friendly', 'Gym'].map((amenity) => (
-                  <div key={amenity} className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id={amenity}
-                      checked={amenities.includes(amenity)}
-                      onChange={() => handleAmenityChange(amenity)}
-                    />
-                    <Label htmlFor={amenity}>{amenity}</Label>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="images">Images</Label>
-              <Input id="images" type="file" multiple accept="image/*" onChange={handleImageChange} />
-            </div>
-
-            <div className="space-y-2">
-              <VideoUpload 
-                onVideoUpload={(videoUrl) => setVideos(prev => [...prev, videoUrl])}
-                onVideoRemove={(videoUrl) => setVideos(prev => prev.filter(url => url !== videoUrl))}
-                existingVideos={videos}
-                maxVideos={5}
-                maxSizeInMB={50}
+              <Label htmlFor="images" className="text-sm font-medium text-gray-700">Images</Label>
+              <Input 
+                id="images" 
+                type="file" 
+                multiple 
+                accept="image/*" 
+                onChange={handleImageChange}
+                className="h-12"
               />
             </div>
+          </CardContent>
+        </Card>
 
-            {error && <p className="text-sm text-red-500">{error}</p>}
+        {/* Property Videos Section */}
+        <Card className="border border-gray-200">
+          <CardContent className="p-6">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Property Videos (Optional)</h2>
+            </div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Listing Property...' : 'List Property'}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-12">
+              <div className="text-center">
+                <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                <p className="text-lg text-gray-600 mb-2">
+                  <span className="font-medium">Click to upload videos</span> or drag and drop
+                </p>
+                <p className="text-sm text-gray-500">
+                  MP4, MOV, AVI up to <span className="font-medium">100MB</span> each
+                </p>
+                <VideoUpload 
+                  onVideoUpload={(videoUrl) => setVideos(prev => [...prev, videoUrl])}
+                  onVideoRemove={(videoUrl) => setVideos(prev => prev.filter(url => url !== videoUrl))}
+                  existingVideos={videos}
+                  maxVideos={5}
+                  maxSizeInMB={100}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <p className="text-sm text-red-600">{error}</p>
+          </div>
+        )}
+
+        <Button 
+          type="submit" 
+          className="w-full h-12 bg-gray-900 hover:bg-gray-800 text-white font-medium" 
+          disabled={loading}
+        >
+          {loading ? 'Listing Property...' : 'List Property'}
+        </Button>
+      </form>
     </div>
   )
 }
