@@ -387,7 +387,8 @@ export default function ListPropertyPage() {
                 <Button 
                   type="button" 
                   size="sm" 
-                  className="text-sm bg-gradient-to-r from-purple-500 via-pink-500 via-red-500 via-yellow-500 via-green-500 to-blue-500 hover:from-purple-600 hover:via-pink-600 hover:via-red-600 hover:via-yellow-600 hover:via-green-600 hover:to-blue-600 text-white font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 animate-pulse hover:animate-none border-0 bg-[length:200%_200%] hover:bg-[position:100%_0%] bg-[position:0%_0%]"
+                  className="text-sm bg-gradient-to-r from-purple-500 via-pink-500 via-red-500 via-yellow-500 via-green-500 to-blue-500 hover:from-purple-600 hover:via-pink-600 hover:via-red-600 hover:via-yellow-600 hover:via-green-600 hover:to-blue-600 text-white font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 hover:animate-none border-0 bg-[length:200%_200%] hover:bg-[position:100%_0%] bg-[position:0%_0%]"
+                  style={{ animation: 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}
                   onClick={handleGenerateWithAI}
                   disabled={aiGenerating || !fullAddress.trim()}
                 >
