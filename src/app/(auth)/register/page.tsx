@@ -401,12 +401,12 @@ function RegisterForm() {
                     />
                     <Label htmlFor="terms" className="text-sm text-gray-600 leading-relaxed">
                       I agree to the{" "}
-                      <Link href="/terms" className="text-primary hover:underline font-medium">
-                        Terms of Service
-                      </Link>{" "}
-                      and{" "}
                       <Link href="/privacy" className="text-primary hover:underline font-medium">
                         Privacy Policy
+                      </Link>{" "}
+                      and{" "}
+                      <Link href="/terms" className="text-primary hover:underline font-medium">
+                        Terms of Service
                       </Link>
                     </Label>
                   </div>
