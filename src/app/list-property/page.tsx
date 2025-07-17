@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox'
 import { VideoUpload } from '@/components/video-upload'
 import { useGoogleMaps, geocodeAddress, initializeAutocomplete, parsePlaceResult } from '@/lib/google-maps'
-import { MapPin, Star } from 'lucide-react'
+import { MapPin, Star, ArrowLeft } from 'lucide-react'
 
 export default function ListPropertyPage() {
   const { user } = useAuth()
@@ -268,6 +268,23 @@ export default function ListPropertyPage() {
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
+      {/* Header with Back Button */}
+      <div className="flex items-center space-x-4 pb-4">
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => router.back()}
+          className="flex items-center space-x-2 text-gray-600 hover:text-gray-900"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span>Back</span>
+        </Button>
+        <div className="flex-1">
+          <h1 className="text-3xl font-bold text-gray-900">List Your Property</h1>
+          <p className="text-gray-600 mt-1">Create a new property listing</p>
+        </div>
+      </div>
+
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Location Section */}
         <Card className="border border-gray-200">
