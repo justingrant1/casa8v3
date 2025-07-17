@@ -53,7 +53,19 @@ export function PropertyCard({ property }: PropertyCardProps) {
         </div>
         <CardContent className="p-6 bg-white">
           <div className="flex justify-between items-start mb-2">
-            <h3 className="text-xl font-bold text-gray-900 truncate pr-2">{property.title}</h3>
+            <Link href={`/property/${property.id}`} passHref>
+              <h3 
+                className="text-xl font-bold text-gray-900 truncate pr-2 hover:text-blue-600 cursor-pointer transition-colors duration-200"
+                onClick={() => {
+                  // Haptic feedback for supported devices
+                  if (navigator.vibrate) {
+                    navigator.vibrate(10)
+                  }
+                }}
+              >
+                {property.title}
+              </h3>
+            </Link>
             <div className="text-right">
               <p className="text-xl font-bold text-gray-900">${property.price.toLocaleString()}</p>
               <p className="text-sm text-gray-500">per month</p>

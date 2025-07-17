@@ -422,8 +422,6 @@ export default function ListPropertyPage() {
                     <SelectContent>
                       <SelectItem value="Apartment">Apartment</SelectItem>
                       <SelectItem value="House">House</SelectItem>
-                      <SelectItem value="Condo">Condo</SelectItem>
-                      <SelectItem value="Townhouse">Townhouse</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
