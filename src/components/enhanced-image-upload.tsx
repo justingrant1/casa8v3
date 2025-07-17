@@ -324,13 +324,32 @@ export function EnhancedImageUpload({
     }
   }
 
-  // Set main image
+  // Set main image and move to first position
   const setMainImage = (id: string) => {
     if (!mountedRef.current) return
     
-    setImages(prev => 
-      prev.map(img => ({ ...img, isMain: img.id === id }))
-    )
+    setImages(prev => {
+      const newImages = [...prev]
+      const selectedImageIndex = newImages.findIndex(img => img.id === id)
+      
+      if (selectedImageIndex !== -1) {
+        // Remove the selected image from its current position
+        const [selectedImage] = newImages.splice(selectedImageIndex, 1)
+        
+        // Set it as main and insert at the beginning
+        selectedImage.isMain = true
+        newImages.unshift(selectedImage)
+        
+        // Make sure no other images are marked as main
+        newImages.forEach((img, index) => {
+          if (index !== 0) {
+            img.isMain = false
+          }
+        })
+      }
+      
+      return newImages
+    })
   }
 
   // Move image (for reordering)
@@ -560,9 +579,10 @@ export function EnhancedImageUpload({
                     {!image.isMain && (
                       <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-40 transition-all duration-200 flex items-center justify-center group">
                         <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                          <div className="bg-yellow-500 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center">
-                            <Star className="h-4 w-4 mr-1" />
-                            Click to make main
+                          <div className="bg-yellow-500 text-white px-2 py-1 rounded-full text-xs md:text-sm font-medium flex items-center">
+                            <Star className="h-3 w-3 md:h-4 md:w-4 mr-1" />
+                            <span className="hidden sm:inline">Click to make main</span>
+                            <span className="sm:hidden">Make main</span>
                           </div>
                         </div>
                       </div>
@@ -616,9 +636,6 @@ export function EnhancedImageUpload({
                   
                   <CardContent className="p-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-600 truncate mr-2">
-                        {image.file.name}
-                      </span>
                       <div className="flex items-center space-x-1">
                         {/* Mobile reorder buttons */}
                         <div className="flex items-center space-x-1 md:hidden">
@@ -645,20 +662,6 @@ export function EnhancedImageUpload({
                             <ChevronDown className="h-3 w-3" />
                           </Button>
                         </div>
-                        
-                        {/* Set as main button */}
-                        {!image.isMain && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setMainImage(image.id)}
-                            className="p-1 h-6 w-6 text-gray-500 hover:text-yellow-500"
-                            title="Set as main image"
-                          >
-                            <StarOff className="h-3 w-3" />
-                          </Button>
-                        )}
                         
                         {/* Remove button */}
                         <Button
