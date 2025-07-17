@@ -51,53 +51,55 @@ export function PropertyCard({ property }: PropertyCardProps) {
             <Heart className={`h-5 w-5 ${user && isFavorite(property.id) ? 'fill-red-500 text-red-500' : 'text-gray-700'}`} />
           </Button>
         </div>
-        <CardContent className="p-6 bg-white">
-          <div className="flex justify-between items-start mb-2">
-            <h3 className="text-xl font-bold text-gray-900 truncate pr-2">{property.title}</h3>
-            <div className="text-right">
-              <p className="text-xl font-bold text-gray-900">${property.price.toLocaleString()}</p>
-              <p className="text-sm text-gray-500">per month</p>
+        <CardContent className="p-0 bg-white">
+          <div className="p-6 pb-4">
+            <div className="flex justify-between items-start mb-2">
+              <h3 className="text-xl font-bold text-gray-900 truncate pr-2">{property.title}</h3>
+              <div className="text-right">
+                <p className="text-xl font-bold text-gray-900">${property.price.toLocaleString()}</p>
+                <p className="text-sm text-gray-500">per month</p>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center text-gray-600 mb-4">
-            <MapPin className="h-4 w-4 mr-2 flex-shrink-0" />
-            <p className="truncate">{property.address}</p>
-          </div>
-          
-          <div className="bg-gray-50 rounded-lg p-4 flex justify-around items-center mb-6">
-            <div className="text-center">
-              <Bed className="h-6 w-6 mx-auto text-gray-500 mb-1" />
-              <p className="text-lg font-semibold">{property.bedrooms}</p>
-              <p className="text-xs text-gray-500 uppercase">Beds</p>
+            <div className="flex items-center text-gray-600 mb-4">
+              <MapPin className="h-4 w-4 mr-2 flex-shrink-0" />
+              <p className="truncate">{property.address}</p>
             </div>
-            <div className="border-l h-10 border-gray-200"></div>
-            <div className="text-center">
-              <Bath className="h-6 w-6 mx-auto text-gray-500 mb-1" />
-              <p className="text-lg font-semibold">{property.bathrooms}</p>
-              <p className="text-xs text-gray-500 uppercase">Baths</p>
+            
+            <div className="bg-gray-50 rounded-lg p-4 flex justify-around items-center mb-6">
+              <div className="text-center">
+                <Bed className="h-6 w-6 mx-auto text-gray-500 mb-1" />
+                <p className="text-lg font-semibold">{property.bedrooms}</p>
+                <p className="text-xs text-gray-500 uppercase">Beds</p>
+              </div>
+              <div className="border-l h-10 border-gray-200"></div>
+              <div className="text-center">
+                <Bath className="h-6 w-6 mx-auto text-gray-500 mb-1" />
+                <p className="text-lg font-semibold">{property.bathrooms}</p>
+                <p className="text-xs text-gray-500 uppercase">Baths</p>
+              </div>
+              <div className="border-l h-10 border-gray-200"></div>
+              <div className="text-center">
+                <Square className="h-6 w-6 mx-auto text-gray-500 mb-1" />
+                <p className="text-lg font-semibold">{property.sqft}</p>
+                <p className="text-xs text-gray-500 uppercase">Sqft</p>
+              </div>
             </div>
-            <div className="border-l h-10 border-gray-200"></div>
-            <div className="text-center">
-              <Square className="h-6 w-6 mx-auto text-gray-500 mb-1" />
-              <p className="text-lg font-semibold">{property.sqft}</p>
-              <p className="text-xs text-gray-500 uppercase">Sqft</p>
+
+            <div className="flex flex-wrap gap-2 mb-6">
+              {property.amenities?.slice(0, 3).map((amenity: string) => (
+                <Badge key={amenity} variant="outline" className="font-normal bg-gray-100 text-gray-700">
+                  {amenity}
+                </Badge>
+              ))}
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-2 mb-6">
-            {property.amenities?.slice(0, 3).map((amenity: string) => (
-              <Badge key={amenity} variant="outline" className="font-normal bg-gray-100 text-gray-700">
-                {amenity}
-              </Badge>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-2 px-3 pb-3">
             <Link href={`/property/${property.id}`} passHref>
-              <Button variant="outline" className="w-full">View Details</Button>
+              <Button variant="outline" className="w-full h-12 text-base">View Details</Button>
             </Link>
             <Button 
-              className="w-full bg-gray-900 text-white hover:bg-gray-800"
+              className="w-full h-12 text-base bg-gray-900 text-white hover:bg-gray-800"
               onClick={() => setIsContactModalOpen(true)}
             >
               Contact Now
