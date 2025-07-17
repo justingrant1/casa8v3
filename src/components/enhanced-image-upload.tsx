@@ -291,9 +291,15 @@ export function EnhancedImageUpload({
   const removeImage = (id: string) => {
     if (!mountedRef.current) return
     
+    console.log('Removing image with ID:', id)
+    console.log('Current images:', images.map(img => img.id))
+    
     setImages(prev => {
       const imageToRemove = prev.find(img => img.id === id)
       const filtered = prev.filter(img => img.id !== id)
+      
+      console.log('Image to remove:', imageToRemove?.id)
+      console.log('Filtered images:', filtered.map(img => img.id))
       
       // If we removed the main image, make the first remaining image the main one
       if (imageToRemove?.isMain && filtered.length > 0) {
@@ -304,7 +310,7 @@ export function EnhancedImageUpload({
       if (imageToRemove?.preview.startsWith('blob:')) {
         setTimeout(() => {
           URL.revokeObjectURL(imageToRemove.preview)
-        }, 0)
+        }, 100) // Increased delay to ensure image is removed from DOM first
       }
       
       return filtered
