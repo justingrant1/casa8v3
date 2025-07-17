@@ -74,8 +74,8 @@ Based on the information you find, create an appealing RENTAL LISTING with:
 
 Please respond with a JSON object in this exact format:
 {
-  "title": "Attractive rental listing title (e.g., 'Charming 3BR Home in Quiet Neighborhood with Modern Updates')",
-  "description": "Compelling rental description with specific details about the property, its features, and neighborhood appeal. Write as if creating a rental listing that would attract quality tenants.",
+  "title": "Attractive rental listing title (e.g., 'Charming 3BR Home in Quiet Neighborhood with Modern Updates') - KEEP UNDER 200 CHARACTERS",
+  "description": "Compelling rental description with specific details about the property, its features, and neighborhood appeal. Write as if creating a rental listing that would attract quality tenants. KEEP UNDER 1500 CHARACTERS - be concise but engaging.",
   "bedrooms": number,
   "bathrooms": number,
   "sqft": number,
@@ -84,7 +84,7 @@ Please respond with a JSON object in this exact format:
   "amenities": ["amenity1", "amenity2", "amenity3"]
 }
 
-Focus on creating marketing copy that highlights the property's best features and appeals to potential renters. If you cannot find specific information for some fields, use reasonable estimates based on similar properties in the area. Always return valid JSON format.`
+IMPORTANT: Keep the description concise and under 1500 characters. Focus on the most important selling points rather than lengthy details. Create marketing copy that highlights the property's best features and appeals to potential renters. If you cannot find specific information for some fields, use reasonable estimates based on similar properties in the area. Always return valid JSON format.`
 
     // Make request to Perplexity API
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
@@ -105,7 +105,7 @@ Focus on creating marketing copy that highlights the property's best features an
             content: prompt
           }
         ],
-        max_tokens: 1000,
+        max_tokens: 800,
         temperature: 0.2,
         top_p: 0.9,
         return_citations: true,
@@ -163,8 +163,8 @@ Focus on creating marketing copy that highlights the property's best features an
 
     // Validate and sanitize the response
     const sanitizedData = {
-      title: propertyData.title || `Property at ${address}`,
-      description: propertyData.description || 'Please add a description for this property.',
+      title: (propertyData.title || `Property at ${address}`).slice(0, 255), // Limit title to 255 chars
+      description: (propertyData.description || 'Please add a description for this property.').slice(0, 2000), // Limit description to 2000 chars
       bedrooms: Math.max(1, Math.min(10, propertyData.bedrooms || 2)),
       bathrooms: Math.max(1, Math.min(5, propertyData.bathrooms || 1)),
       sqft: Math.max(200, Math.min(10000, propertyData.sqft || 1000)),
