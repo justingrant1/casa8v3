@@ -299,7 +299,7 @@ export default function ListPropertyPage() {
                     id="address"
                     value={fullAddress}
                     onChange={(e) => setFullAddress(e.target.value)}
-                    placeholder="2712 Rutland St, Opa-locka, FL 33054, USA"
+                    placeholder="Enter your property address (e.g., 123 Main St, New York, NY 10001)"
                     className="pl-12 h-12"
                     required
                   />
