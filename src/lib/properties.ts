@@ -250,6 +250,7 @@ export async function getPropertyById(id: string): Promise<any | null> {
     }
 
     // Then get the landlord profile
+    console.log('Looking for landlord profile with ID:', property.landlord_id)
     const { data: landlordProfile, error: profileError } = await supabase
       .from('profiles')
       .select('first_name, last_name, email, phone, avatar_url')
@@ -258,7 +259,15 @@ export async function getPropertyById(id: string): Promise<any | null> {
 
     if (profileError) {
       console.error('Error fetching landlord profile:', profileError)
+      console.error('Profile error details:', {
+        code: profileError.code,
+        message: profileError.message,
+        details: profileError.details,
+        hint: profileError.hint
+      })
       // Don't throw error, just log it and continue without profile data
+    } else {
+      console.log('Landlord profile found:', landlordProfile)
     }
 
     // Combine the data
