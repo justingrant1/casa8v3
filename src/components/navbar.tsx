@@ -209,8 +209,25 @@ export function Navbar({ currentPage = "home" }: NavbarProps) {
             )}
           </div>
 
-          {/* Mobile Menu Button */}
-          <div className="md:hidden">
+          {/* Mobile Actions */}
+          <div className="md:hidden flex items-center space-x-2">
+            {/* Favorites Button - Always visible on mobile */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                if (user) {
+                  router.push("/favorites")
+                } else {
+                  router.push("/login")
+                }
+              }}
+              className="text-gray-700 hover:text-red-500"
+            >
+              <Heart className="h-5 w-5" />
+            </Button>
+
+            {/* Mobile Menu Button */}
             <Button
               variant="ghost"
               size="icon"
