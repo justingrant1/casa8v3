@@ -61,10 +61,11 @@ export function EnhancedImageUpload({
   const mountedRef = useRef(true)
   const imagesRef = useRef<ImageFile[]>([])
   const cleanupRef = useRef<() => void>()
+  const initializedRef = useRef(false)
 
-  // Initialize with existing images
+  // Initialize with existing images only once on mount
   useEffect(() => {
-    if (existingImages.length > 0) {
+    if (existingImages.length > 0 && !initializedRef.current) {
       const imageFiles = existingImages.map((file, index) => ({
         id: `existing-${index}`,
         file,
@@ -73,6 +74,7 @@ export function EnhancedImageUpload({
         uploadProgress: 100
       }))
       setImages(imageFiles)
+      initializedRef.current = true
     }
   }, [existingImages])
 
@@ -291,15 +293,9 @@ export function EnhancedImageUpload({
   const removeImage = (id: string) => {
     if (!mountedRef.current) return
     
-    console.log('Removing image with ID:', id)
-    console.log('Current images:', images.map(img => img.id))
-    
     setImages(prev => {
       const imageToRemove = prev.find(img => img.id === id)
       const filtered = prev.filter(img => img.id !== id)
-      
-      console.log('Image to remove:', imageToRemove?.id)
-      console.log('Filtered images:', filtered.map(img => img.id))
       
       // If we removed the main image, make the first remaining image the main one
       if (imageToRemove?.isMain && filtered.length > 0) {
@@ -310,7 +306,7 @@ export function EnhancedImageUpload({
       if (imageToRemove?.preview.startsWith('blob:')) {
         setTimeout(() => {
           URL.revokeObjectURL(imageToRemove.preview)
-        }, 100) // Increased delay to ensure image is removed from DOM first
+        }, 100)
       }
       
       return filtered
