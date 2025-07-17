@@ -21,14 +21,14 @@ export function PropertyCard({ property }: PropertyCardProps) {
   const { toggleFavorite, isFavorite } = useFavorites()
   const [isContactModalOpen, setIsContactModalOpen] = useState(false)
 
-  // Extract landlord data from property profiles
+  // Extract landlord data - handle both raw and formatted property data
   const landlord = {
     id: property.landlord_id || '1',
     name: property.profiles 
       ? `${property.profiles.first_name || ''} ${property.profiles.last_name || ''}`.trim() || 'Property Owner'
-      : 'Property Owner',
-    phone: property.profiles?.phone || null,
-    email: property.profiles?.email || null,
+      : property.landlord || 'Property Owner',
+    phone: property.profiles?.phone || property.landlord_phone || null,
+    email: property.profiles?.email || property.landlord_email || null,
   }
 
   return (
