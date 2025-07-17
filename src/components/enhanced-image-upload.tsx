@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef, useCallback, useEffect } from 'react'
+import { flushSync } from 'react-dom'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { Label } from './ui/label'
@@ -226,15 +227,17 @@ export function EnhancedImageUpload({
     imagesRef.current = images
     const files = images.map(img => img.file)
     
-    // Only call parent callbacks if component is still mounted
-    if (mountedRef.current) {
-      onImagesChange(files)
-      
-      const mainImageIndex = images.findIndex(img => img.isMain)
-      if (mainImageIndex !== -1 && onMainImageChange) {
-        onMainImageChange(mainImageIndex)
+    // Schedule parent callbacks to happen after render to prevent React error #185
+    setTimeout(() => {
+      if (mountedRef.current) {
+        onImagesChange(files)
+        
+        const mainImageIndex = images.findIndex(img => img.isMain)
+        if (mainImageIndex !== -1 && onMainImageChange) {
+          onMainImageChange(mainImageIndex)
+        }
       }
-    }
+    }, 0)
   }, [images, onImagesChange, onMainImageChange])
 
   // Drag and drop handlers
