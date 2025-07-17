@@ -1,10 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import puppeteer from 'puppeteer-extra'
-import StealthPlugin from 'puppeteer-extra-plugin-stealth'
 import OpenAI from 'openai'
-
-// Add stealth plugin to puppeteer
-puppeteer.use(StealthPlugin())
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -18,99 +13,43 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Address is required' }, { status: 400 })
     }
 
-    console.log('Searching for property:', address)
+    console.log('Generating property listing for:', address)
 
-    // Launch puppeteer with stealth mode
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--no-first-run',
-        '--no-zygote',
-        '--single-process',
-        '--disable-gpu',
-        '--disable-web-security',
-        '--disable-features=VizDisplayCompositor',
-        '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-      ]
-    })
-
-    const page = await browser.newPage()
-    
-    // Set viewport and user agent
-    await page.setViewport({ width: 1920, height: 1080 })
-    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36')
-
-    // Navigate to Google and search for the property
-    await page.goto('https://www.google.com', { waitUntil: 'networkidle2' })
-    
-    // Wait for search box and enter the address
-    await page.waitForSelector('input[name="q"]')
-    await page.type('input[name="q"]', `${address} real estate property details`)
-    await page.keyboard.press('Enter' as any)
-    
-    // Wait for results to load
-    await page.waitForSelector('#search', { timeout: 10000 })
-    
-    // Take a screenshot of the search results
-    const screenshot = await page.screenshot({ 
-      fullPage: true,
-      type: 'png'
-    } as any)
-    
-    await browser.close()
-
-    // Convert screenshot to base64
-    const base64Screenshot = Buffer.from(screenshot).toString('base64')
-
-    // Send to OpenAI Vision API
+    // Use OpenAI to generate property data based on the address
     const response = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages: [
         {
+          role: 'system',
+          content: `You are a real estate expert AI that generates property listing data based on addresses. You have extensive knowledge of real estate markets, property types, and typical rental rates across different areas. Create realistic and appealing property listings that would be competitive in the local market.`
+        },
+        {
           role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: `Please analyze this Google search results screenshot for the property address: "${address}". 
-              
-              Extract the following information if available:
-              - Property title (create an attractive title if not explicitly shown)
-              - Property description (summarize key features and selling points)
-              - Number of bedrooms
-              - Number of bathrooms
-              - Square footage
-              - Property type (House, Apartment, Condo, Townhouse)
-              - Estimated monthly rent (if available, otherwise provide a reasonable estimate based on the area)
-              - Amenities (parking, laundry, pool, etc.)
-              - Key features and highlights
-              
-              Please return the data in the following JSON format:
-              {
-                "title": "Attractive property title",
-                "description": "Detailed property description highlighting key features",
-                "bedrooms": number,
-                "bathrooms": number,
-                "sqft": number,
-                "propertyType": "House|Apartment|Condo|Townhouse",
-                "estimatedRent": number,
-                "amenities": ["amenity1", "amenity2"],
-                "features": ["feature1", "feature2"],
-                "confidence": "high|medium|low"
-              }
-              
-              If specific information is not available, make reasonable estimates based on typical properties in the area and property type. Always provide a complete response with all fields filled.`
-            },
-            {
-              type: 'image_url',
-              image_url: {
-                url: `data:image/png;base64,${base64Screenshot}`
-              }
-            }
-          ]
+          content: `Generate a comprehensive property listing for the address: "${address}". 
+          
+          Please analyze the location, neighborhood characteristics, and typical property features for this area to create realistic listing details.
+          
+          Return the data in the following JSON format:
+          {
+            "title": "Attractive property title that highlights key selling points",
+            "description": "Detailed property description (3-4 sentences) highlighting key features, neighborhood benefits, and what makes it special",
+            "bedrooms": number,
+            "bathrooms": number,
+            "sqft": number,
+            "propertyType": "House|Apartment|Condo|Townhouse",
+            "estimatedRent": number,
+            "amenities": ["amenity1", "amenity2", "amenity3"],
+            "features": ["feature1", "feature2", "feature3"],
+            "confidence": "high|medium|low"
+          }
+          
+          Guidelines:
+          - Make realistic estimates based on the location and area
+          - Include 3-5 relevant amenities from: ["Washer/Dryer", "Air Conditioning", "Parking", "Dishwasher", "Pet Friendly", "Gym", "Pool", "Balcony", "Garden", "Fireplace"]
+          - Include 3-5 appealing features
+          - Set confidence to "medium" since this is AI-generated without direct property inspection
+          - Ensure all fields are filled with appropriate data
+          - Make the title and description appealing but realistic`
         }
       ],
       max_tokens: 1000,
@@ -120,7 +59,7 @@ export async function POST(request: NextRequest) {
     const aiResponse = response.choices[0]?.message?.content
     
     if (!aiResponse) {
-      return NextResponse.json({ error: 'No response from AI' }, { status: 500 })
+      throw new Error('No response from AI')
     }
 
     // Try to parse JSON response
@@ -137,20 +76,42 @@ export async function POST(request: NextRequest) {
       console.error('Error parsing AI response:', parseError)
       console.error('Raw AI response:', aiResponse)
       
-      // Fallback: create a basic response
+      // Fallback: create a basic response using the address
+      const cityState = address.split(',').slice(-2).join(',').trim()
       propertyData = {
-        title: `Property at ${address}`,
-        description: 'Beautiful property in a great location with modern amenities and comfortable living spaces.',
+        title: `Beautiful Property in ${cityState}`,
+        description: `This well-maintained property offers comfortable living in a desirable location. Features modern amenities and is conveniently located near local attractions, shopping, and dining. Perfect for those seeking quality housing in ${cityState}.`,
         bedrooms: 3,
         bathrooms: 2,
         sqft: 1200,
         propertyType: 'House',
         estimatedRent: 2500,
-        amenities: ['Parking', 'Laundry'],
-        features: ['Modern Kitchen', 'Spacious Rooms'],
+        amenities: ['Parking', 'Air Conditioning', 'Washer/Dryer'],
+        features: ['Modern Kitchen', 'Spacious Rooms', 'Updated Fixtures'],
         confidence: 'low'
       }
     }
+
+    // Validate required fields
+    const requiredFields = ['title', 'description', 'bedrooms', 'bathrooms', 'sqft', 'propertyType', 'estimatedRent']
+    const missingFields = requiredFields.filter(field => !propertyData[field])
+    
+    if (missingFields.length > 0) {
+      console.error('Missing required fields:', missingFields)
+      // Fill in missing fields with defaults
+      if (!propertyData.title) propertyData.title = `Property at ${address}`
+      if (!propertyData.description) propertyData.description = 'Beautiful property in a great location with modern amenities.'
+      if (!propertyData.bedrooms) propertyData.bedrooms = 3
+      if (!propertyData.bathrooms) propertyData.bathrooms = 2
+      if (!propertyData.sqft) propertyData.sqft = 1200
+      if (!propertyData.propertyType) propertyData.propertyType = 'House'
+      if (!propertyData.estimatedRent) propertyData.estimatedRent = 2500
+    }
+
+    // Ensure arrays exist
+    if (!propertyData.amenities) propertyData.amenities = ['Parking', 'Air Conditioning']
+    if (!propertyData.features) propertyData.features = ['Modern Kitchen', 'Spacious Rooms']
+    if (!propertyData.confidence) propertyData.confidence = 'medium'
 
     console.log('Generated property data:', propertyData)
 
@@ -161,9 +122,21 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Error in generate-listing API:', error)
+    
+    // Return detailed error information for debugging
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    const errorStack = error instanceof Error ? error.stack : undefined
+    
+    console.error('Error details:', {
+      message: errorMessage,
+      stack: errorStack,
+      timestamp: new Date().toISOString()
+    })
+    
     return NextResponse.json({ 
       error: 'Failed to generate listing', 
-      details: error instanceof Error ? error.message : 'Unknown error'
+      details: errorMessage,
+      timestamp: new Date().toISOString()
     }, { status: 500 })
   }
 }
