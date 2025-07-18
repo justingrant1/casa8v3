@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
-import { supabase } from '@/lib/supabase'
+import { createProperty } from '@/lib/property-management'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -209,36 +209,7 @@ export default function ListPropertyPage() {
     setError(null)
 
     try {
-      // 1. Upload images to Supabase Storage
-      const imageUrls: string[] = []
-      for (const image of images) {
-        const { data, error } = await supabase.storage
-          .from('property-images')
-          .upload(`${user.id}/${Date.now()}_${image.name}`, image)
-
-        if (error) throw error
-        
-        const { data: { publicUrl } } = supabase.storage.from('property-images').getPublicUrl(data.path)
-        imageUrls.push(publicUrl)
-      }
-
-      // 2. Videos are already uploaded URLs from VideoUpload component
-      const videoUrls: string[] = videos
-
-      // 3. Fetch the user's profile to get the correct landlord_id
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('id', user.id)
-        .single()
-
-      if (profileError || !profile) {
-        throw new Error('Could not find a landlord profile for the current user.')
-      }
-
-      // 4. Insert property data into the database
-      const { error: dbError } = await supabase.from('properties').insert({
-        landlord_id: profile.id,
+      const propertyData = {
         title,
         description,
         price: parseFloat(price),
@@ -253,11 +224,9 @@ export default function ListPropertyPage() {
         bathrooms: parseFloat(bathrooms),
         sqft: parseInt(sqft),
         amenities,
-        images: imageUrls,
-        videos: videoUrls,
-      })
+      }
 
-      if (dbError) throw dbError
+      await createProperty(propertyData, images, videos, user)
 
       router.push('/dashboard')
     } catch (error: any) {

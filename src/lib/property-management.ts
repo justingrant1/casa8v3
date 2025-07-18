@@ -1,9 +1,58 @@
 import { supabase } from './supabase'
-import { Database } from './database.types'
+import { Profile } from './database.types'
 
-type Property = Database['public']['Tables']['properties']['Row']
+export const createProperty = async (
+  propertyData: any,
+  images: File[],
+  videos: string[],
+  user: any
+) => {
+  // 1. Upload images to Supabase Storage
+  const imageUrls: string[] = []
+  for (const image of images) {
+    const { data, error } = await supabase.storage
+      .from('property-images')
+      .upload(`${user.id}/${Date.now()}_${image.name}`, image)
 
-export async function getLandlordProperties(landlordId: string): Promise<Property[]> {
+    if (error) throw error
+
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from('property-images').getPublicUrl(data.path)
+    imageUrls.push(publicUrl)
+  }
+
+  // 2. Videos are already uploaded URLs from VideoUpload component
+  const videoUrls: string[] = videos
+
+  // 3. Fetch the user's profile to get the correct landlord_id
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('id', user.id)
+    .single()
+
+  if (profileError || !profile) {
+    throw new Error('Could not find a landlord profile for the current user.')
+  }
+
+  // 4. Insert property data into the database
+  const { error: dbError } = await supabase.from('properties').insert({
+    ...propertyData,
+    landlord_id: profile.id,
+    images: imageUrls,
+    videos: videoUrls,
+  })
+
+  if (dbError) throw dbError
+}
+
+export async function getLandlordProperties(landlordId: string) {
+  if (!landlordId) {
+    console.error('No landlord ID provided to getLandlordProperties')
+    return []
+  }
+
   try {
     const { data, error } = await supabase
       .from('properties')
@@ -23,49 +72,21 @@ export async function getLandlordProperties(landlordId: string): Promise<Propert
   }
 }
 
-export async function deleteProperty(propertyId: string, landlordId: string): Promise<void> {
+export async function deleteProperty(propertyId: string, landlordId: string) {
+  if (!propertyId || !landlordId) {
+    throw new Error('Property ID and Landlord ID are required to delete a property.')
+  }
+
   try {
-    // First, verify the property belongs to the landlord
-    const { data: property, error: fetchError } = await supabase
-      .from('properties')
-      .select('landlord_id')
-      .eq('id', propertyId)
-      .single()
-
-    if (fetchError) {
-      console.error('Error fetching property:', fetchError)
-      throw fetchError
-    }
-
-    if (!property || property.landlord_id !== landlordId) {
-      throw new Error('Property not found or unauthorized')
-    }
-
-    // Delete related records first
-    await supabase
-      .from('applications')
-      .delete()
-      .eq('property_id', propertyId)
-
-    await supabase
-      .from('favorites')
-      .delete()
-      .eq('property_id', propertyId)
-
-    await supabase
-      .from('messages')
-      .delete()
-      .eq('property_id', propertyId)
-
-    // Finally, delete the property
-    const { error: deleteError } = await supabase
+    const { error } = await supabase
       .from('properties')
       .delete()
       .eq('id', propertyId)
+      .eq('landlord_id', landlordId)
 
-    if (deleteError) {
-      console.error('Error deleting property:', deleteError)
-      throw deleteError
+    if (error) {
+      console.error('Error deleting property:', error)
+      throw error
     }
   } catch (error) {
     console.error('Error in deleteProperty:', error)
@@ -73,115 +94,24 @@ export async function deleteProperty(propertyId: string, landlordId: string): Pr
   }
 }
 
-export async function updatePropertyStatus(
-  propertyId: string, 
-  landlordId: string, 
-  available: boolean
-): Promise<void> {
+export async function updatePropertyStatus(propertyId: string, landlordId: string, is_active: boolean) {
+  if (!propertyId || !landlordId) {
+    throw new Error('Property ID and Landlord ID are required to update status.')
+  }
+
   try {
-    // First, verify the property belongs to the landlord
-    const { data: property, error: fetchError } = await supabase
+    const { error } = await supabase
       .from('properties')
-      .select('landlord_id')
+      .update({ is_active })
       .eq('id', propertyId)
-      .single()
+      .eq('landlord_id', landlordId)
 
-    if (fetchError) {
-      console.error('Error fetching property:', fetchError)
-      throw fetchError
-    }
-
-    if (!property || property.landlord_id !== landlordId) {
-      throw new Error('Property not found or unauthorized')
-    }
-
-    // Update the property status
-    const { error: updateError } = await supabase
-      .from('properties')
-      .update({ available, updated_at: new Date().toISOString() })
-      .eq('id', propertyId)
-
-    if (updateError) {
-      console.error('Error updating property status:', updateError)
-      throw updateError
+    if (error) {
+      console.error('Error updating property status:', error)
+      throw error
     }
   } catch (error) {
     console.error('Error in updatePropertyStatus:', error)
-    throw error
-  }
-}
-
-export async function getPropertyApplications(propertyId: string): Promise<any[]> {
-  try {
-    const { data, error } = await supabase
-      .from('applications')
-      .select(`
-        *,
-        tenant:profiles!tenant_id (
-          id,
-          full_name,
-          email,
-          phone
-        )
-      `)
-      .eq('property_id', propertyId)
-      .order('created_at', { ascending: false })
-
-    if (error) {
-      console.error('Error fetching property applications:', error)
-      throw error
-    }
-
-    return data || []
-  } catch (error) {
-    console.error('Error in getPropertyApplications:', error)
-    throw error
-  }
-}
-
-export async function getPropertyStats(landlordId: string): Promise<{
-  totalProperties: number
-  activeProperties: number
-  totalApplications: number
-  pendingApplications: number
-}> {
-  try {
-    // Get property stats
-    const { data: properties, error: propError } = await supabase
-      .from('properties')
-      .select('id, available')
-      .eq('landlord_id', landlordId)
-
-    if (propError) {
-      console.error('Error fetching property stats:', propError)
-      throw propError
-    }
-
-    const totalProperties = properties?.length || 0
-    const activeProperties = properties?.filter(p => p.available).length || 0
-
-    // Get application stats
-    const { data: applications, error: appError } = await supabase
-      .from('applications')
-      .select('status, property_id')
-      .in('property_id', properties?.map(p => p.id) || [])
-
-    if (appError) {
-      console.error('Error fetching application stats:', appError)
-      throw appError
-    }
-
-    const totalApplications = applications?.length || 0
-    const pendingApplications = applications?.filter(a => a.status === 'pending').length || 0
-
-    return {
-      totalProperties,
-      activeProperties,
-      totalApplications,
-      pendingApplications
-    }
-  } catch (error) {
-    console.error('Error in getPropertyStats:', error)
     throw error
   }
 }
