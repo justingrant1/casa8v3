@@ -36,8 +36,8 @@ https://www.casa8.com
 #### Redirect URLs
 Add these **Redirect URLs**:
 ```
-https://www.casa8.com/auth/callback
-http://localhost:3000/auth/callback
+https://www.casa8.com/reset-password
+http://localhost:3000/reset-password
 ```
 
 ### 2. Environment Variables
