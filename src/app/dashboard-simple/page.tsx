@@ -581,34 +581,74 @@ export default function SimpleDashboard() {
                 {landlordProperties.map((property) => (
                   <Card key={property.id} className="hover:shadow-md transition-shadow">
                     <CardContent className="p-4 md:p-6">
-                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        {/* Property Info */}
-                        <div className="flex-1 space-y-2">
-                          <div className="flex flex-col md:flex-row md:items-start md:justify-between">
-                            <div className="space-y-1">
-                              <h3 className="font-semibold text-lg md:text-xl text-gray-900 line-clamp-1">
-                                {property.title}
-                              </h3>
-                              <p className="text-sm md:text-base text-gray-600 line-clamp-2">
-                                {property.address}, {property.city}, {property.state}
-                              </p>
+                      <div className="flex flex-col md:flex-row gap-4">
+                        {/* Property Image */}
+                        <div className="flex-shrink-0">
+                          <div className="w-full h-48 md:w-48 md:h-32 bg-gray-200 rounded-lg overflow-hidden">
+                            {property.images && property.images.length > 0 ? (
+                              <img
+                                src={property.images[0]}
+                                alt={property.title}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-gray-400">
+                                <div className="text-center">
+                                  <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                  </svg>
+                                  <p className="text-sm">No image</p>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex-1 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                          {/* Property Info */}
+                          <div className="flex-1 space-y-2">
+                            <div className="flex flex-col md:flex-row md:items-start md:justify-between">
+                              <div className="space-y-1">
+                                <h3 className="font-semibold text-lg md:text-xl text-gray-900 line-clamp-1">
+                                  {property.title}
+                                </h3>
+                                <p className="text-sm md:text-base text-gray-600 line-clamp-2">
+                                  {property.address}, {property.city}, {property.state}
+                                </p>
+                              </div>
+                              <div className="mt-2 md:mt-0 md:ml-4">
+                                <p className="text-xl md:text-2xl font-bold text-gray-900">
+                                  ${property.price}
+                                  <span className="text-sm md:text-base font-normal text-gray-500">/month</span>
+                                </p>
+                              </div>
                             </div>
-                            <div className="mt-2 md:mt-0 md:ml-4">
-                              <p className="text-xl md:text-2xl font-bold text-gray-900">
-                                ${property.price}
-                                <span className="text-sm md:text-base font-normal text-gray-500">/month</span>
-                              </p>
+
+                            {/* Mobile Status */}
+                            <div className="flex items-center justify-between md:hidden">
+                              <span className="text-sm font-medium text-gray-700">Status:</span>
+                              <Select
+                                value={propertyStatuses[property.id]}
+                                onValueChange={(value: string) => handleStatusChange(property.id, value)}
+                              >
+                                <SelectTrigger className="w-24 h-8">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="active">Active</SelectItem>
+                                  <SelectItem value="inactive">Inactive</SelectItem>
+                                </SelectContent>
+                              </Select>
                             </div>
                           </div>
 
-                          {/* Mobile Status */}
-                          <div className="flex items-center justify-between md:hidden">
-                            <span className="text-sm font-medium text-gray-700">Status:</span>
+                          {/* Desktop Status & Actions */}
+                          <div className="hidden md:flex md:items-center md:space-x-4">
                             <Select
                               value={propertyStatuses[property.id]}
                               onValueChange={(value: string) => handleStatusChange(property.id, value)}
                             >
-                              <SelectTrigger className="w-24 h-8">
+                              <SelectTrigger className="w-32">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -616,61 +656,45 @@ export default function SimpleDashboard() {
                                 <SelectItem value="inactive">Inactive</SelectItem>
                               </SelectContent>
                             </Select>
-                          </div>
-                        </div>
 
-                        {/* Desktop Status & Actions */}
-                        <div className="hidden md:flex md:items-center md:space-x-4">
-                          <Select
-                            value={propertyStatuses[property.id]}
-                            onValueChange={(value: string) => handleStatusChange(property.id, value)}
-                          >
-                            <SelectTrigger className="w-32">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="active">Active</SelectItem>
-                              <SelectItem value="inactive">Inactive</SelectItem>
-                            </SelectContent>
-                          </Select>
-
-                          <div className="flex items-center space-x-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-9 w-9 text-gray-600 hover:text-gray-900"
-                              onClick={() => handleEdit(property.id)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-9 w-9 text-red-600 hover:text-red-700 hover:bg-red-50"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Delete Property</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Are you sure you want to delete "{property.title}"? This action cannot be undone and will remove all associated images and data.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => handleDelete(property.id)}
-                                    className="bg-red-600 hover:bg-red-700"
+                            <div className="flex items-center space-x-2">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-9 w-9 text-gray-600 hover:text-gray-900"
+                                onClick={() => handleEdit(property.id)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-9 w-9 text-red-600 hover:text-red-700 hover:bg-red-50"
                                   >
-                                    Delete Property
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Delete Property</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Are you sure you want to delete "{property.title}"? This action cannot be undone and will remove all associated images and data.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => handleDelete(property.id)}
+                                      className="bg-red-600 hover:bg-red-700"
+                                    >
+                                      Delete Property
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
                           </div>
                         </div>
 
