@@ -44,8 +44,6 @@ export async function middleware(req: NextRequest) {
 
   // Handle other Supabase auth redirects
   if (req.nextUrl.pathname.startsWith('/auth/')) {
-    const { data: { session } } = await supabase.auth.getSession()
-    
     // Handle password recovery flow
     if (req.nextUrl.searchParams.get('type') === 'recovery') {
       const redirectUrl = new URL('/reset-password', req.url)

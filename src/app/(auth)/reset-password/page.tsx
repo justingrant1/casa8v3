@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import Link from 'next/link'
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [message, setMessage] = useState<string | null>(null)
@@ -31,7 +31,7 @@ export default function ResetPasswordPage() {
       supabase.auth.setSession({
         access_token: accessToken,
         refresh_token: refreshToken,
-      }).then(({ data, error }) => {
+      }).then(({ error }) => {
         if (error) {
           setError('Invalid or expired reset link. Please request a new password reset.')
           setIsValidSession(false)
@@ -53,7 +53,7 @@ export default function ResetPasswordPage() {
       })
     }
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'PASSWORD_RECOVERY') {
         setIsValidSession(true)
         setIsCheckingSession(false)
@@ -189,5 +189,26 @@ export default function ResetPasswordPage() {
         </CardFooter>
       </Card>
     </div>
+  )
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <Card className="w-full max-w-md">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+            <p className="text-center mt-4 text-sm text-gray-600">
+              Loading...
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    }>
+      <ResetPasswordForm />
+    </Suspense>
   )
 }

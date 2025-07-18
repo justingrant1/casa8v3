@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import sharp from 'sharp'
 
+// Force the route to be dynamic
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
+    const { searchParams } = request.nextUrl
     const imageUrl = searchParams.get('url')
 
     if (!imageUrl) {
