@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { useAuthSimple } from '@/hooks/use-auth-simple'
+import { useAuth } from '@/lib/auth'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -15,7 +15,7 @@ interface GoogleSignupCompleteProps {
 }
 
 export function GoogleSignupComplete({ onComplete }: GoogleSignupCompleteProps) {
-  const { user, profile } = useAuthSimple()
+  const { user, profile } = useAuth()
   const router = useRouter()
   const [phone, setPhone] = useState('')
   const [loading, setLoading] = useState(false)
