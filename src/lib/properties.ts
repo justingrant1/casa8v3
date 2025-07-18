@@ -325,16 +325,29 @@ export function formatPropertyForFrontend(property: any) {
     lng: lng
   } : null
 
+  // Defensively clean address fields to remove any stray JSON
+  const cleanAddressField = (field: any) => {
+    if (typeof field !== 'string') return field
+    const jsonIndex = field.indexOf('{')
+    return jsonIndex === -1 ? field : field.substring(0, jsonIndex).trim().replace(/,$/, '')
+  }
+
+  const cleanedAddress = cleanAddressField(combined.address)
+  const cleanedCity = cleanAddressField(combined.city)
+  const cleanedState = cleanAddressField(combined.state)
+  const cleanedZip = cleanAddressField(combined.zip_code)
+
   return {
     id: combined.id,
     title: combined.title,
     description: cleanDescription,
     price: combined.price,
     type: combined.property_type,
-    location: `${combined.address}${combined.city ? `, ${combined.city}` : ''}${combined.state ? `, ${combined.state}` : ''}`,
-    address: combined.address,
-    city: combined.city,
-    state: combined.state,
+    location: `${cleanedAddress}${cleanedCity ? `, ${cleanedCity}` : ''}${cleanedState ? `, ${cleanedState}` : ''}`,
+    address: cleanedAddress,
+    city: cleanedCity,
+    state: cleanedState,
+    zip_code: cleanedZip,
     bedrooms: combined.bedrooms,
     bathrooms: combined.bathrooms,
     sqft: combined.sqft || 1200, // Default square footage
