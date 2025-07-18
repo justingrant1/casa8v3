@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Calendar, DollarSign, MapPin, User, Mail, Phone, FileText, Building } from 'lucide-react'
+import { Calendar, DollarSign, MapPin, User, Mail, Phone, FileText, Building, CreditCard } from 'lucide-react'
 
 interface ApplicationDetailsModalProps {
   isOpen: boolean
@@ -111,6 +111,54 @@ export function ApplicationDetailsModal({ isOpen, onClose, application }: Applic
               </div>
             </CardContent>
           </Card>
+
+          {/* Voucher Information */}
+          {(application.has_section8_voucher !== undefined) && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CreditCard className="h-5 w-5" />
+                  Section 8 Voucher Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1">
+                      <div className="font-medium">Section 8 Voucher Status</div>
+                      <div className="flex items-center gap-2 mt-1">
+                        {application.has_section8_voucher ? (
+                          <Badge className="bg-green-100 text-green-800">
+                            Has Section 8 Voucher
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-gray-100 text-gray-800">
+                            No Section 8 Voucher
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                    {application.has_section8_voucher && application.voucher_bedroom_count && (
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-primary">
+                          {application.voucher_bedroom_count}
+                        </div>
+                        <div className="text-sm text-gray-500">Voucher Size</div>
+                      </div>
+                    )}
+                  </div>
+                  {application.has_section8_voucher && application.voucher_bedroom_count && (
+                    <div className="bg-blue-50 p-3 rounded-lg">
+                      <p className="text-sm text-blue-800">
+                        <strong>Voucher Coverage:</strong> This tenant has a Section 8 voucher that covers up to {application.voucher_bedroom_count} bedroom{application.voucher_bedroom_count > 1 ? 's' : ''}. 
+                        The voucher will typically cover a portion of the rent, with the tenant responsible for the remaining amount.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Property Information */}
           {application.properties && (

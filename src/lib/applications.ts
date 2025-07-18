@@ -13,6 +13,8 @@ export interface Application {
   tenant_name: string
   tenant_email: string
   tenant_phone?: string
+  has_section8_voucher?: boolean
+  voucher_bedroom_count?: number
   properties?: {
     id: string
     title: string
@@ -95,6 +97,8 @@ export async function getApplicationsForLandlord(landlordId: string): Promise<Ap
         tenant_name: tenantName,
         tenant_email: app.tenant_email || 'Unknown',
         tenant_phone: app.tenant_phone,
+        has_section8_voucher: app.has_section8_voucher,
+        voucher_bedroom_count: app.voucher_bedroom_count,
         properties: app.properties
       }
     })
@@ -197,7 +201,19 @@ export async function submitApplication(applicationData: {
       throw new Error('You have already applied to this property')
     }
 
-    // Create the insert object
+    // Fetch tenant's voucher information from their profile
+    const { data: tenantProfile, error: profileError } = await supabase
+      .from('profiles')
+      .select('has_section8_voucher, voucher_bedroom_count')
+      .eq('id', applicationData.tenant_id)
+      .single()
+
+    if (profileError) {
+      console.error('Error fetching tenant profile:', profileError)
+      // Don't throw error here, just continue without voucher info
+    }
+
+    // Create the insert object with voucher information
     const insertData = {
       property_id: applicationData.property_id,
       tenant_id: applicationData.tenant_id,
@@ -206,7 +222,9 @@ export async function submitApplication(applicationData: {
       tenant_first_name: applicationData.tenant_first_name,
       tenant_last_name: applicationData.tenant_last_name,
       tenant_email: applicationData.tenant_email,
-      tenant_phone: applicationData.tenant_phone
+      tenant_phone: applicationData.tenant_phone,
+      has_section8_voucher: tenantProfile?.has_section8_voucher || false,
+      voucher_bedroom_count: tenantProfile?.voucher_bedroom_count || null
     }
 
     console.log('=== Data being inserted into database ===')

@@ -146,6 +146,12 @@ export interface Database {
           move_in_date: string | null
           created_at: string
           updated_at: string
+          tenant_first_name: string | null
+          tenant_last_name: string | null
+          tenant_email: string | null
+          tenant_phone: string | null
+          has_section8_voucher: boolean | null
+          voucher_bedroom_count: number | null
         }
         Insert: {
           id?: string
@@ -156,6 +162,12 @@ export interface Database {
           move_in_date?: string | null
           created_at?: string
           updated_at?: string
+          tenant_first_name?: string | null
+          tenant_last_name?: string | null
+          tenant_email?: string | null
+          tenant_phone?: string | null
+          has_section8_voucher?: boolean | null
+          voucher_bedroom_count?: number | null
         }
         Update: {
           id?: string
@@ -166,6 +178,12 @@ export interface Database {
           move_in_date?: string | null
           created_at?: string
           updated_at?: string
+          tenant_first_name?: string | null
+          tenant_last_name?: string | null
+          tenant_email?: string | null
+          tenant_phone?: string | null
+          has_section8_voucher?: boolean | null
+          voucher_bedroom_count?: number | null
         }
       }
       favorites: {
