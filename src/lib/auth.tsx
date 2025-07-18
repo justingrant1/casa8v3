@@ -27,31 +27,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Get initial session
+    // Get initial session with refresh for production domain sync
     const getInitialSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      setUser(session?.user ?? null)
-      setLoading(false) // Set loading to false as soon as we know the user state
-      
-      if (session?.user) {
-        // Fetch profile in background without blocking loading state
-        fetchProfile(session.user.id)
+      try {
+        // First try to refresh session to ensure sync with server
+        const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession()
+        
+        let session = null
+        if (!refreshError && refreshData?.session) {
+          session = refreshData.session
+        } else {
+          // Fallback to getSession if refresh fails
+          const { data: sessionData } = await supabase.auth.getSession()
+          session = sessionData?.session
+        }
+        
+        setUser(session?.user ?? null)
+        setLoading(false)
+        
+        if (session?.user) {
+          fetchProfile(session.user.id)
+        }
+      } catch (error) {
+        console.error('Error getting initial session:', error)
+        setLoading(false)
       }
     }
 
     getInitialSession()
 
-    // Listen for auth changes
+    // Listen for auth changes with enhanced session handling
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state change:', event, session?.user?.id)
+        
         setUser(session?.user ?? null)
-        setLoading(false) // Set loading to false as soon as we know the user state
+        setLoading(false)
         
         if (session?.user) {
-          // Fetch profile in background without blocking loading state
           fetchProfile(session.user.id)
         } else {
           setProfile(null)
+        }
+        
+        // Force a hard refresh on sign out to clear any stale state
+        if (event === 'SIGNED_OUT') {
+          window.location.href = '/'
         }
       }
     )

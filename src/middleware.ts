@@ -26,12 +26,32 @@ export async function middleware(req: NextRequest) {
   const supabase = createMiddlewareClient({ req, res })
 
   try {
-    // Get current session
-    const { data: { session }, error } = await supabase.auth.getSession()
-    
-    if (error) {
-      console.error('Middleware auth error:', error)
-      // Continue with unauthenticated flow
+    // First, try to refresh the session to ensure we have the latest tokens
+    let session = null
+    let sessionError = null
+
+    try {
+      // Try to refresh the session first - this is crucial for production domains
+      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession()
+      
+      if (!refreshError && refreshData?.session) {
+        session = refreshData.session
+      } else {
+        // Fallback to getSession if refresh fails
+        const { data: sessionData, error: getSessionError } = await supabase.auth.getSession()
+        session = sessionData?.session
+        sessionError = getSessionError
+      }
+    } catch (authError) {
+      console.error('Middleware session refresh error:', authError)
+      // Try getSession as fallback
+      const { data: sessionData, error: getSessionError } = await supabase.auth.getSession()
+      session = sessionData?.session
+      sessionError = getSessionError
+    }
+
+    if (sessionError) {
+      console.error('Middleware auth error:', sessionError)
     }
 
     const pathname = req.nextUrl.pathname
