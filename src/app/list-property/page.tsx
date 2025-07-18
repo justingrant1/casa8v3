@@ -111,6 +111,10 @@ function ListPropertyPageContent() {
       loadPropertyData(propertyId)
     } else {
       setLoading(false)
+      // Ensure default amenities are set for new properties
+      if (!isEditMode) {
+        dispatch({ type: 'SET_FIELD', field: 'amenities', value: ['Central Air Conditioning', 'Refrigerator', 'Stove'] })
+      }
     }
   }, [searchParams, user, profile])
 
@@ -289,7 +293,7 @@ function ListPropertyPageContent() {
             sqft: data.sqft.toString(),
             propertyType: data.propertyType,
             price: data.price.toString(),
-            amenities: data.amenities,
+            // Don't override amenities - keep the defaults
           },
         })
       }

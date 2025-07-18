@@ -44,6 +44,12 @@ function SearchPageContent() {
   const [showFilters, setShowFilters] = useState(false)
   const [sortBy, setSortBy] = useState('price_asc')
 
+  // Listen for URL parameter changes and update view mode
+  useEffect(() => {
+    const currentView = searchParams.get('view') === 'map' ? 'map' : 'list'
+    setViewMode(currentView)
+  }, [searchParams])
+
   useEffect(() => {
     const fetchProperties = async () => {
       setLoading(true)

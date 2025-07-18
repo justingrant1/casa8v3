@@ -5,10 +5,12 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { LocationSearch } from '@/components/location-search'
 import { Search, Map } from 'lucide-react'
 
 function SearchFormContent() {
   const [location, setLocation] = useState('')
+  const [searchLocation, setSearchLocation] = useState<any>(null)
   const [bedrooms, setBedrooms] = useState('any')
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -21,22 +23,55 @@ function SearchFormContent() {
     setBedrooms(currentBedrooms)
   }, [searchParams])
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    const query = new URLSearchParams({
-      location,
-      bedrooms,
-    }).toString()
-    router.push(`/search?${query}`)
+  const handleLocationSelect = (locationData: any) => {
+    setSearchLocation(locationData)
+    // Update the location string for display
+    setLocation(`${locationData.city}, ${locationData.state}`)
+  }
+
+  const handleSearch = (e?: React.FormEvent) => {
+    if (e) e.preventDefault()
+    
+    const searchParams = new URLSearchParams()
+    
+    if (searchLocation) {
+      if (searchLocation.city) searchParams.append('city', searchLocation.city)
+      if (searchLocation.state) searchParams.append('state', searchLocation.state)
+      if (searchLocation.coordinates) {
+        searchParams.append('lat', searchLocation.coordinates.lat.toString())
+        searchParams.append('lng', searchLocation.coordinates.lng.toString())
+      }
+    } else if (location) {
+      searchParams.append('location', location)
+    }
+
+    if (bedrooms !== 'any') {
+      searchParams.append('bedrooms', bedrooms)
+    }
+
+    router.push(`/search?${searchParams.toString()}`)
   }
 
   const handleMapView = () => {
-    const query = new URLSearchParams({
-      location,
-      bedrooms,
-      view: 'map',
-    }).toString()
-    router.push(`/search?${query}`)
+    const searchParams = new URLSearchParams()
+    
+    if (searchLocation) {
+      if (searchLocation.city) searchParams.append('city', searchLocation.city)
+      if (searchLocation.state) searchParams.append('state', searchLocation.state)
+      if (searchLocation.coordinates) {
+        searchParams.append('lat', searchLocation.coordinates.lat.toString())
+        searchParams.append('lng', searchLocation.coordinates.lng.toString())
+      }
+    } else if (location) {
+      searchParams.append('location', location)
+    }
+
+    if (bedrooms !== 'any') {
+      searchParams.append('bedrooms', bedrooms)
+    }
+
+    searchParams.append('view', 'map')
+    router.push(`/search?${searchParams.toString()}`)
   }
 
   return (
@@ -45,12 +80,11 @@ function SearchFormContent() {
         <h2 className="text-3xl font-bold mb-6">Find Your Perfect Home</h2>
       </div>
       <form onSubmit={handleSearch} className="space-y-4 px-6">
-        <Input
-          type="text"
+        <LocationSearch
           placeholder="Enter city, neighborhood, or ZIP code..."
           value={location}
-          onChange={(e) => setLocation(e.target.value)}
-          className="w-full text-base h-12"
+          onLocationSelect={handleLocationSelect}
+          className="w-full"
         />
         <Select value={bedrooms} onValueChange={setBedrooms}>
           <SelectTrigger className="h-12 text-base">
