@@ -86,9 +86,11 @@ export function PropertyCard({ property }: PropertyCardProps) {
             images={getImageUrls(property.images)}
             propertyTitle={property.title}
           />
-          <Badge variant="secondary" className="absolute top-4 left-4 bg-white/80 backdrop-blur-sm">
-            {property.type}
-          </Badge>
+          {property.type && (
+            <Badge variant="secondary" className="absolute top-4 left-4 bg-white/80 backdrop-blur-sm">
+              {property.type}
+            </Badge>
+          )}
           <Button
             size="icon"
             variant="secondary"
