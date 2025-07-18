@@ -28,6 +28,33 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
   const [showApplicationModal, setShowApplicationModal] = useState(false)
   const [showContactModal, setShowContactModal] = useState(false)
 
+  const parsePropertyData = (rawProperty: any) => {
+    // Check if description contains JSON data
+    if (typeof rawProperty.description === 'string' && rawProperty.description.includes('"title"')) {
+      try {
+        const parsedData = JSON.parse(rawProperty.description)
+        return {
+          ...rawProperty,
+          title: parsedData.title || rawProperty.title,
+          description: parsedData.description || 'No description available',
+          price: parsedData.price || rawProperty.price,
+          bedrooms: parsedData.bedrooms || rawProperty.bedrooms,
+          bathrooms: parsedData.bathrooms || rawProperty.bathrooms,
+          sqft: rawProperty.sqft || 1400,
+          address: parsedData.fullAddress?.split(',')[0] || rawProperty.address,
+          city: parsedData.city || rawProperty.city,
+          state: parsedData.state || rawProperty.state,
+          zip_code: parsedData.zipCode || rawProperty.zip_code,
+          amenities: parsedData.amenities || rawProperty.amenities || []
+        }
+      } catch (e) {
+        console.error('Error parsing property JSON:', e)
+        return rawProperty
+      }
+    }
+    return rawProperty
+  }
+
   const fetchProperty = useCallback(async () => {
     if (!propertyId) {
       setLoading(false)
@@ -48,14 +75,15 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
     try {
       const data = await getPropertyById(propertyId)
       clearTimeout(timeoutId)
-      console.log('Property data received:', data)
-      console.log('Landlord profile data:', (data as any)?.profiles)
+      console.log('Raw property data received:', data)
       
       if (!data) {
         setError("Property not found.")
         setProperty(null)
       } else {
-        setProperty(data)
+        const parsedProperty = parsePropertyData(data)
+        console.log('Parsed property data:', parsedProperty)
+        setProperty(parsedProperty)
       }
     } catch (err: any) {
       clearTimeout(timeoutId)
