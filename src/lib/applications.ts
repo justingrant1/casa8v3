@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import { Database } from './database.types'
+import { formatPropertyForFrontend } from './properties'
 
 export interface Application {
   id: string
@@ -15,16 +16,7 @@ export interface Application {
   tenant_phone?: string
   has_section8_voucher?: boolean
   voucher_bedroom_count?: number
-  properties?: {
-    id: string
-    title: string
-    address: string
-    city?: string
-    state?: string
-    price: number
-    bedrooms: number
-    bathrooms: number
-  }
+  properties?: any
 }
 
 export async function getApplicationsForLandlord(landlordId: string): Promise<Application[]> {
@@ -85,6 +77,9 @@ export async function getApplicationsForLandlord(landlordId: string): Promise<Ap
         ? `${app.tenant_first_name} ${app.tenant_last_name}`.trim()
         : app.tenant_email || 'Unknown'
       
+      // Apply formatPropertyForFrontend to clean up the properties data
+      const cleanedProperties = app.properties ? formatPropertyForFrontend(app.properties) : null
+      
       return {
         id: app.id,
         property_id: app.property_id,
@@ -99,7 +94,7 @@ export async function getApplicationsForLandlord(landlordId: string): Promise<Ap
         tenant_phone: app.tenant_phone,
         has_section8_voucher: app.has_section8_voucher,
         voucher_bedroom_count: app.voucher_bedroom_count,
-        properties: app.properties
+        properties: cleanedProperties
       }
     })
     
