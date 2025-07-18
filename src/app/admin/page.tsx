@@ -81,15 +81,23 @@ export default function AdminDashboard() {
 
   // Check if user is admin
   useEffect(() => {
+    // Add debugging
+    console.log('Admin page debug:', {
+      authLoading,
+      user: user ? { id: user.id, email: user.email } : null,
+      profile: profile ? { id: profile.id, email: profile.email, role: profile.role } : null
+    })
+
     if (!authLoading && !user) {
       router.push("/login")
       return
     }
 
     if (!authLoading && user && profile?.role !== 'admin') {
+      console.log('Access denied - profile role:', profile?.role)
       toast({
         title: "Access Denied",
-        description: "This page is only accessible to administrators",
+        description: `This page is only accessible to administrators. Your role: ${profile?.role || 'undefined'}`,
         variant: "destructive"
       })
       router.push("/")
@@ -97,6 +105,7 @@ export default function AdminDashboard() {
     }
 
     if (user && profile?.role === 'admin') {
+      console.log('Admin access granted')
       fetchAdminData()
     }
   }, [user, profile, authLoading])
