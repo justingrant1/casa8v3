@@ -52,7 +52,7 @@ function RegisterForm() {
     } else {
       // Redirect based on role
       if (formData.role === "landlord") {
-        router.push("/dashboard")
+        router.push("/dashboard-simple")
       } else {
         router.push("/")
       }

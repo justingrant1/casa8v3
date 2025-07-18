@@ -156,7 +156,7 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
       })
 
       // Redirect to dashboard or applications page
-      router.push('/dashboard')
+      router.push('/dashboard-simple')
     } catch (error: any) {
       console.error('Error submitting application:', error)
       setError(error.message || 'Failed to submit application. Please try again.')

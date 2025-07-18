@@ -548,7 +548,7 @@ export default function HomePage() {
               <h3 className="font-bold text-gray-900 mb-6 text-lg">For Landlords</h3>
               <ul className="space-y-4 text-gray-600">
                 <li>
-                  <Link href="/dashboard" className="hover:text-primary transition-colors">
+                  <Link href="/dashboard-simple" className="hover:text-primary transition-colors">
                     Dashboard
                   </Link>
                 </li>

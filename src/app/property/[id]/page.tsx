@@ -223,7 +223,7 @@ export default function PropertyDetailsPage({ params }: { params: { id: string }
         onClose={() => setShowApplicationModal(false)}
         onSuccess={() => {
           // Optionally redirect to dashboard or show success message
-          router.push('/dashboard')
+          router.push('/dashboard-simple')
         }}
       />
 

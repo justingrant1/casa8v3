@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef, useReducer } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/lib/auth'
+import { useAuthSimple } from '@/hooks/use-auth-simple'
+import { useToast } from '@/hooks/use-toast-simple'
 import { createProperty } from '@/lib/property-management'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -56,7 +57,7 @@ function reducer(state: any, action: any) {
 }
 
 export default function ListPropertyPage() {
-  const { user } = useAuth()
+  const { user } = useAuthSimple()
   const router = useRouter()
   const { isLoaded: mapsLoaded } = useGoogleMaps()
   
