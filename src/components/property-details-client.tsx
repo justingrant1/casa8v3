@@ -14,6 +14,7 @@ import { getImageUrls } from '@/lib/storage'
 import { ImageCarousel } from '@/components/image-carousel'
 import { ApplicationModal } from '@/components/application-modal'
 import { ContactLandlordModal } from '@/components/contact-landlord-modal'
+import { useFavorites } from '@/lib/favorites-context'
 
 interface PropertyDetailsClientProps {
   propertyId: string
@@ -21,6 +22,7 @@ interface PropertyDetailsClientProps {
 
 export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps) {
   const { user } = useAuth()
+  const { isFavorite, toggleFavorite } = useFavorites()
   const router = useRouter()
   const [property, setProperty] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -77,6 +79,14 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
       return
     }
     setShowApplicationModal(true)
+  }
+
+  const handleToggleFavorite = () => {
+    if (!user) {
+      router.push('/login')
+      return
+    }
+    toggleFavorite(propertyId)
   }
 
   const handleShare = async () => {
@@ -212,11 +222,21 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
               <CardContent className="space-y-4">
                 <Button size="lg" className="w-full h-12 text-lg" onClick={handleApply}>Apply Now</Button>
                 <div className="grid grid-cols-2 gap-3">
-                  <Button size="lg" variant="outline" className="h-12 text-lg">
-                    <Heart className="h-5 w-5 mr-2" />
-                    Save
+                  <Button 
+                    size="lg" 
+                    variant="outline" 
+                    className="h-12 text-lg"
+                    onClick={handleToggleFavorite}
+                  >
+                    <Heart className={`h-5 w-5 mr-2 ${isFavorite(propertyId) ? 'fill-red-500 text-red-500' : ''}`} />
+                    {isFavorite(propertyId) ? 'Saved' : 'Save'}
                   </Button>
-                  <Button size="lg" variant="outline" className="h-12 text-lg" onClick={handleShare}>
+                  <Button 
+                    size="lg" 
+                    variant="outline" 
+                    className="h-12 text-lg" 
+                    onClick={handleShare}
+                  >
                     <Share2 className="h-5 w-5 mr-2" />
                     Share
                   </Button>
