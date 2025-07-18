@@ -5,7 +5,7 @@ import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Heart, MapPin, Bed, Bath, Square } from "lucide-react"
+import { Heart, MapPin, Bed, Bath, Square, Share2 } from "lucide-react"
 import { PropertyCardCarousel } from "./property-card-carousel"
 import { ContactLandlordModal } from "./contact-landlord-modal"
 import { getImageUrls } from "@/lib/storage"
@@ -31,9 +31,50 @@ export function PropertyCard({ property }: PropertyCardProps) {
     email: property.profiles?.email || property.landlord_email || null,
   }
 
+  const handleOpenMaps = () => {
+    const encodedAddress = encodeURIComponent(property.address)
+    const mapsUrl = `https://maps.google.com/maps?q=${encodedAddress}`
+    
+    // For mobile devices, try to open the native maps app
+    if (/Android/i.test(navigator.userAgent)) {
+      window.open(`geo:0,0?q=${encodedAddress}`, '_blank')
+    } else if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+      window.open(`maps://maps.google.com/maps?q=${encodedAddress}`, '_blank')
+    } else {
+      window.open(mapsUrl, '_blank')
+    }
+  }
+
+  const handleShare = async () => {
+    const shareData = {
+      title: `${property.title} - Casa8`,
+      text: `Check out this ${property.bedrooms} bedroom, ${property.bathrooms} bathroom home at ${property.address}. ${property.price.toLocaleString()} per month. Available on Casa8.`,
+      url: `${window.location.origin}/property/${property.id}`
+    }
+
+    try {
+      if (navigator.share && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+        await navigator.share(shareData)
+      } else {
+        // Fallback for desktop or unsupported browsers
+        await navigator.clipboard.writeText(`${shareData.title}\n${shareData.text}\n${shareData.url}`)
+        alert('Link copied to clipboard!')
+      }
+    } catch (error) {
+      console.error('Error sharing:', error)
+      // Final fallback
+      try {
+        await navigator.clipboard.writeText(`${shareData.title}\n${shareData.text}\n${shareData.url}`)
+        alert('Link copied to clipboard!')
+      } catch (clipboardError) {
+        console.error('Clipboard also failed:', clipboardError)
+      }
+    }
+  }
+
   return (
     <>
-      <Card className="w-full max-w-sm rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out transform hover:-translate-y-1">
+      <Card className="w-full max-w-sm sm:max-w-md rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out transform hover:-translate-y-1">
         <div className="relative">
           <PropertyCardCarousel
             images={getImageUrls(property.images)}
@@ -51,11 +92,11 @@ export function PropertyCard({ property }: PropertyCardProps) {
             <Heart className={`h-5 w-5 ${user && isFavorite(property.id) ? 'fill-red-500 text-red-500' : 'text-gray-700'}`} />
           </Button>
         </div>
-        <CardContent className="p-6 bg-white">
-          <div className="flex justify-between items-start mb-2">
+        <CardContent className="p-4 sm:p-6 bg-white">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-3">
             <Link href={`/property/${property.id}`} passHref>
               <h3 
-                className="text-xl font-bold text-gray-900 truncate pr-2 hover:text-blue-600 cursor-pointer transition-colors duration-200"
+                className="text-lg sm:text-xl font-bold text-gray-900 hover:text-blue-600 cursor-pointer transition-colors duration-200 mb-2 sm:mb-0 line-clamp-2 sm:pr-2"
                 onClick={() => {
                   // Haptic feedback for supported devices
                   if (navigator.vibrate) {
@@ -66,14 +107,19 @@ export function PropertyCard({ property }: PropertyCardProps) {
                 {property.title}
               </h3>
             </Link>
-            <div className="text-right">
+            <div className="text-left sm:text-right flex-shrink-0">
               <p className="text-xl font-bold text-gray-900">${property.price.toLocaleString()}</p>
               <p className="text-sm text-gray-500">per month</p>
             </div>
           </div>
           <div className="flex items-center text-gray-600 mb-4">
             <MapPin className="h-4 w-4 mr-2 flex-shrink-0" />
-            <p className="truncate">{property.address}</p>
+            <button 
+              onClick={handleOpenMaps}
+              className="flex-1 text-left hover:text-blue-600 cursor-pointer transition-colors duration-200 truncate"
+            >
+              {property.address}
+            </button>
           </div>
           
           <div className="bg-gray-50 rounded-lg p-4 flex justify-around items-center mb-6">
@@ -104,7 +150,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
             ))}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3 mb-3">
             <Link href={`/property/${property.id}`} passHref>
               <Button variant="outline" className="w-full">View Details</Button>
             </Link>
@@ -113,6 +159,18 @@ export function PropertyCard({ property }: PropertyCardProps) {
               onClick={() => setIsContactModalOpen(true)}
             >
               Contact Now
+            </Button>
+          </div>
+          
+          {/* Mobile Share Button */}
+          <div className="sm:hidden">
+            <Button 
+              variant="outline" 
+              className="w-full flex items-center justify-center gap-2"
+              onClick={handleShare}
+            >
+              <Share2 className="h-4 w-4" />
+              Share Listing
             </Button>
           </div>
         </CardContent>
