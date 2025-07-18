@@ -31,12 +31,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const getInitialSession = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       setUser(session?.user ?? null)
+      setLoading(false) // Set loading to false as soon as we know the user state
       
       if (session?.user) {
-        await fetchProfile(session.user.id)
+        // Fetch profile in background without blocking loading state
+        fetchProfile(session.user.id)
       }
-      
-      setLoading(false)
     }
 
     getInitialSession()
@@ -45,22 +45,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         setUser(session?.user ?? null)
+        setLoading(false) // Set loading to false as soon as we know the user state
         
         if (session?.user) {
-          await fetchProfile(session.user.id)
+          // Fetch profile in background without blocking loading state
+          fetchProfile(session.user.id)
         } else {
           setProfile(null)
         }
-        
-        setLoading(false)
       }
     )
 
     return () => subscription.unsubscribe()
   }, [])
 
-  const fetchProfile = async (userId: string) => {
+  const fetchProfile = async (userId: string, retryCount = 0) => {
     try {
+      console.log('🔍 Fetching profile for user:', userId, 'retry:', retryCount)
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -68,13 +69,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .single()
 
       if (error) {
-        console.error('Error fetching profile:', error)
+        console.error('❌ Error fetching profile:', error)
+        
+        // If profile doesn't exist and it's a new user, retry a few times
+        if (error.code === 'PGRST116' && retryCount < 3) {
+          console.log('⏳ Profile not found, retrying in 1 second...')
+          await new Promise(resolve => setTimeout(resolve, 1000))
+          return fetchProfile(userId, retryCount + 1)
+        }
         return
       }
 
+      console.log('✅ Profile fetched successfully:', data)
       setProfile(data)
     } catch (error) {
-      console.error('Error fetching profile:', error)
+      console.error('❌ Error fetching profile:', error)
     }
   }
 
