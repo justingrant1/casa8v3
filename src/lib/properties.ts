@@ -118,7 +118,7 @@ export async function getProperties(filters?: PropertyFilter): Promise<any[]> {
     propertiesCache = enrichedProperties
     cacheTimestamp = now
 
-    return enrichedProperties
+    return enrichedProperties.map(formatPropertyForFrontend)
   } catch (error) {
     console.error('Error in getProperties:', error)
     throw error
@@ -224,7 +224,7 @@ export async function searchProperties(searchTerm: string, filters?: PropertyFil
       profiles: profileMap.get(property.landlord_id) || null
     }))
 
-    return enrichedProperties
+    return enrichedProperties.map(formatPropertyForFrontend)
   } catch (error) {
     console.error('Error in searchProperties:', error)
     throw error
@@ -274,10 +274,12 @@ export async function getPropertyById(id: string): Promise<any | null> {
     }
 
     // Combine the data
-    return {
+    const enrichedProperty = {
       ...property,
       profiles: landlordProfile || null
     }
+
+    return formatPropertyForFrontend(enrichedProperty)
   } catch (error) {
     console.error('Error in getPropertyById:', error)
     throw error
@@ -285,85 +287,65 @@ export async function getPropertyById(id: string): Promise<any | null> {
 }
 
 export function formatPropertyForFrontend(property: any) {
-  // Parse property data to handle JSON in description field
-  const parsePropertyData = (rawProperty: any) => {
-    // Check if description contains JSON data
-    if (typeof rawProperty.description === 'string' && rawProperty.description.includes('"title"')) {
-      try {
-        // Find where JSON starts (first '{' character)
-        const jsonStartIndex = rawProperty.description.indexOf('{')
-        if (jsonStartIndex === -1) {
-          return rawProperty
-        }
-        
-        // Extract only the JSON part
-        const jsonString = rawProperty.description.substring(jsonStartIndex)
-        const parsedData = JSON.parse(jsonString)
-        
-        return {
-          ...rawProperty,
-          title: parsedData.title || rawProperty.title,
-          description: parsedData.description || 'No description available',
-          price: parsedData.price || rawProperty.price,
-          bedrooms: parsedData.bedrooms || rawProperty.bedrooms,
-          bathrooms: parsedData.bathrooms || rawProperty.bathrooms,
-          sqft: parsedData.sqft || rawProperty.sqft || 1200,
-          // Keep original address fields from database, don't extract from JSON
-          address: rawProperty.address,
-          city: rawProperty.city,
-          state: rawProperty.state,
-          zip_code: rawProperty.zip_code,
-          amenities: parsedData.amenities || rawProperty.amenities || []
-        }
-      } catch (e) {
-        console.error('Error parsing property JSON:', e)
-        return rawProperty
+  let parsedData = {}
+  let cleanDescription = property.description
+
+  if (typeof property.description === 'string' && property.description.includes('{')) {
+    try {
+      const jsonStartIndex = property.description.indexOf('{')
+      const jsonString = property.description.substring(jsonStartIndex)
+      cleanDescription = property.description.substring(0, jsonStartIndex).trim()
+      
+      if (jsonString) {
+        parsedData = JSON.parse(jsonString)
       }
+    } catch (e) {
+      console.error('Error parsing property JSON:', e, 'Raw description:', property.description)
+      // Keep original description if JSON is malformed
+      cleanDescription = property.description
     }
-    return rawProperty
   }
 
-  // Parse the property data first
-  const parsedProperty = parsePropertyData(property)
+  const combined = { ...property, ...parsedData }
 
-  const landlordName = parsedProperty.profiles 
-    ? `${parsedProperty.profiles.first_name || ''} ${parsedProperty.profiles.last_name || ''}`.trim() || 'Property Owner'
+  const landlordName = combined.profiles 
+    ? `${combined.profiles.first_name || ''} ${combined.profiles.last_name || ''}`.trim() || 'Property Owner'
     : 'Property Owner'
 
   // Create coordinates object with more robust checking
-  const lat = parsedProperty.latitude ? parseFloat(parsedProperty.latitude) : null
-  const lng = parsedProperty.longitude ? parseFloat(parsedProperty.longitude) : null
+  const lat = combined.latitude ? parseFloat(combined.latitude) : null
+  const lng = combined.longitude ? parseFloat(combined.longitude) : null
   const coordinates = (lat !== null && lng !== null && !isNaN(lat) && !isNaN(lng)) ? {
     lat: lat,
     lng: lng
   } : null
 
   return {
-    id: parsedProperty.id,
-    title: parsedProperty.title,
-    description: parsedProperty.description,
-    price: parsedProperty.price,
-    type: parsedProperty.property_type,
-    location: `${parsedProperty.address}${parsedProperty.city ? `, ${parsedProperty.city}` : ''}${parsedProperty.state ? `, ${parsedProperty.state}` : ''}`,
-    address: parsedProperty.address,
-    city: parsedProperty.city,
-    state: parsedProperty.state,
-    bedrooms: parsedProperty.bedrooms,
-    bathrooms: parsedProperty.bathrooms,
-    sqft: parsedProperty.sqft || 1200, // Default square footage
-    images: parsedProperty.images || ['/placeholder.svg'],
-    image: parsedProperty.images?.[0] || '/placeholder.svg',
-    amenities: parsedProperty.amenities || [],
-    available: parsedProperty.is_active,
+    id: combined.id,
+    title: combined.title,
+    description: cleanDescription,
+    price: combined.price,
+    type: combined.property_type,
+    location: `${combined.address}${combined.city ? `, ${combined.city}` : ''}${combined.state ? `, ${combined.state}` : ''}`,
+    address: combined.address,
+    city: combined.city,
+    state: combined.state,
+    bedrooms: combined.bedrooms,
+    bathrooms: combined.bathrooms,
+    sqft: combined.sqft || 1200, // Default square footage
+    images: combined.images || ['/placeholder.svg'],
+    image: combined.images?.[0] || '/placeholder.svg',
+    amenities: combined.amenities || [],
+    available: combined.is_active,
     landlord: landlordName,
-    landlord_email: parsedProperty.profiles?.email,
-    landlord_phone: parsedProperty.profiles?.phone,
-    landlord_id: parsedProperty.landlord_id,
-    latitude: parsedProperty.latitude,
-    longitude: parsedProperty.longitude,
+    landlord_email: combined.profiles?.email,
+    landlord_phone: combined.profiles?.phone,
+    landlord_id: combined.landlord_id,
+    latitude: combined.latitude,
+    longitude: combined.longitude,
     coordinates: coordinates,
-    created_at: parsedProperty.created_at,
-    updated_at: parsedProperty.updated_at
+    created_at: combined.created_at,
+    updated_at: combined.updated_at
   }
 }
 
