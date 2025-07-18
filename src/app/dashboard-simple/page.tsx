@@ -787,9 +787,33 @@ export default function SimpleDashboard() {
                           <div className="flex-1">
                             <div className="font-semibold">{application.tenant_name}</div>
                             <div className="text-sm text-muted-foreground">
-                              Applied for: {application.properties?.address ? 
-                                `${application.properties.address}${application.properties.city ? `, ${application.properties.city}` : ''}${application.properties.state ? `, ${application.properties.state}` : ''}` : 
-                                application.properties?.title || 'Property'}
+                              Applied for: {(() => {
+                                const props = application.properties;
+                                if (!props) return 'Property';
+                                
+                                // Handle case where properties is a JSON string
+                                let parsedProps: any = props;
+                                if (typeof props === 'string') {
+                                  try {
+                                    parsedProps = JSON.parse(props);
+                                  } catch (e) {
+                                    console.error('Error parsing properties JSON:', e);
+                                    return 'Property';
+                                  }
+                                }
+                                
+                                // Extract the address information
+                                const address = parsedProps.address;
+                                const city = parsedProps.city;
+                                const state = parsedProps.state;
+                                const title = parsedProps.title;
+                                
+                                if (address) {
+                                  return `${address}${city ? `, ${city}` : ''}${state ? `, ${state}` : ''}`;
+                                }
+                                
+                                return title || 'Property';
+                              })()}
                             </div>
                             <div className="text-xs text-muted-foreground">
                               Applied on: {new Date(application.created_at).toLocaleDateString()}
