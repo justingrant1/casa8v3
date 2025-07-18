@@ -7,7 +7,6 @@ import { Label } from './ui/label'
 import { Progress } from './ui/progress'
 import { X, Upload, Video, Play, Pause } from 'lucide-react'
 import { uploadPropertyVideo, deletePropertyVideo } from '@/lib/storage'
-import { toast } from '@/hooks/use-toast'
 
 interface VideoUploadProps {
   onVideoUpload: (videoUrl: string) => void
@@ -35,11 +34,7 @@ export function VideoUpload({
 
     // Check if adding these files would exceed the maximum
     if (existingVideos.length + files.length > maxVideos) {
-      toast({
-        title: "Too many videos",
-        description: `You can only upload up to ${maxVideos} videos per property`,
-        variant: "destructive"
-      })
+      console.error(`Too many videos. You can only upload up to ${maxVideos} videos.`)
       return
     }
 
@@ -52,21 +47,13 @@ export function VideoUpload({
 
         // Validate file type
         if (!file.type.startsWith('video/')) {
-          toast({
-            title: "Invalid file type",
-            description: `${file.name} is not a video file`,
-            variant: "destructive"
-          })
+          console.error(`${file.name} is not a video file.`)
           continue
         }
 
         // Validate file size
         if (file.size > maxSizeInMB * 1024 * 1024) {
-          toast({
-            title: "File too large",
-            description: `${file.name} is larger than ${maxSizeInMB}MB`,
-            variant: "destructive"
-          })
+          console.error(`${file.name} is larger than ${maxSizeInMB}MB.`)
           continue
         }
 
@@ -84,18 +71,8 @@ export function VideoUpload({
           })
 
           onVideoUpload(videoUrl)
-          
-          toast({
-            title: "Video uploaded",
-            description: `${file.name} has been uploaded successfully`
-          })
         } catch (error) {
           console.error('Upload error:', error)
-          toast({
-            title: "Upload failed",
-            description: `Failed to upload ${file.name}. Please try again.`,
-            variant: "destructive"
-          })
         }
       }
     } finally {
@@ -110,17 +87,8 @@ export function VideoUpload({
     try {
       await deletePropertyVideo(videoUrl)
       onVideoRemove(videoUrl)
-      toast({
-        title: "Video removed",
-        description: "Video has been removed successfully"
-      })
     } catch (error) {
       console.error('Delete error:', error)
-      toast({
-        title: "Delete failed",
-        description: "Failed to delete video. Please try again.",
-        variant: "destructive"
-      })
     }
   }
 
