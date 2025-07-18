@@ -27,15 +27,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Get initial session
+    // Get initial session with timeout
     const getInitialSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      setUser(session?.user ?? null)
-      setLoading(false) // Set loading to false as soon as we know the user state
-      
-      if (session?.user) {
-        // Fetch profile in background without blocking loading state
-        fetchProfile(session.user.id)
+      try {
+        console.log('🔍 Getting initial session...')
+        
+        // Add timeout to prevent hanging
+        const sessionPromise = supabase.auth.getSession()
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Session timeout')), 5000)
+        )
+        
+        const { data: { session } } = await Promise.race([
+          sessionPromise,
+          timeoutPromise
+        ]) as any
+        
+        console.log('✅ Initial session retrieved:', !!session)
+        setUser(session?.user ?? null)
+        setLoading(false) // Set loading to false as soon as we know the user state
+        
+        if (session?.user) {
+          // Fetch profile in background without blocking loading state
+          fetchProfile(session.user.id)
+        }
+      } catch (error) {
+        console.error('❌ Error getting initial session:', error)
+        // Even if there's an error, we should stop loading
+        setUser(null)
+        setLoading(false)
       }
     }
 
@@ -44,6 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('🔍 Auth state changed:', event, !!session)
         setUser(session?.user ?? null)
         setLoading(false) // Set loading to false as soon as we know the user state
         
@@ -56,7 +77,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     )
 
-    return () => subscription.unsubscribe()
+    // Failsafe: ensure loading is set to false after 10 seconds no matter what
+    const failsafeTimeout = setTimeout(() => {
+      console.log('⚠️ Auth loading failsafe triggered')
+      setLoading(false)
+    }, 10000)
+
+    return () => {
+      subscription.unsubscribe()
+      clearTimeout(failsafeTimeout)
+    }
   }, [])
 
   const fetchProfile = async (userId: string, retryCount = 0) => {
