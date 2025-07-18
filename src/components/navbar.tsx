@@ -119,7 +119,7 @@ export function Navbar({ currentPage = "home" }: NavbarProps) {
 
             {user && isLandlord && (
               <Link 
-                href="/dashboard" 
+                href="/dashboard-simple" 
                 className={`flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium transition-colors ${
                   currentPage === "dashboard" 
                     ? "text-primary bg-primary/10" 
@@ -300,7 +300,7 @@ export function Navbar({ currentPage = "home" }: NavbarProps) {
 
               {user && isLandlord && (
                 <Link 
-                  href="/dashboard" 
+                  href="/dashboard-simple" 
                   className={`flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                     currentPage === "dashboard" 
                       ? "text-primary bg-primary/10" 

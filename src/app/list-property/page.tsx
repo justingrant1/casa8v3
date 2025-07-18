@@ -263,7 +263,7 @@ export default function ListPropertyPage() {
 
       await createProperty(propertyData, images, videos, user)
 
-      router.push('/dashboard')
+      router.push('/dashboard-simple')
     } catch (error: any) {
       dispatch({ type: 'SET_ERROR', payload: error.message })
     }
