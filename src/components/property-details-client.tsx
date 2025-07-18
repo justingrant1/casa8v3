@@ -32,7 +32,16 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
     // Check if description contains JSON data
     if (typeof rawProperty.description === 'string' && rawProperty.description.includes('"title"')) {
       try {
-        const parsedData = JSON.parse(rawProperty.description)
+        // Find where JSON starts (first '{' character)
+        const jsonStartIndex = rawProperty.description.indexOf('{')
+        if (jsonStartIndex === -1) {
+          return rawProperty
+        }
+        
+        // Extract only the JSON part
+        const jsonString = rawProperty.description.substring(jsonStartIndex)
+        const parsedData = JSON.parse(jsonString)
+        
         return {
           ...rawProperty,
           title: parsedData.title || rawProperty.title,
@@ -40,11 +49,12 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
           price: parsedData.price || rawProperty.price,
           bedrooms: parsedData.bedrooms || rawProperty.bedrooms,
           bathrooms: parsedData.bathrooms || rawProperty.bathrooms,
-          sqft: rawProperty.sqft || 1400,
-          address: parsedData.fullAddress?.split(',')[0] || rawProperty.address,
-          city: parsedData.city || rawProperty.city,
-          state: parsedData.state || rawProperty.state,
-          zip_code: parsedData.zipCode || rawProperty.zip_code,
+          sqft: parsedData.sqft || rawProperty.sqft || 1400,
+          // Keep original address fields from database, don't extract from JSON
+          address: rawProperty.address,
+          city: rawProperty.city,
+          state: rawProperty.state,
+          zip_code: rawProperty.zip_code,
           amenities: parsedData.amenities || rawProperty.amenities || []
         }
       } catch (e) {
