@@ -78,6 +78,8 @@ export interface Database {
           videos: string[] | null
           available_date: string | null
           is_active: boolean
+          security_deposit: number | null
+          security_deposit_negotiable: boolean | null
           created_at: string
           updated_at: string
         }
@@ -102,6 +104,8 @@ export interface Database {
           videos?: string[] | null
           available_date?: string | null
           is_active?: boolean
+          security_deposit?: number | null
+          security_deposit_negotiable?: boolean | null
           created_at?: string
           updated_at?: string
         }
@@ -126,6 +130,8 @@ export interface Database {
           videos?: string[] | null
           available_date?: string | null
           is_active?: boolean
+          security_deposit?: number | null
+          security_deposit_negotiable?: boolean | null
           created_at?: string
           updated_at?: string
         }

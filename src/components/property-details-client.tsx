@@ -211,6 +211,34 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
                 ))}
               </div>
             </div>
+
+            {/* Lease Details */}
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold mb-4">Lease Details</h2>
+              <div className="bg-gray-50 rounded-lg p-6">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-lg font-semibold text-gray-700">Security Deposit</span>
+                    <div className="text-right">
+                      <span className="text-2xl font-bold text-gray-900">
+                        ${(property.security_deposit || 1000).toLocaleString()}
+                      </span>
+                      {property.security_deposit_negotiable && (
+                        <div className="flex items-center justify-end mt-1">
+                          <Check className="h-4 w-4 mr-1 text-green-500" />
+                          <span className="text-sm text-green-600 font-medium">Negotiable</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  {!property.security_deposit_negotiable && (
+                    <div className="text-sm text-gray-500">
+                      Security deposit amount is fixed
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Sidebar */}

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef, useReducer } from 'react'
+import { useState, useEffect, useRef, useReducer, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
 import { useToast } from '@/hooks/use-toast-simple'
@@ -34,6 +34,8 @@ const initialState = {
   bathrooms: '',
   sqft: '',
   amenities: ['Central Air Conditioning', 'Refrigerator', 'Stove'],
+  securityDeposit: '1000',
+  securityDepositNegotiable: true,
   images: [],
   videos: [],
   isSubmitting: false,
@@ -56,7 +58,7 @@ function reducer(state: any, action: any) {
   }
 }
 
-export default function ListPropertyPage() {
+function ListPropertyPageContent() {
   const { user, profile } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -84,6 +86,8 @@ export default function ListPropertyPage() {
     bathrooms,
     sqft,
     amenities,
+    securityDeposit,
+    securityDepositNegotiable,
     images,
     videos,
     isSubmitting,
@@ -126,6 +130,8 @@ export default function ListPropertyPage() {
         dispatch({ type: 'SET_FIELD', field: 'bathrooms', value: property.bathrooms?.toString() || '' })
         dispatch({ type: 'SET_FIELD', field: 'sqft', value: property.sqft?.toString() || '' })
         dispatch({ type: 'SET_FIELD', field: 'amenities', value: property.amenities || [] })
+        dispatch({ type: 'SET_FIELD', field: 'securityDeposit', value: (property as any).security_deposit?.toString() || '1000' })
+        dispatch({ type: 'SET_FIELD', field: 'securityDepositNegotiable', value: (property as any).security_deposit_negotiable ?? true })
         dispatch({ type: 'SET_FIELD', field: 'videos', value: (property as any).videos || [] })
         
         // Set coordinates if available
@@ -319,6 +325,8 @@ export default function ListPropertyPage() {
         bathrooms: parseFloat(bathrooms),
         sqft: parseInt(sqft),
         amenities,
+        security_deposit: parseInt(securityDeposit),
+        security_deposit_negotiable: securityDepositNegotiable,
       }
 
       if (isEditMode && editPropertyId) {
@@ -577,6 +585,44 @@ export default function ListPropertyPage() {
           </CardContent>
         </Card>
 
+        {/* Lease Details Section */}
+        <Card className="border border-gray-200">
+          <CardContent className="p-6">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Lease Details</h2>
+              <p className="text-gray-600">Set the lease terms for your property</p>
+            </div>
+
+            <div className="space-y-6">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="securityDeposit" className="text-sm font-medium text-gray-700">Security Deposit ($)</Label>
+                  <Input 
+                    id="securityDeposit" 
+                    type="number" 
+                    value={securityDeposit} 
+                    onChange={(e) => dispatch({ type: 'SET_FIELD', field: 'securityDeposit', value: e.target.value })}
+                    placeholder="1000"
+                    className="h-12"
+                    required 
+                  />
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="securityDepositNegotiable"
+                    checked={securityDepositNegotiable}
+                    onCheckedChange={(checked) => dispatch({ type: 'SET_FIELD', field: 'securityDepositNegotiable', value: checked as boolean })}
+                  />
+                  <Label htmlFor="securityDepositNegotiable" className="text-sm text-gray-700">
+                    Security deposit is negotiable
+                  </Label>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Property Images Section */}
         <Card className="border border-gray-200">
           <CardContent className="p-6">
@@ -622,5 +668,40 @@ export default function ListPropertyPage() {
         </Button>
       </form>
     </div>
+  )
+}
+
+function LoadingFallback() {
+  return (
+    <div className="max-w-4xl mx-auto p-6 space-y-6">
+      <div className="flex items-center space-x-4 pb-4">
+        <div className="h-8 w-8 bg-gray-200 rounded animate-pulse"></div>
+        <div className="flex-1">
+          <div className="h-8 bg-gray-200 rounded animate-pulse mb-2"></div>
+          <div className="h-4 bg-gray-200 rounded animate-pulse w-1/3"></div>
+        </div>
+      </div>
+      
+      <div className="space-y-6">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="border border-gray-200 rounded-lg p-6">
+            <div className="h-6 bg-gray-200 rounded animate-pulse mb-4"></div>
+            <div className="space-y-3">
+              <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+              <div className="h-4 bg-gray-200 rounded animate-pulse w-3/4"></div>
+              <div className="h-12 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export default function ListPropertyPage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <ListPropertyPageContent />
+    </Suspense>
   )
 }
