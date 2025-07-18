@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { MapPin, Bed, Bath, Square, Heart, MessageSquare, Check, ArrowLeft, AlertTriangle } from "lucide-react"
+import { MapPin, Bed, Bath, Square, Heart, MessageSquare, Check, ArrowLeft, AlertTriangle, Share2 } from "lucide-react"
 import { useAuth } from '@/lib/auth'
 import { useRouter } from 'next/navigation'
 import { Navbar } from '@/components/navbar'
@@ -117,6 +117,36 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
     setShowApplicationModal(true)
   }
 
+  const handleShare = async () => {
+    if (!property) return
+    
+    const fullAddress = `${property.address}${property.city ? `, ${property.city}` : ''}${property.state ? `, ${property.state}` : ''}${property.zip_code ? ` ${property.zip_code}` : ''}`
+    const shareData = {
+      title: `${property.title} - Casa8`,
+      text: `Check out this ${property.bedrooms} bedroom, ${property.bathrooms} bathroom home at ${fullAddress}. $${property.price.toLocaleString()} per month. Available on Casa8.`,
+      url: `${window.location.origin}/property/${property.id}`
+    }
+
+    try {
+      if (navigator.share && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+        await navigator.share(shareData)
+      } else {
+        // Fallback for desktop or unsupported browsers
+        await navigator.clipboard.writeText(`${shareData.title}\n${shareData.text}\n${shareData.url}`)
+        alert('Link copied to clipboard!')
+      }
+    } catch (error) {
+      console.error('Error sharing:', error)
+      // Final fallback
+      try {
+        await navigator.clipboard.writeText(`${shareData.title}\n${shareData.text}\n${shareData.url}`)
+        alert('Link copied to clipboard!')
+      } catch (clipboardError) {
+        console.error('Clipboard also failed:', clipboardError)
+      }
+    }
+  }
+
   if (loading) {
     return (
       <>
@@ -219,10 +249,16 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
               </CardHeader>
               <CardContent className="space-y-4">
                 <Button size="lg" className="w-full h-12 text-lg" onClick={handleApply}>Apply Now</Button>
-                <Button size="lg" variant="outline" className="w-full h-12 text-lg">
-                  <Heart className="h-5 w-5 mr-2" />
-                  Save to Favorites
-                </Button>
+                <div className="grid grid-cols-2 gap-3">
+                  <Button size="lg" variant="outline" className="h-12 text-lg">
+                    <Heart className="h-5 w-5 mr-2" />
+                    Save
+                  </Button>
+                  <Button size="lg" variant="outline" className="h-12 text-lg" onClick={handleShare}>
+                    <Share2 className="h-5 w-5 mr-2" />
+                    Share
+                  </Button>
+                </div>
 
                 <div className="flex items-center pt-4 border-t">
                   <Avatar className="h-12 w-12">
