@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useReducer } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
 import { createProperty } from '@/lib/property-management'
@@ -16,35 +16,73 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { useGoogleMaps, geocodeAddress, initializeAutocomplete, parsePlaceResult } from '@/lib/google-maps'
 import { MapPin, Star, ArrowLeft } from 'lucide-react'
 
+const initialState = {
+  title: '',
+  description: '',
+  price: '',
+  propertyType: '',
+  fullAddress: '',
+  address: '',
+  city: '',
+  state: '',
+  zipCode: '',
+  coordinates: null,
+  manualOverride: false,
+  geocoding: false,
+  bedrooms: '',
+  bathrooms: '',
+  sqft: '',
+  amenities: ['Central Air Conditioning', 'Refrigerator', 'Stove'],
+  images: [],
+  videos: [],
+  isSubmitting: false,
+  aiGenerating: false,
+  error: null,
+}
+
+function reducer(state: any, action: any) {
+  switch (action.type) {
+    case 'SET_FIELD':
+      return { ...state, [action.field]: action.value }
+    case 'SET_AI_DATA':
+      return { ...state, ...action.payload, aiGenerating: false }
+    case 'SET_SUBMITTING':
+      return { ...state, isSubmitting: action.payload, error: null }
+    case 'SET_ERROR':
+      return { ...state, error: action.payload, isSubmitting: false, aiGenerating: false }
+    default:
+      return state
+  }
+}
+
 export default function ListPropertyPage() {
   const { user } = useAuth()
   const router = useRouter()
   const { isLoaded: mapsLoaded } = useGoogleMaps()
   
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
-  const [price, setPrice] = useState('')
-  const [propertyType, setPropertyType] = useState('')
-  
-  // Address handling
-  const [fullAddress, setFullAddress] = useState('')
-  const [address, setAddress] = useState('')
-  const [city, setCity] = useState('')
-  const [state, setState] = useState('')
-  const [zipCode, setZipCode] = useState('')
-  const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null)
-  const [manualOverride, setManualOverride] = useState(false)
-  const [geocoding, setGeocoding] = useState(false)
-  
-  const [bedrooms, setBedrooms] = useState('')
-  const [bathrooms, setBathrooms] = useState('')
-  const [sqft, setSqft] = useState('')
-  const [amenities, setAmenities] = useState<string[]>(['Central Air Conditioning', 'Refrigerator', 'Stove'])
-  const [images, setImages] = useState<File[]>([])
-  const [videos, setVideos] = useState<string[]>([])
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [aiGenerating, setAiGenerating] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [state, dispatch] = useReducer(reducer, initialState)
+  const {
+    title,
+    description,
+    price,
+    propertyType,
+    fullAddress,
+    address,
+    city,
+    zipCode,
+    coordinates,
+    manualOverride,
+    geocoding,
+    bedrooms,
+    bathrooms,
+    sqft,
+    amenities,
+    images,
+    videos,
+    isSubmitting,
+    aiGenerating,
+    error,
+  } = state
 
   const addressInputRef = useRef<HTMLInputElement>(null)
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null)
@@ -60,8 +98,8 @@ export default function ListPropertyPage() {
           const parsed = parsePlaceResult(place)
           
           if (parsed.coordinates) {
-            setFullAddress(parsed.formatted_address)
-            setCoordinates(parsed.coordinates)
+            dispatch({ type: 'SET_FIELD', field: 'fullAddress', value: parsed.formatted_address })
+            dispatch({ type: 'SET_FIELD', field: 'coordinates', value: parsed.coordinates })
             
             // Parse address components
             const addressComponents = place.address_components || []
@@ -80,10 +118,10 @@ export default function ListPropertyPage() {
               }
             })
             
-            setAddress(`${streetNumber} ${route}`.trim())
-            setCity(parsed.city)
-            setState(parsed.state)
-            setZipCode(zipCode)
+            dispatch({ type: 'SET_FIELD', field: 'address', value: `${streetNumber} ${route}`.trim() })
+            dispatch({ type: 'SET_FIELD', field: 'city', value: parsed.city })
+            dispatch({ type: 'SET_FIELD', field: 'state', value: parsed.state })
+            dispatch({ type: 'SET_FIELD', field: 'zipCode', value: zipCode })
           }
         }
       })
@@ -94,11 +132,11 @@ export default function ListPropertyPage() {
   const handleGeocodeAddress = async () => {
     if (!fullAddress.trim()) return
     
-    setGeocoding(true)
+    dispatch({ type: 'SET_FIELD', field: 'geocoding', value: true })
     try {
       const result = await geocodeAddress(fullAddress)
       if (result) {
-        setCoordinates({ lat: result.lat, lng: result.lng })
+        dispatch({ type: 'SET_FIELD', field: 'coordinates', value: { lat: result.lat, lng: result.lng } })
         
         // Parse the result to fill in city, state, etc.
         const addressComponents = result.address_components || []
@@ -123,35 +161,33 @@ export default function ListPropertyPage() {
           }
         })
         
-        setAddress(`${streetNumber} ${route}`.trim())
-        setCity(city)
-        setState(state)
-        setZipCode(zipCode)
+        dispatch({ type: 'SET_FIELD', field: 'address', value: `${streetNumber} ${route}`.trim() })
+        dispatch({ type: 'SET_FIELD', field: 'city', value: city })
+        dispatch({ type: 'SET_FIELD', field: 'state', value: state })
+        dispatch({ type: 'SET_FIELD', field: 'zipCode', value: zipCode })
       }
     } catch (error) {
       console.error('Geocoding error:', error)
-      setError('Failed to geocode address. Please check the address and try again.')
+      dispatch({ type: 'SET_ERROR', payload: 'Failed to geocode address. Please check the address and try again.' })
     } finally {
-      setGeocoding(false)
+      dispatch({ type: 'SET_FIELD', field: 'geocoding', value: false })
     }
   }
 
   const handleAmenityChange = (amenity: string) => {
-    setAmenities((prev) =>
-      prev.includes(amenity)
-        ? prev.filter((a) => a !== amenity)
-        : [...prev, amenity]
-    )
+    const newAmenities = amenities.includes(amenity)
+      ? amenities.filter((a: string) => a !== amenity)
+      : [...amenities, amenity]
+    dispatch({ type: 'SET_FIELD', field: 'amenities', value: newAmenities })
   }
 
   const handleGenerateWithAI = async () => {
     if (!fullAddress.trim()) {
-      setError('Please enter a property address first before generating with AI.')
+      dispatch({ type: 'SET_ERROR', payload: 'Please enter a property address first before generating with AI.' })
       return
     }
 
-    setAiGenerating(true)
-    setError(null)
+    dispatch({ type: 'SET_FIELD', field: 'aiGenerating', value: true })
 
     try {
       const response = await fetch('/api/generate-listing', {
@@ -173,40 +209,39 @@ export default function ListPropertyPage() {
       if (result.success && result.data) {
         const data = result.data
         
-        // Populate form fields with AI-generated data
-        setTitle(data.title)
-        setDescription(data.description)
-        setBedrooms(data.bedrooms.toString())
-        setBathrooms(data.bathrooms.toString())
-        setSqft(data.sqft.toString())
-        setPropertyType(data.propertyType)
-        setPrice(data.price.toString())
-        
-        // Update amenities
-        setAmenities(data.amenities)
+        dispatch({
+          type: 'SET_AI_DATA',
+          payload: {
+            title: data.title,
+            description: data.description,
+            bedrooms: data.bedrooms.toString(),
+            bathrooms: data.bathrooms.toString(),
+            sqft: data.sqft.toString(),
+            propertyType: data.propertyType,
+            price: data.price.toString(),
+            amenities: data.amenities,
+          },
+        })
       }
     } catch (error: any) {
-      setError(error.message)
-    } finally {
-      setAiGenerating(false)
+      dispatch({ type: 'SET_ERROR', payload: error.message })
     }
   }
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      setImages(Array.from(e.target.files))
+      dispatch({ type: 'SET_FIELD', field: 'images', value: Array.from(e.target.files) })
     }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user) {
-      setError('You must be logged in to list a property.')
+      dispatch({ type: 'SET_ERROR', payload: 'You must be logged in to list a property.' })
       return
     }
 
-    setIsSubmitting(true)
-    setError(null)
+    dispatch({ type: 'SET_SUBMITTING', payload: true })
 
     try {
       const propertyData = {
@@ -230,9 +265,7 @@ export default function ListPropertyPage() {
 
       router.push('/dashboard')
     } catch (error: any) {
-      setError(error.message)
-    } finally {
-      setIsSubmitting(false)
+      dispatch({ type: 'SET_ERROR', payload: error.message })
     }
   }
 
@@ -272,7 +305,7 @@ export default function ListPropertyPage() {
                     <Checkbox 
                       id="manual-override"
                       checked={manualOverride}
-                      onCheckedChange={(checked) => setManualOverride(checked as boolean)}
+                      onCheckedChange={(checked) => dispatch({ type: 'SET_FIELD', field: 'manualOverride', value: checked as boolean })}
                     />
                     <Label htmlFor="manual-override" className="text-sm text-gray-600">
                       Enter manually
@@ -285,7 +318,7 @@ export default function ListPropertyPage() {
                     ref={addressInputRef}
                     id="address"
                     value={fullAddress}
-                    onChange={(e) => setFullAddress(e.target.value)}
+                    onChange={(e) => dispatch({ type: 'SET_FIELD', field: 'fullAddress', value: e.target.value })}
                     placeholder="Enter your property address (e.g., 123 Main St, New York, NY 10001)"
                     className="pl-12 h-12"
                     required
@@ -300,7 +333,7 @@ export default function ListPropertyPage() {
                     <Input
                       id="city"
                       value={city}
-                      onChange={(e) => setCity(e.target.value)}
+                      onChange={(e) => dispatch({ type: 'SET_FIELD', field: 'city', value: e.target.value })}
                       placeholder="Miami"
                       className="h-12"
                       required
@@ -311,7 +344,7 @@ export default function ListPropertyPage() {
                     <Input
                       id="state"
                       value={state}
-                      onChange={(e) => setState(e.target.value)}
+                      onChange={(e) => dispatch({ type: 'SET_FIELD', field: 'state', value: e.target.value })}
                       placeholder="FL"
                       className="h-12"
                       maxLength={2}
@@ -323,7 +356,7 @@ export default function ListPropertyPage() {
                     <Input
                       id="zipCode"
                       value={zipCode}
-                      onChange={(e) => setZipCode(e.target.value)}
+                      onChange={(e) => dispatch({ type: 'SET_FIELD', field: 'zipCode', value: e.target.value })}
                       placeholder="33054"
                       className="h-12"
                       maxLength={5}
@@ -363,7 +396,7 @@ export default function ListPropertyPage() {
                 <Input 
                   id="title" 
                   value={title} 
-                  onChange={(e) => setTitle(e.target.value)} 
+                  onChange={(e) => dispatch({ type: 'SET_FIELD', field: 'title', value: e.target.value })}
                   placeholder="e.g., Modern Downtown Apartment"
                   className="h-12"
                   required 
@@ -375,7 +408,7 @@ export default function ListPropertyPage() {
                 <Textarea 
                   id="description" 
                   value={description} 
-                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => dispatch({ type: 'SET_FIELD', field: 'description', value: e.target.value })}
                   placeholder="Describe your property, its features, and what makes it special..."
                   className="min-h-32 resize-none"
                   rows={4}
@@ -385,7 +418,7 @@ export default function ListPropertyPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="propertyType" className="text-sm font-medium text-gray-700">Property Type</Label>
-                  <Select value={propertyType} onValueChange={(value: string) => setPropertyType(value)}>
+                  <Select value={propertyType} onValueChange={(value: string) => dispatch({ type: 'SET_FIELD', field: 'propertyType', value })}>
                     <SelectTrigger id="propertyType" className="h-12">
                       <SelectValue placeholder="Select property type" />
                     </SelectTrigger>
@@ -401,7 +434,7 @@ export default function ListPropertyPage() {
                     id="price" 
                     type="number" 
                     value={price} 
-                    onChange={(e) => setPrice(e.target.value)} 
+                    onChange={(e) => dispatch({ type: 'SET_FIELD', field: 'price', value: e.target.value })}
                     placeholder="2500"
                     className="h-12"
                     required 
@@ -428,7 +461,7 @@ export default function ListPropertyPage() {
                     id="bedrooms" 
                     type="number" 
                     value={bedrooms} 
-                    onChange={(e) => setBedrooms(e.target.value)} 
+                    onChange={(e) => dispatch({ type: 'SET_FIELD', field: 'bedrooms', value: e.target.value })}
                     className="h-12"
                     required 
                   />
@@ -440,7 +473,7 @@ export default function ListPropertyPage() {
                     type="number" 
                     step="0.5" 
                     value={bathrooms} 
-                    onChange={(e) => setBathrooms(e.target.value)} 
+                    onChange={(e) => dispatch({ type: 'SET_FIELD', field: 'bathrooms', value: e.target.value })}
                     className="h-12"
                     required 
                   />
@@ -451,7 +484,7 @@ export default function ListPropertyPage() {
                     id="sqft" 
                     type="number" 
                     value={sqft} 
-                    onChange={(e) => setSqft(e.target.value)} 
+                    onChange={(e) => dispatch({ type: 'SET_FIELD', field: 'sqft', value: e.target.value })}
                     className="h-12"
                   />
                 </div>
