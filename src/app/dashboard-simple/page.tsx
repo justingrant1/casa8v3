@@ -284,7 +284,7 @@ export default function SimpleDashboard() {
       
       // Initialize property statuses
       const statuses = properties.reduce((acc: any, property: any) => {
-        acc[property.id] = property.is_active ? 'active' : 'inactive'
+        acc[property.id] = property.available ? 'active' : 'inactive'
         return acc
       }, {})
       setPropertyStatuses(statuses)
