@@ -42,7 +42,7 @@ export default function ListPropertyPage() {
   const [amenities, setAmenities] = useState<string[]>(['Central Air Conditioning', 'Refrigerator', 'Stove'])
   const [images, setImages] = useState<File[]>([])
   const [videos, setVideos] = useState<string[]>([])
-  const [loading, setLoading] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [aiGenerating, setAiGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -205,7 +205,7 @@ export default function ListPropertyPage() {
       return
     }
 
-    setLoading(true)
+    setIsSubmitting(true)
     setError(null)
 
     try {
@@ -232,7 +232,7 @@ export default function ListPropertyPage() {
     } catch (error: any) {
       setError(error.message)
     } finally {
-      setLoading(false)
+      setIsSubmitting(false)
     }
   }
 
@@ -512,9 +512,9 @@ export default function ListPropertyPage() {
         <Button 
           type="submit" 
           className="w-full h-12 bg-gray-900 hover:bg-gray-800 text-white font-medium" 
-          disabled={loading}
+          disabled={isSubmitting}
         >
-          {loading ? 'Listing Property...' : 'List Property'}
+          {isSubmitting ? 'Listing Property...' : 'List Property'}
         </Button>
       </form>
     </div>
