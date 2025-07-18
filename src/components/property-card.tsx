@@ -24,8 +24,8 @@ export function PropertyCard({ property }: PropertyCardProps) {
   const landlord = {
     id: property.landlord_id || '1',
     name: property.landlord || 'Property Owner',
-    phone: property.landlord_phone || null,
-    email: property.landlord_email || null,
+    phone: property.landlord_phone,
+    email: property.landlord_email,
   }
 
   const handleOpenMaps = () => {

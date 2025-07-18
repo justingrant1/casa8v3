@@ -290,11 +290,9 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
         onClose={() => setShowContactModal(false)}
         landlord={{
           id: property.landlord_id,
-          name: (property as any).profiles 
-            ? `${(property as any).profiles.first_name || ''} ${(property as any).profiles.last_name || ''}`.trim() || 'Property Owner'
-            : 'Property Owner',
-          phone: (property as any).profiles?.phone,
-          email: (property as any).profiles?.email
+          name: property.landlord || 'Property Owner',
+          phone: property.landlord_phone,
+          email: property.landlord_email
         }}
         property={{
           id: property.id,
