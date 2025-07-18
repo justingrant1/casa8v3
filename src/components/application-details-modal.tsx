@@ -170,37 +170,57 @@ export function ApplicationDetailsModal({ isOpen, onClose, application }: Applic
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  <h3 className="font-semibold">{application.properties.title}</h3>
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <MapPin className="h-4 w-4" />
-                    <span>
-                      {application.properties.address}
-                      {(application.properties as any).city && `, ${(application.properties as any).city}`}
-                      {(application.properties as any).state && ` ${(application.properties as any).state}`}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-primary">
-                        {formatCurrency(application.properties.price)}
+                {(() => {
+                  const props = application.properties;
+                  
+                  // Handle case where properties might be a JSON string
+                  let parsedProps: any = props;
+                  if (typeof props === 'string') {
+                    try {
+                      parsedProps = JSON.parse(props);
+                    } catch (e) {
+                      return (
+                        <div className="text-sm text-gray-500">
+                          Unable to display property information
+                        </div>
+                      );
+                    }
+                  }
+                  
+                  return (
+                    <div className="space-y-3">
+                      <h3 className="font-semibold">{parsedProps.title}</h3>
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <MapPin className="h-4 w-4" />
+                        <span>
+                          {parsedProps.address}
+                          {parsedProps.city && `, ${parsedProps.city}`}
+                          {parsedProps.state && ` ${parsedProps.state}`}
+                        </span>
                       </div>
-                      <div className="text-sm text-gray-500">Monthly Rent</div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-primary">
+                            {formatCurrency(parsedProps.price)}
+                          </div>
+                          <div className="text-sm text-gray-500">Monthly Rent</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold">{parsedProps.bedrooms}</div>
+                          <div className="text-sm text-gray-500">Bedrooms</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold">{parsedProps.bathrooms}</div>
+                          <div className="text-sm text-gray-500">Bathrooms</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold">{parsedProps.sqft || 'N/A'}</div>
+                          <div className="text-sm text-gray-500">Sq Ft</div>
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold">{application.properties.bedrooms}</div>
-                      <div className="text-sm text-gray-500">Bedrooms</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold">{application.properties.bathrooms}</div>
-                      <div className="text-sm text-gray-500">Bathrooms</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold">{application.properties.bedrooms}</div>
-                      <div className="text-sm text-gray-500">Bedrooms</div>
-                    </div>
-                  </div>
-                </div>
+                  );
+                })()}
               </CardContent>
             </Card>
           )}
