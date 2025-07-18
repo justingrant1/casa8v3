@@ -16,10 +16,51 @@ interface PropertyCardProps {
   property: any
 }
 
-export function PropertyCard({ property }: PropertyCardProps) {
+export function PropertyCard({ property: rawProperty }: PropertyCardProps) {
   const { user } = useAuth()
   const { toggleFavorite, isFavorite } = useFavorites()
   const [isContactModalOpen, setIsContactModalOpen] = useState(false)
+
+  // Parse property data to handle JSON in description field
+  const parsePropertyData = (rawProperty: any) => {
+    // Check if description contains JSON data
+    if (typeof rawProperty.description === 'string' && rawProperty.description.includes('"title"')) {
+      try {
+        // Find where JSON starts (first '{' character)
+        const jsonStartIndex = rawProperty.description.indexOf('{')
+        if (jsonStartIndex === -1) {
+          return rawProperty
+        }
+        
+        // Extract only the JSON part
+        const jsonString = rawProperty.description.substring(jsonStartIndex)
+        const parsedData = JSON.parse(jsonString)
+        
+        return {
+          ...rawProperty,
+          title: parsedData.title || rawProperty.title,
+          description: parsedData.description || 'No description available',
+          price: parsedData.price || rawProperty.price,
+          bedrooms: parsedData.bedrooms || rawProperty.bedrooms,
+          bathrooms: parsedData.bathrooms || rawProperty.bathrooms,
+          sqft: parsedData.sqft || rawProperty.sqft || 1400,
+          // Keep original address fields from database, don't extract from JSON
+          address: rawProperty.address,
+          city: rawProperty.city,
+          state: rawProperty.state,
+          zip_code: rawProperty.zip_code,
+          amenities: parsedData.amenities || rawProperty.amenities || []
+        }
+      } catch (e) {
+        console.error('Error parsing property JSON:', e)
+        return rawProperty
+      }
+    }
+    return rawProperty
+  }
+
+  // Parse the property data
+  const property = parsePropertyData(rawProperty)
 
   // Extract landlord data - handle both raw and formatted property data
   const landlord = {

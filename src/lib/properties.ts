@@ -285,44 +285,85 @@ export async function getPropertyById(id: string): Promise<any | null> {
 }
 
 export function formatPropertyForFrontend(property: any) {
-  const landlordName = property.profiles 
-    ? `${property.profiles.first_name || ''} ${property.profiles.last_name || ''}`.trim() || 'Property Owner'
+  // Parse property data to handle JSON in description field
+  const parsePropertyData = (rawProperty: any) => {
+    // Check if description contains JSON data
+    if (typeof rawProperty.description === 'string' && rawProperty.description.includes('"title"')) {
+      try {
+        // Find where JSON starts (first '{' character)
+        const jsonStartIndex = rawProperty.description.indexOf('{')
+        if (jsonStartIndex === -1) {
+          return rawProperty
+        }
+        
+        // Extract only the JSON part
+        const jsonString = rawProperty.description.substring(jsonStartIndex)
+        const parsedData = JSON.parse(jsonString)
+        
+        return {
+          ...rawProperty,
+          title: parsedData.title || rawProperty.title,
+          description: parsedData.description || 'No description available',
+          price: parsedData.price || rawProperty.price,
+          bedrooms: parsedData.bedrooms || rawProperty.bedrooms,
+          bathrooms: parsedData.bathrooms || rawProperty.bathrooms,
+          sqft: parsedData.sqft || rawProperty.sqft || 1200,
+          // Keep original address fields from database, don't extract from JSON
+          address: rawProperty.address,
+          city: rawProperty.city,
+          state: rawProperty.state,
+          zip_code: rawProperty.zip_code,
+          amenities: parsedData.amenities || rawProperty.amenities || []
+        }
+      } catch (e) {
+        console.error('Error parsing property JSON:', e)
+        return rawProperty
+      }
+    }
+    return rawProperty
+  }
+
+  // Parse the property data first
+  const parsedProperty = parsePropertyData(property)
+
+  const landlordName = parsedProperty.profiles 
+    ? `${parsedProperty.profiles.first_name || ''} ${parsedProperty.profiles.last_name || ''}`.trim() || 'Property Owner'
     : 'Property Owner'
 
   // Create coordinates object with more robust checking
-  const lat = property.latitude ? parseFloat(property.latitude) : null
-  const lng = property.longitude ? parseFloat(property.longitude) : null
+  const lat = parsedProperty.latitude ? parseFloat(parsedProperty.latitude) : null
+  const lng = parsedProperty.longitude ? parseFloat(parsedProperty.longitude) : null
   const coordinates = (lat !== null && lng !== null && !isNaN(lat) && !isNaN(lng)) ? {
     lat: lat,
     lng: lng
   } : null
 
   return {
-    id: property.id,
-    title: property.title,
-    description: property.description,
-    price: property.price,
-    type: property.property_type,
-    location: `${property.address}${property.city ? `, ${property.city}` : ''}${property.state ? `, ${property.state}` : ''}`,
-    address: property.address,
-    city: property.city,
-    state: property.state,
-    bedrooms: property.bedrooms,
-    bathrooms: property.bathrooms,
-    sqft: property.sqft || 1200, // Default square footage
-    images: property.images || ['/placeholder.svg'],
-    image: property.images?.[0] || '/placeholder.svg',
-    amenities: property.amenities || [],
-    available: property.is_active,
+    id: parsedProperty.id,
+    title: parsedProperty.title,
+    description: parsedProperty.description,
+    price: parsedProperty.price,
+    type: parsedProperty.property_type,
+    location: `${parsedProperty.address}${parsedProperty.city ? `, ${parsedProperty.city}` : ''}${parsedProperty.state ? `, ${parsedProperty.state}` : ''}`,
+    address: parsedProperty.address,
+    city: parsedProperty.city,
+    state: parsedProperty.state,
+    bedrooms: parsedProperty.bedrooms,
+    bathrooms: parsedProperty.bathrooms,
+    sqft: parsedProperty.sqft || 1200, // Default square footage
+    images: parsedProperty.images || ['/placeholder.svg'],
+    image: parsedProperty.images?.[0] || '/placeholder.svg',
+    amenities: parsedProperty.amenities || [],
+    available: parsedProperty.is_active,
     landlord: landlordName,
-    landlord_email: property.profiles?.email,
-    landlord_phone: property.profiles?.phone,
-    landlord_id: property.landlord_id,
-    latitude: property.latitude,
-    longitude: property.longitude,
+    landlord_email: parsedProperty.profiles?.email,
+    landlord_phone: parsedProperty.profiles?.phone,
+    landlord_id: parsedProperty.landlord_id,
+    latitude: parsedProperty.latitude,
+    longitude: parsedProperty.longitude,
     coordinates: coordinates,
-    created_at: property.created_at,
-    updated_at: property.updated_at
+    created_at: parsedProperty.created_at,
+    updated_at: parsedProperty.updated_at
   }
 }
 
