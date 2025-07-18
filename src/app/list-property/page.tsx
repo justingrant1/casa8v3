@@ -628,7 +628,7 @@ function ListPropertyPageContent() {
           <CardContent className="p-6">
             <EnhancedImageUpload
               onImagesChange={(newImages) => dispatch({ type: 'SET_FIELD', field: 'images', value: newImages })}
-              existingImages={images}
+              existingImages={existingImages}
               maxImages={20}
               maxSizeInMB={10}
               acceptedFormats={['image/jpeg', 'image/png', 'image/webp']}

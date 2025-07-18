@@ -21,17 +21,18 @@ import { cn } from '@/lib/utils'
 
 interface ImageFile {
   id: string
-  file: File
+  file: File | null
   preview: string
   isMain: boolean
   uploadProgress?: number
   error?: string
+  isExisting?: boolean
 }
 
 interface EnhancedImageUploadProps {
   onImagesChange: (images: File[]) => void
   onMainImageChange?: (imageIndex: number) => void
-  existingImages?: File[]
+  existingImages?: File[] | string[]
   maxImages?: number
   maxSizeInMB?: number
   acceptedFormats?: string[]
@@ -65,12 +66,13 @@ export function EnhancedImageUpload({
   // Initialize with existing images only once on mount
   useEffect(() => {
     if (existingImages.length > 0 && !initializedRef.current) {
-      const imageFiles = existingImages.map((file, index) => ({
+      const imageFiles = existingImages.map((item, index) => ({
         id: `existing-${index}`,
-        file,
-        preview: URL.createObjectURL(file),
+        file: item instanceof File ? item : null,
+        preview: typeof item === 'string' ? item : URL.createObjectURL(item),
         isMain: index === 0,
-        uploadProgress: 100
+        uploadProgress: 100,
+        isExisting: true
       }))
       setImages(imageFiles)
       initializedRef.current = true
@@ -205,7 +207,7 @@ export function EnhancedImageUpload({
     if (!mountedRef.current) return
     
     imagesRef.current = images
-    const files = images.map(img => img.file)
+    const files = images.map(img => img.file).filter((file): file is File => file !== null)
     
     // Schedule parent callbacks to happen after render to prevent React error #185
     setTimeout(() => {
@@ -473,7 +475,7 @@ export function EnhancedImageUpload({
                 .map(img => (
                   <div key={img.id} className="space-y-1">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="truncate">{img.file.name}</span>
+                      <span className="truncate">{img.file?.name || 'Image'}</span>
                       <span>{Math.round(img.uploadProgress || 0)}%</span>
                     </div>
                     <Progress value={img.uploadProgress || 0} className="h-2" />
