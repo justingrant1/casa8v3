@@ -342,7 +342,7 @@ export function formatPropertyForFrontend(property: any) {
     title: combined.title,
     description: cleanDescription,
     price: combined.price,
-    type: combined.property_type,
+    type: combined.propertyType || combined.property_type,
     location: `${cleanedAddress}${cleanedCity ? `, ${cleanedCity}` : ''}${cleanedState ? `, ${cleanedState}` : ''}`,
     address: cleanedAddress,
     city: cleanedCity,
