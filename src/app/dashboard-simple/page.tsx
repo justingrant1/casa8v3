@@ -24,11 +24,13 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Navbar } from "@/components/navbar"
 import { ApplicationDetailsModal } from "@/components/application-details-modal"
+import { GoogleSignupComplete } from "@/components/google-signup-complete"
 
 export default function SimpleDashboard() {
   const { user, profile, loading: authLoading } = useAuthSimple()
   const router = useRouter()
   const { toast } = useToast()
+  const [showGoogleSignupComplete, setShowGoogleSignupComplete] = useState(false)
   const [activeTab, setActiveTab] = useState("properties")
   const [landlordProperties, setLandlordProperties] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -181,6 +183,19 @@ export default function SimpleDashboard() {
       return
     }
 
+    // Check if user signed up with Google and needs to complete profile
+    if (!authLoading && user && profile) {
+      // Check if user signed up with Google but doesn't have phone number (needs profile completion)
+      const signedUpWithGoogle = user.app_metadata?.provider === 'google' || user.app_metadata?.providers?.includes('google')
+      const needsProfileCompletion = signedUpWithGoogle && !(profile as any).phone
+
+      if (needsProfileCompletion) {
+        console.log('🔍 User needs to complete Google signup')
+        setShowGoogleSignupComplete(true)
+        return
+      }
+    }
+
     // Check if user is a landlord - only landlords should access dashboard
     if (!authLoading && user && profile && profile.role !== 'landlord') {
       console.log('🔍 User is not landlord, redirecting home')
@@ -194,14 +209,14 @@ export default function SimpleDashboard() {
     }
 
     // Fetch properties when user is available and we haven't initialized yet
-    if (user && profile && !authLoading && !initialized) {
+    if (user && profile && !authLoading && !initialized && !showGoogleSignupComplete) {
       console.log('🔍 User available, fetching properties for first time')
       setInitialized(true)
       fetchLandlordProperties()
       fetchApplications()
       fetchMessages()
     }
-  }, [user, profile, authLoading, initialized])
+  }, [user, profile, authLoading, initialized, showGoogleSignupComplete])
 
   // Show loading screen while auth is loading
   if (authLoading) {
@@ -223,6 +238,19 @@ export default function SimpleDashboard() {
           <p className="text-muted-foreground">Redirecting to login...</p>
         </div>
       </div>
+    )
+  }
+
+  // Show Google signup completion flow if needed
+  if (showGoogleSignupComplete) {
+    return (
+      <GoogleSignupComplete 
+        onComplete={() => {
+          setShowGoogleSignupComplete(false)
+          // Refresh the page to load the dashboard properly
+          window.location.reload()
+        }}
+      />
     )
   }
 

@@ -1,20 +1,21 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { useAuth } from '@/lib/auth'
+import { useAuthSimple } from '@/hooks/use-auth-simple'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Phone, ArrowRight } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
 
 interface GoogleSignupCompleteProps {
   onComplete: () => void
 }
 
 export function GoogleSignupComplete({ onComplete }: GoogleSignupCompleteProps) {
-  const { user, profile, handleGoogleSignupComplete } = useAuth()
+  const { user, profile } = useAuthSimple()
   const router = useRouter()
   const [phone, setPhone] = useState('')
   const [loading, setLoading] = useState(false)
@@ -22,7 +23,7 @@ export function GoogleSignupComplete({ onComplete }: GoogleSignupCompleteProps) 
 
   useEffect(() => {
     // If user already has a phone number, skip this step
-    if (profile?.phone) {
+    if ((profile as any)?.phone) {
       onComplete()
     }
   }, [profile, onComplete])
@@ -38,19 +39,35 @@ export function GoogleSignupComplete({ onComplete }: GoogleSignupCompleteProps) 
       return
     }
 
-    const { error } = await handleGoogleSignupComplete({
-      phone: phone.trim(),
-      first_name: user?.user_metadata?.given_name || '',
-      last_name: user?.user_metadata?.family_name || '',
-    })
+    try {
+      // Get the pending role from localStorage
+      const pendingRole = localStorage.getItem('pendingRole') || 'tenant'
+      
+      // Update the user's profile with the phone number and other details
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          phone: phone.trim(),
+          first_name: user?.user_metadata?.given_name || '',
+          last_name: user?.user_metadata?.family_name || '',
+          role: pendingRole as 'tenant' | 'landlord',
+          onboarding_completed: true
+        })
+        .eq('id', user?.id)
 
-    if (error) {
-      setError(error.message || 'Failed to complete signup')
-    } else {
+      if (error) {
+        throw error
+      }
+
+      // Clear the pending role from localStorage
+      localStorage.removeItem('pendingRole')
+      
       onComplete()
+    } catch (error: any) {
+      setError(error.message || 'Failed to complete signup')
+    } finally {
+      setLoading(false)
     }
-
-    setLoading(false)
   }
 
   return (
