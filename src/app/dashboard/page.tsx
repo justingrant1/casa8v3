@@ -31,6 +31,44 @@ export default function LandlordDashboard() {
   const { user, profile, loading: authLoading } = useAuth()
   const router = useRouter()
   const { toast } = useToast()
+
+  // Parse property data to handle JSON in description field
+  const parsePropertyData = (rawProperty: any) => {
+    // Check if description contains JSON data
+    if (typeof rawProperty.description === 'string' && rawProperty.description.includes('"title"')) {
+      try {
+        // Find where JSON starts (first '{' character)
+        const jsonStartIndex = rawProperty.description.indexOf('{')
+        if (jsonStartIndex === -1) {
+          return rawProperty
+        }
+        
+        // Extract only the JSON part
+        const jsonString = rawProperty.description.substring(jsonStartIndex)
+        const parsedData = JSON.parse(jsonString)
+        
+        return {
+          ...rawProperty,
+          title: parsedData.title || rawProperty.title,
+          description: parsedData.description || 'No description available',
+          price: parsedData.price || rawProperty.price,
+          bedrooms: parsedData.bedrooms || rawProperty.bedrooms,
+          bathrooms: parsedData.bathrooms || rawProperty.bathrooms,
+          sqft: parsedData.sqft || rawProperty.sqft || 1400,
+          // Keep original address fields from database, don't extract from JSON
+          address: rawProperty.address,
+          city: rawProperty.city,
+          state: rawProperty.state,
+          zip_code: rawProperty.zip_code,
+          amenities: parsedData.amenities || rawProperty.amenities || []
+        }
+      } catch (e) {
+        console.error('Error parsing property JSON:', e)
+        return rawProperty
+      }
+    }
+    return rawProperty
+  }
   const [activeTab, setActiveTab] = useState("properties")
   const [landlordProperties, setLandlordProperties] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -272,7 +310,9 @@ export default function LandlordDashboard() {
       const properties = await getLandlordProperties(user.id)
       console.log('DEBUG: Fetched properties:', properties)
       
-      setLandlordProperties(properties)
+      // Parse properties to handle JSON data
+      const parsedProperties = properties.map(parsePropertyData)
+      setLandlordProperties(parsedProperties)
       
       // Initialize property statuses
       const statuses = properties.reduce((acc: any, property: any) => {
