@@ -6,11 +6,24 @@ export const createProperty = async (
   propertyData: any,
   images: File[],
   videos: string[],
-  user: any
+  user: any,
+  onProgress?: (progress: number, stage: string) => void
 ) => {
+  const totalSteps = images.length + 3 // images + profile fetch + database insert + completion
+  let currentStep = 0
+
+  const updateProgress = (stage: string) => {
+    currentStep++
+    const progress = Math.round((currentStep / totalSteps) * 100)
+    onProgress?.(progress, stage)
+  }
+
   // 1. Upload images to Supabase Storage
   const imageUrls: string[] = []
-  for (const image of images) {
+  for (let i = 0; i < images.length; i++) {
+    const image = images[i]
+    onProgress?.(Math.round(((currentStep + (i + 1) / images.length) / totalSteps) * 100), `Uploading image ${i + 1} of ${images.length}`)
+    
     const { data, error } = await supabase.storage
       .from('property-images')
       .upload(`${user.id}/${Date.now()}_${image.name}`, image)
@@ -22,11 +35,16 @@ export const createProperty = async (
     } = supabase.storage.from('property-images').getPublicUrl(data.path)
     imageUrls.push(publicUrl)
   }
+  
+  if (images.length > 0) {
+    currentStep = images.length
+  }
 
   // 2. Videos are already uploaded URLs from VideoUpload component
   const videoUrls: string[] = videos
 
   // 3. Fetch the user's profile to get the correct landlord_id
+  updateProgress('Verifying account information')
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('id')
@@ -38,6 +56,7 @@ export const createProperty = async (
   }
 
   // 4. Insert property data into the database
+  updateProgress('Saving property listing')
   const { error: dbError } = await supabase.from('properties').insert({
     ...propertyData,
     landlord_id: profile.id,
@@ -46,6 +65,8 @@ export const createProperty = async (
   })
 
   if (dbError) throw dbError
+  
+  updateProgress('Property listing created successfully!')
 }
 
 export async function getLandlordProperties(landlordId: string) {
@@ -148,11 +169,24 @@ export async function updateProperty(
   images: File[],
   videos: string[],
   user: any,
-  existingImages: string[] = []
+  existingImages: string[] = [],
+  onProgress?: (progress: number, stage: string) => void
 ) {
+  const totalSteps = images.length + 3 // new images + profile fetch + database update + completion
+  let currentStep = 0
+
+  const updateProgress = (stage: string) => {
+    currentStep++
+    const progress = Math.round((currentStep / totalSteps) * 100)
+    onProgress?.(progress, stage)
+  }
+
   // 1. Upload new images to Supabase Storage
   const newImageUrls: string[] = []
-  for (const image of images) {
+  for (let i = 0; i < images.length; i++) {
+    const image = images[i]
+    onProgress?.(Math.round(((currentStep + (i + 1) / images.length) / totalSteps) * 100), `Uploading image ${i + 1} of ${images.length}`)
+    
     const { data, error } = await supabase.storage
       .from('property-images')
       .upload(`${user.id}/${Date.now()}_${image.name}`, image)
@@ -164,6 +198,10 @@ export async function updateProperty(
     } = supabase.storage.from('property-images').getPublicUrl(data.path)
     newImageUrls.push(publicUrl)
   }
+  
+  if (images.length > 0) {
+    currentStep = images.length
+  }
 
   // 2. Combine existing and new images
   const allImageUrls = [...existingImages, ...newImageUrls]
@@ -172,6 +210,7 @@ export async function updateProperty(
   const videoUrls: string[] = videos
 
   // 4. Fetch the user's profile to get the correct landlord_id
+  updateProgress('Verifying account information')
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('id')
@@ -183,6 +222,7 @@ export async function updateProperty(
   }
 
   // 5. Update property data in the database
+  updateProgress('Updating property listing')
   const { error: dbError } = await supabase
     .from('properties')
     .update({
@@ -194,4 +234,6 @@ export async function updateProperty(
     .eq('landlord_id', profile.id)
 
   if (dbError) throw dbError
+  
+  updateProgress('Property listing updated successfully!')
 }

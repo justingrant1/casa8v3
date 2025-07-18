@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Progress } from '@/components/ui/progress'
 import { VideoUpload } from '@/components/video-upload'
 import { EnhancedImageUpload } from '@/components/enhanced-image-upload'
 import { useGoogleMaps, geocodeAddress, initializeAutocomplete, parsePlaceResult } from '@/lib/google-maps'
@@ -69,6 +70,9 @@ function ListPropertyPageContent() {
   const [editPropertyId, setEditPropertyId] = useState<string | null>(null)
   const [existingImages, setExistingImages] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const [uploadStage, setUploadStage] = useState('')
+  const [showUploadProgress, setShowUploadProgress] = useState(false)
   
   const {
     title,
@@ -308,6 +312,14 @@ function ListPropertyPageContent() {
     }
 
     dispatch({ type: 'SET_SUBMITTING', payload: true })
+    setShowUploadProgress(true)
+    setUploadProgress(0)
+    setUploadStage('Starting...')
+
+    const handleProgress = (progress: number, stage: string) => {
+      setUploadProgress(progress)
+      setUploadStage(stage)
+    }
 
     try {
       const propertyData = {
@@ -330,14 +342,18 @@ function ListPropertyPageContent() {
       }
 
       if (isEditMode && editPropertyId) {
-        await updateProperty(editPropertyId, propertyData, images, videos, user, existingImages)
+        await updateProperty(editPropertyId, propertyData, images, videos, user, existingImages, handleProgress)
       } else {
-        await createProperty(propertyData, images, videos, user)
+        await createProperty(propertyData, images, videos, user, handleProgress)
       }
 
-      router.push('/dashboard-simple')
+      // Show completion for a moment before redirecting
+      setTimeout(() => {
+        router.push('/dashboard-simple')
+      }, 1000)
     } catch (error: any) {
       dispatch({ type: 'SET_ERROR', payload: error.message })
+      setShowUploadProgress(false)
     }
   }
 
@@ -654,6 +670,33 @@ function ListPropertyPageContent() {
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
             <p className="text-sm text-red-600">{error}</p>
           </div>
+        )}
+
+        {/* Upload Progress Bar */}
+        {showUploadProgress && (
+          <Card className="border border-blue-200 bg-blue-50">
+            <CardContent className="p-6">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-blue-900">
+                    {isEditMode ? 'Updating Property' : 'Creating Property Listing'}
+                  </h3>
+                  <span className="text-sm font-medium text-blue-700">
+                    {uploadProgress}%
+                  </span>
+                </div>
+                <Progress value={uploadProgress} className="h-3" />
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-blue-700">{uploadStage}</span>
+                  {uploadProgress === 100 && (
+                    <span className="text-green-600 font-medium">
+                      ✓ Complete! Redirecting to dashboard...
+                    </span>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         )}
 
         <Button 
