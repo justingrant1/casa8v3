@@ -363,7 +363,8 @@ export function formatPropertyForFrontend(property: any) {
     longitude: combined.longitude,
     coordinates: coordinates,
     created_at: combined.created_at,
-    updated_at: combined.updated_at
+    updated_at: combined.updated_at,
+    profiles: combined.profiles
   }
 }
 
