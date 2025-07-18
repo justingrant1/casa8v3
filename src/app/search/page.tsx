@@ -28,6 +28,19 @@ function SearchPageContent() {
   const [properties, setProperties] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [viewMode, setViewMode] = useState<'list' | 'map'>(searchParams.get('view') === 'map' ? 'map' : 'list')
+  
+  const updateViewMode = (mode: 'list' | 'map') => {
+    setViewMode(mode)
+    // Update URL to maintain state
+    const currentParams = new URLSearchParams(window.location.search)
+    if (mode === 'map') {
+      currentParams.set('view', 'map')
+    } else {
+      currentParams.delete('view')
+    }
+    const newUrl = `${window.location.pathname}${currentParams.toString() ? '?' + currentParams.toString() : ''}`
+    window.history.replaceState({}, '', newUrl)
+  }
   const [showFilters, setShowFilters] = useState(false)
   const [sortBy, setSortBy] = useState('price_asc')
 
@@ -107,7 +120,7 @@ function SearchPageContent() {
                   <div className="flex items-center gap-2">
                     <Button
                       variant={viewMode === 'list' ? 'secondary' : 'ghost'}
-                      onClick={() => setViewMode('list')}
+                      onClick={() => updateViewMode('list')}
                       className="rounded-full"
                     >
                       <List className="h-4 w-4 mr-2" />
@@ -115,7 +128,7 @@ function SearchPageContent() {
                     </Button>
                     <Button
                       variant={viewMode === 'map' ? 'secondary' : 'ghost'}
-                      onClick={() => setViewMode('map')}
+                      onClick={() => updateViewMode('map')}
                       className="rounded-full"
                     >
                       <Map className="h-4 w-4 mr-2" />
@@ -147,7 +160,25 @@ function SearchPageContent() {
                 </div>
               ) : (
                 <div className="h-[600px] rounded-lg overflow-hidden">
-                  <SimpleMap properties={properties.filter(p => p.coordinates)} />
+                  {properties.length > 0 ? (
+                    <SimpleMap 
+                      properties={properties.map(property => ({
+                        ...property,
+                        coordinates: property.coordinates || (property.latitude && property.longitude ? {
+                          lat: parseFloat(property.latitude),
+                          lng: parseFloat(property.longitude)
+                        } : null)
+                      }))} 
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center h-full bg-gray-100 rounded-lg">
+                      <div className="text-center">
+                        <Map className="h-16 w-16 mx-auto text-gray-400 mb-4" />
+                        <h3 className="text-lg font-semibold text-gray-600 mb-2">No Properties Found</h3>
+                        <p className="text-gray-500">Try adjusting your search criteria to see more properties on the map.</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
