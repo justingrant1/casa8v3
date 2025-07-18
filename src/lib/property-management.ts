@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import { Profile } from './database.types'
+import { formatPropertyForFrontend } from './properties'
 
 export const createProperty = async (
   propertyData: any,
@@ -65,7 +66,7 @@ export async function getLandlordProperties(landlordId: string) {
       throw error
     }
 
-    return data || []
+    return data ? data.map(formatPropertyForFrontend) : []
   } catch (error) {
     console.error('Error in getLandlordProperties:', error)
     throw error
