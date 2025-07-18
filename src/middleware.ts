@@ -26,35 +26,23 @@ export async function middleware(req: NextRequest) {
   const supabase = createMiddlewareClient({ req, res })
 
   try {
-    // First, try to refresh the session to ensure we have the latest tokens
-    let session = null
-    let sessionError = null
-
-    try {
-      // Try to refresh the session first - this is crucial for production domains
-      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession()
-      
-      if (!refreshError && refreshData?.session) {
-        session = refreshData.session
-      } else {
-        // Fallback to getSession if refresh fails
-        const { data: sessionData, error: getSessionError } = await supabase.auth.getSession()
-        session = sessionData?.session
-        sessionError = getSessionError
-      }
-    } catch (authError) {
-      console.error('Middleware session refresh error:', authError)
-      // Try getSession as fallback
-      const { data: sessionData, error: getSessionError } = await supabase.auth.getSession()
-      session = sessionData?.session
-      sessionError = getSessionError
-    }
-
-    if (sessionError) {
-      console.error('Middleware auth error:', sessionError)
-    }
-
+    // Debug logging for production
     const pathname = req.nextUrl.pathname
+    console.log('🛡️ Middleware executing for:', pathname)
+    
+    // Get session with simplified approach
+    const { data: { session }, error } = await supabase.auth.getSession()
+    
+    console.log('🔍 Session check result:', {
+      hasSession: !!session,
+      userId: session?.user?.id,
+      error: error?.message,
+      pathname
+    })
+
+    if (error) {
+      console.error('❌ Middleware auth error:', error)
+    }
     const isProtectedRoute = protectedRoutes.some(route => 
       pathname === route || pathname.startsWith(route + '/')
     )
