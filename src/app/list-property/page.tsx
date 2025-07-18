@@ -1,10 +1,10 @@
 "use client"
 
 import { useState, useEffect, useRef, useReducer } from 'react'
-import { useRouter } from 'next/navigation'
-import { useAuthSimple } from '@/hooks/use-auth-simple'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useAuth } from '@/lib/auth'
 import { useToast } from '@/hooks/use-toast-simple'
-import { createProperty } from '@/lib/property-management'
+import { createProperty, getProperty, updateProperty } from '@/lib/property-management'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -57,11 +57,17 @@ function reducer(state: any, action: any) {
 }
 
 export default function ListPropertyPage() {
-  const { user } = useAuthSimple()
+  const { user, profile } = useAuth()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { isLoaded: mapsLoaded } = useGoogleMaps()
   
   const [state, dispatch] = useReducer(reducer, initialState)
+  const [isEditMode, setIsEditMode] = useState(false)
+  const [editPropertyId, setEditPropertyId] = useState<string | null>(null)
+  const [existingImages, setExistingImages] = useState<string[]>([])
+  const [loading, setLoading] = useState(true)
+  
   const {
     title,
     description,
@@ -87,6 +93,59 @@ export default function ListPropertyPage() {
 
   const addressInputRef = useRef<HTMLInputElement>(null)
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null)
+
+  // Check if we're in edit mode and load existing property data
+  useEffect(() => {
+    const propertyId = searchParams.get('edit')
+    if (propertyId && user && profile) {
+      setIsEditMode(true)
+      setEditPropertyId(propertyId)
+      loadPropertyData(propertyId)
+    } else {
+      setLoading(false)
+    }
+  }, [searchParams, user, profile])
+
+  const loadPropertyData = async (propertyId: string) => {
+    try {
+      if (!user || !profile) return
+      
+      const property = await getProperty(propertyId, profile.id)
+      if (property) {
+        // Pre-populate form with existing data
+        dispatch({ type: 'SET_FIELD', field: 'title', value: property.title || '' })
+        dispatch({ type: 'SET_FIELD', field: 'description', value: property.description || '' })
+        dispatch({ type: 'SET_FIELD', field: 'price', value: property.price?.toString() || '' })
+        dispatch({ type: 'SET_FIELD', field: 'propertyType', value: property.type || '' })
+        dispatch({ type: 'SET_FIELD', field: 'fullAddress', value: `${property.address}, ${property.city}, ${property.state} ${property.zip_code}` })
+        dispatch({ type: 'SET_FIELD', field: 'address', value: property.address || '' })
+        dispatch({ type: 'SET_FIELD', field: 'city', value: property.city || '' })
+        dispatch({ type: 'SET_FIELD', field: 'state', value: property.state || '' })
+        dispatch({ type: 'SET_FIELD', field: 'zipCode', value: property.zip_code || '' })
+        dispatch({ type: 'SET_FIELD', field: 'bedrooms', value: property.bedrooms?.toString() || '' })
+        dispatch({ type: 'SET_FIELD', field: 'bathrooms', value: property.bathrooms?.toString() || '' })
+        dispatch({ type: 'SET_FIELD', field: 'sqft', value: property.sqft?.toString() || '' })
+        dispatch({ type: 'SET_FIELD', field: 'amenities', value: property.amenities || [] })
+        dispatch({ type: 'SET_FIELD', field: 'videos', value: (property as any).videos || [] })
+        
+        // Set coordinates if available
+        if (property.latitude && property.longitude) {
+          dispatch({ type: 'SET_FIELD', field: 'coordinates', value: { 
+            lat: parseFloat(property.latitude), 
+            lng: parseFloat(property.longitude) 
+          }})
+        }
+        
+        // Store existing images
+        setExistingImages(property.images || [])
+      }
+    } catch (error) {
+      console.error('Error loading property:', error)
+      dispatch({ type: 'SET_ERROR', payload: 'Failed to load property data' })
+    } finally {
+      setLoading(false)
+    }
+  }
 
   // Initialize Google Maps autocomplete
   useEffect(() => {
@@ -262,7 +321,11 @@ export default function ListPropertyPage() {
         amenities,
       }
 
-      await createProperty(propertyData, images, videos, user)
+      if (isEditMode && editPropertyId) {
+        await updateProperty(editPropertyId, propertyData, images, videos, user, existingImages)
+      } else {
+        await createProperty(propertyData, images, videos, user)
+      }
 
       router.push('/dashboard-simple')
     } catch (error: any) {
@@ -284,8 +347,12 @@ export default function ListPropertyPage() {
           <span>Back</span>
         </Button>
         <div className="flex-1">
-          <h1 className="text-3xl font-bold text-gray-900">List Your Property</h1>
-          <p className="text-gray-600 mt-1">Create a new property listing</p>
+          <h1 className="text-3xl font-bold text-gray-900">
+            {isEditMode ? 'Edit Property' : 'List Your Property'}
+          </h1>
+          <p className="text-gray-600 mt-1">
+            {isEditMode ? 'Update your property listing' : 'Create a new property listing'}
+          </p>
         </div>
       </div>
 
@@ -548,7 +615,10 @@ export default function ListPropertyPage() {
           className="w-full h-12 bg-gray-900 hover:bg-gray-800 text-white font-medium" 
           disabled={isSubmitting}
         >
-          {isSubmitting ? 'Listing Property...' : 'List Property'}
+          {isSubmitting 
+            ? (isEditMode ? 'Updating Property...' : 'Listing Property...') 
+            : (isEditMode ? 'Update Property' : 'List Property')
+          }
         </Button>
       </form>
     </div>

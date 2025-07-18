@@ -116,3 +116,82 @@ export async function updatePropertyStatus(propertyId: string, landlordId: strin
     throw error
   }
 }
+
+export async function getProperty(propertyId: string, landlordId: string) {
+  if (!propertyId || !landlordId) {
+    throw new Error('Property ID and Landlord ID are required to fetch property.')
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('properties')
+      .select('*')
+      .eq('id', propertyId)
+      .eq('landlord_id', landlordId)
+      .single()
+
+    if (error) {
+      console.error('Error fetching property:', error)
+      throw error
+    }
+
+    return data ? formatPropertyForFrontend(data) : null
+  } catch (error) {
+    console.error('Error in getProperty:', error)
+    throw error
+  }
+}
+
+export async function updateProperty(
+  propertyId: string,
+  propertyData: any,
+  images: File[],
+  videos: string[],
+  user: any,
+  existingImages: string[] = []
+) {
+  // 1. Upload new images to Supabase Storage
+  const newImageUrls: string[] = []
+  for (const image of images) {
+    const { data, error } = await supabase.storage
+      .from('property-images')
+      .upload(`${user.id}/${Date.now()}_${image.name}`, image)
+
+    if (error) throw error
+
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from('property-images').getPublicUrl(data.path)
+    newImageUrls.push(publicUrl)
+  }
+
+  // 2. Combine existing and new images
+  const allImageUrls = [...existingImages, ...newImageUrls]
+
+  // 3. Videos are already uploaded URLs from VideoUpload component
+  const videoUrls: string[] = videos
+
+  // 4. Fetch the user's profile to get the correct landlord_id
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('id', user.id)
+    .single()
+
+  if (profileError || !profile) {
+    throw new Error('Could not find a landlord profile for the current user.')
+  }
+
+  // 5. Update property data in the database
+  const { error: dbError } = await supabase
+    .from('properties')
+    .update({
+      ...propertyData,
+      images: allImageUrls,
+      videos: videoUrls,
+    })
+    .eq('id', propertyId)
+    .eq('landlord_id', profile.id)
+
+  if (dbError) throw dbError
+}
