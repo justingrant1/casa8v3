@@ -15,7 +15,7 @@ export interface PropertyFilter {
   amenities?: string[]
 }
 
-let propertiesCache: Property[] = []
+let propertiesCache: any[] = []
 let cacheTimestamp = 0
 const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
 
@@ -32,6 +32,7 @@ export async function getProperties(filters?: PropertyFilter): Promise<any[]> {
     // Check cache first
     const now = Date.now()
     if (propertiesCache.length > 0 && (now - cacheTimestamp) < CACHE_DURATION) {
+      console.log('Returning properties from cache.')
       return applyFilters(propertiesCache, filters)
     }
 
@@ -108,24 +109,28 @@ export async function getProperties(filters?: PropertyFilter): Promise<any[]> {
       })
     }
 
-    // Combine properties with their landlord profiles
-    const enrichedProperties = properties.map(property => ({
-      ...property,
-      profiles: profileMap.get(property.landlord_id) || null
-    }))
+    // Combine properties with their landlord profiles and format them
+    const formattedProperties = properties.map(property => {
+      const enriched = {
+        ...property,
+        profiles: profileMap.get(property.landlord_id) || null
+      }
+      return formatPropertyForFrontend(enriched)
+    })
 
-    // Update cache
-    propertiesCache = enrichedProperties
+    // Update cache with the FORMATTED data
+    propertiesCache = formattedProperties
     cacheTimestamp = now
 
-    return enrichedProperties.map(formatPropertyForFrontend)
+    // Apply filters to the newly fetched data before returning
+    return applyFilters(formattedProperties, filters)
   } catch (error) {
     console.error('Error in getProperties:', error)
     throw error
   }
 }
 
-function applyFilters(properties: Property[], filters?: PropertyFilter): Property[] {
+function applyFilters(properties: any[], filters?: PropertyFilter): any[] {
   if (!filters) return properties
 
   let filtered = properties
