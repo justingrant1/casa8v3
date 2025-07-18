@@ -1,22 +1,40 @@
 "use client"
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Search, Map } from 'lucide-react'
 
-export function SearchForm() {
+function SearchFormContent() {
   const [location, setLocation] = useState('')
   const [bedrooms, setBedrooms] = useState('any')
   const router = useRouter()
+  const searchParams = useSearchParams()
+
+  // Initialize form with current search parameters
+  useEffect(() => {
+    const currentLocation = searchParams.get('location') || ''
+    const currentBedrooms = searchParams.get('bedrooms') || 'any'
+    setLocation(currentLocation)
+    setBedrooms(currentBedrooms)
+  }, [searchParams])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     const query = new URLSearchParams({
       location,
       bedrooms,
+    }).toString()
+    router.push(`/search?${query}`)
+  }
+
+  const handleMapView = () => {
+    const query = new URLSearchParams({
+      location,
+      bedrooms,
+      view: 'map',
     }).toString()
     router.push(`/search?${query}`)
   }
@@ -60,12 +78,38 @@ export function SearchForm() {
           type="button"
           variant="outline"
           className="w-full rounded-none h-14 text-base font-medium border-0 border-t"
-          onClick={() => router.push('/search?view=map')}
+          onClick={handleMapView}
         >
           <Map className="mr-2 h-5 w-5" />
           Map View
         </Button>
       </div>
     </div>
+  )
+}
+
+function SearchFormFallback() {
+  return (
+    <div className="bg-white">
+      <div className="px-6 py-6">
+        <div className="h-8 bg-gray-200 rounded animate-pulse mb-6"></div>
+      </div>
+      <div className="space-y-4 px-6">
+        <div className="h-12 bg-gray-200 rounded animate-pulse"></div>
+        <div className="h-12 bg-gray-200 rounded animate-pulse"></div>
+      </div>
+      <div className="mt-4">
+        <div className="h-14 bg-gray-200 rounded animate-pulse mb-1"></div>
+        <div className="h-14 bg-gray-200 rounded animate-pulse"></div>
+      </div>
+    </div>
+  )
+}
+
+export function SearchForm() {
+  return (
+    <Suspense fallback={<SearchFormFallback />}>
+      <SearchFormContent />
+    </Suspense>
   )
 }
