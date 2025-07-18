@@ -11,6 +11,7 @@ import { ContactLandlordModal } from "./contact-landlord-modal"
 import { getImageUrls } from "@/lib/storage"
 import { useAuth } from "@/lib/auth"
 import { useFavorites } from "@/lib/favorites-context"
+import { useRouter } from "next/navigation"
 
 interface PropertyCardProps {
   property: any
@@ -19,6 +20,7 @@ interface PropertyCardProps {
 export function PropertyCard({ property }: PropertyCardProps) {
   const { user } = useAuth()
   const { toggleFavorite, isFavorite } = useFavorites()
+  const router = useRouter()
   const [isContactModalOpen, setIsContactModalOpen] = useState(false)
 
   const landlord = {
@@ -91,7 +93,13 @@ export function PropertyCard({ property }: PropertyCardProps) {
             size="icon"
             variant="secondary"
             className="absolute top-4 right-4 h-10 w-10 rounded-full bg-white/80 backdrop-blur-sm"
-            onClick={() => user && toggleFavorite(property.id)}
+            onClick={() => {
+              if (!user) {
+                router.push('/login')
+                return
+              }
+              toggleFavorite(property.id)
+            }}
           >
             <Heart className={`h-5 w-5 ${user && isFavorite(property.id) ? 'fill-red-500 text-red-500' : 'text-gray-700'}`} />
           </Button>
