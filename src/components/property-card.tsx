@@ -32,23 +32,30 @@ export function PropertyCard({ property }: PropertyCardProps) {
   }
 
   const handleOpenMaps = () => {
-    const encodedAddress = encodeURIComponent(property.address)
+    // Create full address string for better mapping
+    const fullAddress = `${property.address}, ${property.city}, ${property.state} ${property.zip_code}`.trim()
+    const encodedAddress = encodeURIComponent(fullAddress)
     const mapsUrl = `https://maps.google.com/maps?q=${encodedAddress}`
     
-    // For mobile devices, try to open the native maps app
+    // For mobile devices, try to open the native maps app first
     if (/Android/i.test(navigator.userAgent)) {
+      // Try Android native maps first, fallback to web
       window.open(`geo:0,0?q=${encodedAddress}`, '_blank')
+      setTimeout(() => window.open(mapsUrl, '_blank'), 500)
     } else if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+      // Try iOS native maps first, fallback to web
       window.open(`maps://maps.google.com/maps?q=${encodedAddress}`, '_blank')
+      setTimeout(() => window.open(mapsUrl, '_blank'), 500)
     } else {
       window.open(mapsUrl, '_blank')
     }
   }
 
   const handleShare = async () => {
+    const fullAddress = `${property.address}${property.city ? `, ${property.city}` : ''}${property.state ? `, ${property.state}` : ''}${property.zip_code ? ` ${property.zip_code}` : ''}`
     const shareData = {
       title: `${property.title} - Casa8`,
-      text: `Check out this ${property.bedrooms} bedroom, ${property.bathrooms} bathroom home at ${property.address}. ${property.price.toLocaleString()} per month. Available on Casa8.`,
+      text: `Check out this ${property.bedrooms} bedroom, ${property.bathrooms} bathroom home at ${fullAddress}. $${property.price.toLocaleString()} per month. Available on Casa8.`,
       url: `${window.location.origin}/property/${property.id}`
     }
 
@@ -116,9 +123,12 @@ export function PropertyCard({ property }: PropertyCardProps) {
             <MapPin className="h-4 w-4 mr-2 flex-shrink-0" />
             <button 
               onClick={handleOpenMaps}
-              className="flex-1 text-left hover:text-blue-600 cursor-pointer transition-colors duration-200 truncate"
+              className="flex-1 text-left hover:text-blue-600 cursor-pointer transition-colors duration-200 text-sm leading-relaxed"
+              title="Open in Maps"
             >
-              {property.address}
+              <div className="line-clamp-2">
+                {property.address}{property.city && `, ${property.city}`}{property.state && `, ${property.state}`}{property.zip_code && ` ${property.zip_code}`}
+              </div>
             </button>
           </div>
           
