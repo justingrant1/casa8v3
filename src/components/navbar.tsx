@@ -28,13 +28,14 @@ import {
   X
 } from "lucide-react"
 import { useAuth } from "@/lib/auth"
+import { useEffect } from "react"
 
 interface NavbarProps {
   currentPage?: string
 }
 
 export function Navbar({ currentPage = "home" }: NavbarProps) {
-  const { user, profile, signOut } = useAuth()
+  const { user, profile, signOut, refreshProfile } = useAuth()
   const router = useRouter()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
@@ -53,6 +54,12 @@ export function Navbar({ currentPage = "home" }: NavbarProps) {
 
   const isLandlord = profile?.role === 'landlord'
   const isTenant = profile?.role === 'tenant'
+
+  useEffect(() => {
+    if (user) {
+      refreshProfile()
+    }
+  }, [user])
 
   return (
     <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">

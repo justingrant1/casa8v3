@@ -76,10 +76,17 @@ export function useAuthSimple() {
     setProfile(null)
   }
 
+  const refreshProfile = async () => {
+    if (user) {
+      await fetchProfile(user.id)
+    }
+  }
+
   return {
     user,
     profile,
     loading,
     signOut,
+    refreshProfile,
   }
 }
