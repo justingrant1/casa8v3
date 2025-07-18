@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Plus, Edit, Trash2, MessageSquare, FileText } from "lucide-react"
 import Link from "next/link"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useAuthSimple } from "@/hooks/use-auth-simple"
+import { useAuth } from "@/lib/auth"
 import { useToast } from "@/hooks/use-toast-simple"
 import { getLandlordProperties, deleteProperty, updatePropertyStatus } from "@/lib/property-management"
 import { getApplicationsForLandlord, updateApplicationStatus, Application } from "@/lib/applications"
@@ -27,7 +27,7 @@ import { ApplicationDetailsModal } from "@/components/application-details-modal"
 import { GoogleSignupComplete } from "@/components/google-signup-complete"
 
 export default function SimpleDashboard() {
-  const { user, profile, loading: authLoading } = useAuthSimple()
+  const { user, profile, loading: authLoading } = useAuth()
   const router = useRouter()
   const { toast } = useToast()
   const [showGoogleSignupComplete, setShowGoogleSignupComplete] = useState(false)
@@ -174,7 +174,7 @@ export default function SimpleDashboard() {
   }
 
   useEffect(() => {
-    console.log('🔍 Simple Dashboard useEffect - authLoading:', authLoading, 'user:', !!user, 'initialized:', initialized)
+    console.log('🔍 Simple Dashboard useEffect - authLoading:', authLoading, 'user:', !!user, 'profile:', !!profile, 'initialized:', initialized)
     
     // Only redirect if auth is definitely done loading and there's no user
     if (!authLoading && !user) {
@@ -183,8 +183,20 @@ export default function SimpleDashboard() {
       return
     }
 
+    // Don't proceed if still loading auth
+    if (authLoading) {
+      console.log('🔍 Still loading auth, waiting...')
+      return
+    }
+
+    // Don't proceed if no user
+    if (!user) {
+      console.log('🔍 No user available')
+      return
+    }
+
     // Check if user signed up with Google and needs to complete profile
-    if (!authLoading && user && profile) {
+    if (user && profile) {
       // Check if user signed up with Google but doesn't have phone number (needs profile completion)
       const signedUpWithGoogle = user.app_metadata?.provider === 'google' || user.app_metadata?.providers?.includes('google')
       const needsProfileCompletion = signedUpWithGoogle && !(profile as any).phone
@@ -197,7 +209,7 @@ export default function SimpleDashboard() {
     }
 
     // Check if user is a landlord - only landlords should access dashboard
-    if (!authLoading && user && profile && profile.role !== 'landlord') {
+    if (user && profile && profile.role !== 'landlord') {
       console.log('🔍 User is not landlord, redirecting home')
       toast({
         title: "Access Denied",
@@ -209,7 +221,8 @@ export default function SimpleDashboard() {
     }
 
     // Fetch properties when user is available and we haven't initialized yet
-    if (user && profile && !authLoading && !initialized && !showGoogleSignupComplete) {
+    // Don't require profile to be loaded since it might be loading
+    if (user && !initialized && !showGoogleSignupComplete) {
       console.log('🔍 User available, fetching properties for first time')
       setInitialized(true)
       fetchLandlordProperties()
