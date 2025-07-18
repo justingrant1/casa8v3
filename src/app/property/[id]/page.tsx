@@ -17,6 +17,10 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 
     const images = getImageUrls(property.images)
     const firstImage = images && images.length > 0 ? images[0] : null
+    
+    // Use image proxy for social media sharing to handle orientation correctly
+    const socialImage = firstImage ? `/api/image-proxy?url=${encodeURIComponent(firstImage)}` : null
+    const absoluteSocialImage = socialImage ? `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.casa8.com'}${socialImage}` : null
 
     return {
       title: `${property.title} - Casa8`,
@@ -24,9 +28,9 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
       openGraph: {
         title: `${property.title} - Casa8`,
         description: `${property.bedrooms} bedroom, ${property.bathrooms} bathroom home at ${property.address}. $${property.price.toLocaleString()} per month. Available on Casa8.`,
-        images: firstImage ? [
+        images: absoluteSocialImage ? [
           {
-            url: firstImage,
+            url: absoluteSocialImage,
             width: 1200,
             height: 630,
             alt: property.title,
@@ -38,7 +42,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
         card: 'summary_large_image',
         title: `${property.title} - Casa8`,
         description: `${property.bedrooms} bedroom, ${property.bathrooms} bathroom home at ${property.address}. $${property.price.toLocaleString()} per month.`,
-        images: firstImage ? [firstImage] : [],
+        images: absoluteSocialImage ? [absoluteSocialImage] : [],
       },
     }
   } catch (error) {
