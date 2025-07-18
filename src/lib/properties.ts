@@ -36,9 +36,20 @@ export async function getProperties(filters?: PropertyFilter): Promise<any[]> {
       return applyFilters(propertiesCache, filters)
     }
 
+    // Use JOIN to fetch properties with landlord data in one query
     let query = supabase
       .from('properties')
-      .select('*')
+      .select(`
+        *,
+        profiles!properties_landlord_id_fkey (
+          id,
+          first_name,
+          last_name,
+          email,
+          phone,
+          avatar_url
+        )
+      `)
       .eq('is_active', true)
       .order('created_at', { ascending: false })
 
@@ -88,35 +99,8 @@ export async function getProperties(filters?: PropertyFilter): Promise<any[]> {
       return []
     }
 
-    // Get all unique landlord IDs
-    const landlordIds = [...new Set(properties.map(p => p.landlord_id))]
-
-    // Fetch all landlord profiles in one query
-    const { data: profiles, error: profileError } = await supabase
-      .from('profiles')
-      .select('id, first_name, last_name, email, phone, avatar_url')
-      .in('id', landlordIds)
-
-    if (profileError) {
-      console.error('Error fetching landlord profiles:', profileError)
-    }
-
-    // Create a lookup map for profiles
-    const profileMap = new Map()
-    if (profiles) {
-      profiles.forEach(profile => {
-        profileMap.set(profile.id, profile)
-      })
-    }
-
-    // Combine properties with their landlord profiles and format them
-    const formattedProperties = properties.map(property => {
-      const enriched = {
-        ...property,
-        profiles: profileMap.get(property.landlord_id) || null
-      }
-      return formatPropertyForFrontend(enriched)
-    })
+    // Format properties - profiles are already included from JOIN
+    const formattedProperties = properties.map(formatPropertyForFrontend)
 
     // Update cache with the FORMATTED data
     propertiesCache = formattedProperties
@@ -153,9 +137,20 @@ function applyFilters(properties: any[], filters?: PropertyFilter): any[] {
 
 export async function searchProperties(searchTerm: string, filters?: PropertyFilter): Promise<any[]> {
   try {
+    // Use JOIN to fetch properties with landlord data in one query
     let query = supabase
       .from('properties')
-      .select('*')
+      .select(`
+        *,
+        profiles!properties_landlord_id_fkey (
+          id,
+          first_name,
+          last_name,
+          email,
+          phone,
+          avatar_url
+        )
+      `)
       .eq('is_active', true)
 
     // Search across multiple fields
@@ -202,34 +197,8 @@ export async function searchProperties(searchTerm: string, filters?: PropertyFil
       return []
     }
 
-    // Get all unique landlord IDs
-    const landlordIds = [...new Set(properties.map(p => p.landlord_id))]
-
-    // Fetch all landlord profiles in one query
-    const { data: profiles, error: profileError } = await supabase
-      .from('profiles')
-      .select('id, first_name, last_name, email, phone, avatar_url')
-      .in('id', landlordIds)
-
-    if (profileError) {
-      console.error('Error fetching landlord profiles:', profileError)
-    }
-
-    // Create a lookup map for profiles
-    const profileMap = new Map()
-    if (profiles) {
-      profiles.forEach(profile => {
-        profileMap.set(profile.id, profile)
-      })
-    }
-
-    // Combine properties with their landlord profiles
-    const enrichedProperties = properties.map(property => ({
-      ...property,
-      profiles: profileMap.get(property.landlord_id) || null
-    }))
-
-    return enrichedProperties.map(formatPropertyForFrontend)
+    // Format properties - profiles are already included from JOIN
+    return properties.map(formatPropertyForFrontend)
   } catch (error) {
     console.error('Error in searchProperties:', error)
     throw error

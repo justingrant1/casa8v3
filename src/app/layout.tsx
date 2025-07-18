@@ -5,6 +5,7 @@ import "./globals.css";
 import { AuthProvider } from "@/lib/auth";
 import { FavoritesProvider } from "@/lib/favorites-context";
 import { Toaster } from "@/components/ui/toaster";
+import { ErrorBoundary } from "@/components/error-boundary";
 
 
 export const metadata: Metadata = {
@@ -45,12 +46,14 @@ export default function RootLayout({
       <body
         className={`${Geist.variable} ${Geist_Mono.variable} antialiased`}
       >
-        <AuthProvider>
-          <FavoritesProvider>
-            {children}
-            <Toaster />
-          </FavoritesProvider>
-        </AuthProvider>
+        <ErrorBoundary>
+          <AuthProvider>
+            <FavoritesProvider>
+              {children}
+              <Toaster />
+            </FavoritesProvider>
+          </AuthProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );
