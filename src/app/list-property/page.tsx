@@ -8,11 +8,11 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '../../components/ui/textarea'
+import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
 import { VideoUpload } from '@/components/video-upload'
-import { EnhancedImageUpload } from '@/components/enhanced-image-upload'
+// import { EnhancedImageUpload } from '@/components/enhanced-image-upload'
 import { useGoogleMaps, geocodeAddress, initializeAutocomplete, parsePlaceResult } from '@/lib/google-maps'
 import { MapPin, Star, ArrowLeft } from 'lucide-react'
 
@@ -477,7 +477,7 @@ export default function ListPropertyPage() {
         </Card>
 
         {/* Property Images Section */}
-        <Card className="border border-gray-200">
+        {/* <Card className="border border-gray-200">
           <CardContent className="p-6">
             <EnhancedImageUpload
               onImagesChange={setImages}
@@ -488,10 +488,10 @@ export default function ListPropertyPage() {
               showProgress={true}
             />
           </CardContent>
-        </Card>
+        </Card> */}
 
         {/* Property Videos Section */}
-        <Card className="border border-gray-200">
+        {/* <Card className="border border-gray-200">
           <CardContent className="p-6">
             <VideoUpload 
               onVideoUpload={(videoUrl) => setVideos(prev => [...prev, videoUrl])}
@@ -501,7 +501,7 @@ export default function ListPropertyPage() {
               maxSizeInMB={100}
             />
           </CardContent>
-        </Card>
+        </Card> */}
 
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
