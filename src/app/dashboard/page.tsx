@@ -16,7 +16,6 @@ import { getMessageThreads, markAllMessagesAsRead, sendMessage, MessageThread, g
 import { RealtimeChat } from "@/components/realtime-chat"
 import { realtimeMessaging } from "@/lib/realtime-messaging"
 import { useRouter } from "next/navigation"
-import { useToast } from "@/hooks/use-toast"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
@@ -30,7 +29,6 @@ import { TenantOnboarding } from "@/components/tenant-onboarding"
 export default function LandlordDashboard() {
   const { user, profile, loading: authLoading } = useAuth()
   const router = useRouter()
-  const { toast } = useToast()
   const [activeTab, setActiveTab] = useState("properties")
   const [landlordProperties, setLandlordProperties] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -77,10 +75,7 @@ export default function LandlordDashboard() {
 
           // Show toast notification
           if (message.recipient_id === user.id) {
-            toast({
-              title: "New Message",
-              description: `New message from ${message.sender_profile?.full_name || 'a tenant'}`,
-            })
+            console.log(`New message from ${message.sender_profile?.full_name || 'a tenant'}`)
           }
         },
         (message) => {
@@ -147,11 +142,6 @@ export default function LandlordDashboard() {
       setMessageThreads(threads)
     } catch (error) {
       console.error('ERROR: Fetching messages failed:', error)
-      toast({
-        title: "Error loading messages",
-        description: "Failed to load messages. Please try again.",
-        variant: "destructive"
-      })
       setMessageThreads([])
     } finally {
       setMessagesLoading(false)
@@ -187,11 +177,7 @@ export default function LandlordDashboard() {
     if (!authLoading && user && profile && profile.role !== 'landlord') {
       console.log('🔍 User is not landlord, redirecting home')
       // Redirect tenants back to homepage with message
-      toast({
-        title: "Access Denied",
-        description: "This page is only available to landlords",
-        variant: "destructive"
-      })
+      console.error("Access Denied: This page is only available to landlords")
       router.push("/")
       return
     }
@@ -282,11 +268,6 @@ export default function LandlordDashboard() {
       setPropertyStatuses(statuses)
     } catch (error) {
       console.error('ERROR: Fetching properties failed:', error)
-      toast({
-        title: "Error loading properties",
-        description: "Failed to load your properties. Please try again.",
-        variant: "destructive"
-      })
       // Set empty array on error to stop loading state
       setLandlordProperties([])
     } finally {
@@ -309,11 +290,6 @@ export default function LandlordDashboard() {
       setApplications(fetchedApplications)
     } catch (error) {
       console.error('ERROR: Fetching applications failed:', error)
-      toast({
-        title: "Error loading applications",
-        description: "Failed to load rental applications. Please try again.",
-        variant: "destructive"
-      })
       setApplications([])
     } finally {
       setApplicationsLoading(false)
@@ -352,18 +328,8 @@ export default function LandlordDashboard() {
         ...prev,
         [propertyId]: newStatus,
       }))
-
-      toast({
-        title: "Property status updated",
-        description: `Property is now ${newStatus}`
-      })
     } catch (error) {
       console.error('Error updating property status:', error)
-      toast({
-        title: "Error updating status",
-        description: "Failed to update property status. Please try again.",
-        variant: "destructive"
-      })
     }
   }
 
@@ -380,18 +346,8 @@ export default function LandlordDashboard() {
       
       // Refetch properties to ensure consistency
       await fetchLandlordProperties()
-      
-      toast({
-        title: "Property deleted",
-        description: "Property has been successfully removed from your listings"
-      })
     } catch (error) {
       console.error('Error deleting property:', error)
-      toast({
-        title: "Error deleting property",
-        description: "Failed to delete property. Please try again.",
-        variant: "destructive"
-      })
     }
   }
 
@@ -407,18 +363,8 @@ export default function LandlordDashboard() {
           ? { ...app, status, updated_at: new Date().toISOString() }
           : app
       ))
-
-      toast({
-        title: `Application ${status}`,
-        description: `The application has been ${status}.`
-      })
     } catch (error) {
       console.error('Error updating application status:', error)
-      toast({
-        title: "Error updating application",
-        description: "Failed to update application status. Please try again.",
-        variant: "destructive"
-      })
     }
   }
 
@@ -448,18 +394,8 @@ export default function LandlordDashboard() {
       setReplyMessage('')
       setReplySubject('')
       setSelectedThread(null)
-
-      toast({
-        title: "Message sent",
-        description: "Your reply has been sent successfully."
-      })
     } catch (error) {
       console.error('Error sending reply:', error)
-      toast({
-        title: "Error sending message",
-        description: "Failed to send your reply. Please try again.",
-        variant: "destructive"
-      })
     }
   }
 
@@ -478,18 +414,8 @@ export default function LandlordDashboard() {
           ? { ...t, unread_count: 0 }
           : t
       ))
-
-      toast({
-        title: "Messages marked as read",
-        description: "All messages in this conversation have been marked as read."
-      })
     } catch (error) {
       console.error('Error marking messages as read:', error)
-      toast({
-        title: "Error updating messages",
-        description: "Failed to mark messages as read. Please try again.",
-        variant: "destructive"
-      })
     }
   }
 
