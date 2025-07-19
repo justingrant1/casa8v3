@@ -66,12 +66,12 @@ function SearchPageContent() {
         const propertyFilters: any = {}
         
         // Only apply specific city/state filters if they come from structured search
-        // For general location searches, let the searchTerm handle the filtering
-        if (city && city !== location) {
+        // AND we don't have a general location search term
+        if (city && !location) {
           propertyFilters.city = city
         }
         
-        if (state) {
+        if (state && !location) {
           propertyFilters.state = state
         }
         
@@ -90,7 +90,14 @@ function SearchPageContent() {
         // Use the most specific search term available
         const searchTerm = city || location || ''
         
-        const data = await searchProperties(searchTerm, propertyFilters)
+        // If no search term, get all properties; otherwise search
+        let data
+        if (searchTerm.trim() === '' && Object.keys(propertyFilters).length === 0) {
+          data = await getProperties()
+        } else {
+          data = await searchProperties(searchTerm, propertyFilters)
+        }
+        
         const formattedProperties = data.map(formatPropertyForFrontend)
         setProperties(formattedProperties)
       } catch (error) {

@@ -165,12 +165,13 @@ export async function searchProperties(searchTerm: string, filters?: PropertyFil
       `)
     }
 
-    // Apply additional filters
-    if (filters?.city) {
+    // Apply additional filters only if we don't have a general search term
+    // This prevents double-filtering when someone searches for a city name
+    if (filters?.city && !searchTerm) {
       query = query.ilike('city', `%${filters.city}%`)
     }
     
-    if (filters?.state) {
+    if (filters?.state && !searchTerm) {
       query = query.ilike('state', `%${filters.state}%`)
     }
 
