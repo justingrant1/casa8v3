@@ -137,6 +137,8 @@ function applyFilters(properties: any[], filters?: PropertyFilter): any[] {
 
 export async function searchProperties(searchTerm: string, filters?: PropertyFilter & { coordinates?: { lat: number; lng: number } }): Promise<any[]> {
   try {
+    console.log('searchProperties called with:', { searchTerm, filters })
+    
     // Use JOIN to fetch properties with landlord data in one query
     let query = supabase
       .from('properties')
@@ -155,14 +157,8 @@ export async function searchProperties(searchTerm: string, filters?: PropertyFil
 
     // Search across multiple fields
     if (searchTerm) {
-      query = query.or(`
-        title.ilike.%${searchTerm}%,
-        description.ilike.%${searchTerm}%,
-        address.ilike.%${searchTerm}%,
-        city.ilike.%${searchTerm}%,
-        state.ilike.%${searchTerm}%,
-        property_type.ilike.%${searchTerm}%
-      `)
+      console.log('Adding search term to query:', searchTerm)
+      query = query.or(`title.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%,address.ilike.%${searchTerm}%,city.ilike.%${searchTerm}%,state.ilike.%${searchTerm}%,property_type.ilike.%${searchTerm}%`)
     }
 
     // Apply additional filters only if we don't have a general search term
