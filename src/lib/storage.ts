@@ -1,6 +1,15 @@
 import { supabase } from './supabase'
 
-export function getImageUrl(path: string | null): string {
+/**
+ * Enhanced image URL generation with optimization parameters
+ */
+export function getImageUrl(path: string | null, options?: {
+  width?: number
+  height?: number
+  quality?: number
+  format?: 'webp' | 'avif' | 'auto'
+  resize?: 'cover' | 'contain' | 'fill'
+}): string {
   if (!path) {
     return '/placeholder.svg'
   }
@@ -15,15 +24,57 @@ export function getImageUrl(path: string | null): string {
     .from('property-images')
     .getPublicUrl(path)
 
-  return data.publicUrl || '/placeholder.svg'
+  let url = data.publicUrl || '/placeholder.svg'
+
+  // Add optimization parameters for Supabase storage
+  if (url !== '/placeholder.svg' && options) {
+    const params = new URLSearchParams()
+    
+    if (options.width) params.append('width', options.width.toString())
+    if (options.height) params.append('height', options.height.toString())
+    if (options.quality) params.append('quality', options.quality.toString())
+    if (options.format && options.format !== 'auto') params.append('format', options.format)
+    if (options.resize) params.append('resize', options.resize)
+
+    const paramString = params.toString()
+    if (paramString) {
+      url += `?${paramString}`
+    }
+  }
+
+  return url
 }
 
-export function getImageUrls(paths: string[] | null): string[] {
+export function getImageUrls(paths: string[] | null, options?: {
+  width?: number
+  height?: number
+  quality?: number
+  format?: 'webp' | 'avif' | 'auto'
+  resize?: 'cover' | 'contain' | 'fill'
+}): string[] {
   if (!paths || paths.length === 0) {
     return ['/placeholder.svg']
   }
 
-  return paths.map(path => getImageUrl(path))
+  return paths.map(path => getImageUrl(path, options))
+}
+
+/**
+ * Get optimized image URLs for different use cases
+ */
+export function getOptimizedImageUrls(paths: string[] | null, type: 'card' | 'detail' | 'thumbnail' = 'card'): string[] {
+  if (!paths || paths.length === 0) {
+    return ['/placeholder.svg']
+  }
+
+  const optimizationOptions = {
+    card: { width: 400, height: 300, quality: 85, format: 'webp' as const, resize: 'cover' as const },
+    detail: { width: 1200, height: 900, quality: 90, format: 'webp' as const, resize: 'cover' as const },
+    thumbnail: { width: 120, height: 120, quality: 80, format: 'webp' as const, resize: 'cover' as const }
+  }
+
+  const options = optimizationOptions[type]
+  return paths.map(path => getImageUrl(path, options))
 }
 
 // Helper function to check if image URL is valid

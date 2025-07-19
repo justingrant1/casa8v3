@@ -1,9 +1,9 @@
 "use client"
 
 import { useState, useRef, useEffect } from 'react'
-import Image from 'next/image'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { PropertyCardImage } from '@/components/ui/optimized-image'
 
 interface PropertyCardCarouselProps {
   images: string[]
@@ -75,22 +75,14 @@ export function PropertyCardCarousel({ images, propertyTitle, className = "" }: 
             key={index}
             className="w-full h-full flex-shrink-0 snap-center relative"
           >
-            {imageErrors.has(index) ? (
-              <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                <span className="text-gray-500 text-sm">Image unavailable</span>
-              </div>
-            ) : (
-              <Image
-                src={image}
-                alt={`${propertyTitle} image ${index + 1}`}
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                draggable={false}
-                onError={() => handleImageError(index)}
-                priority={index === 0}
-              />
-            )}
+            <PropertyCardImage
+              src={image}
+              alt={`${propertyTitle} image ${index + 1}`}
+              fill
+              className="w-full h-full"
+              priority={index === 0}
+              onError={() => handleImageError(index)}
+            />
           </div>
         ))}
       </div>

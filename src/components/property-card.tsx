@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Heart, MapPin, Bed, Bath, Square, Share2 } from "lucide-react"
 import { PropertyCardCarousel } from "./property-card-carousel"
 import { ContactLandlordModal } from "./contact-landlord-modal"
-import { getImageUrls } from "@/lib/storage"
+import { getOptimizedImageUrls } from "@/lib/storage"
 import { useAuth } from "@/lib/auth"
 import { useFavorites } from "@/lib/favorites-context"
 import { useRouter } from "next/navigation"
@@ -83,7 +83,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
       <Card className="w-full max-w-sm sm:max-w-md rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out transform hover:-translate-y-1">
         <div className="relative">
           <PropertyCardCarousel
-            images={getImageUrls(property.images)}
+            images={getOptimizedImageUrls(property.images, 'card')}
             propertyTitle={property.title}
           />
           {property.type && (
