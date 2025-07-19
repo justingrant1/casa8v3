@@ -65,11 +65,10 @@ function SearchPageContent() {
         // Build comprehensive filters
         const propertyFilters: any = {}
         
-        // Handle location search - prioritize structured city/state over general location
-        if (city) {
+        // Only apply specific city/state filters if they come from structured search
+        // For general location searches, let the searchTerm handle the filtering
+        if (city && city !== location) {
           propertyFilters.city = city
-        } else if (location) {
-          propertyFilters.city = location
         }
         
         if (state) {
