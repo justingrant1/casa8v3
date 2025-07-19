@@ -16,6 +16,7 @@ import { useAuth } from "@/lib/auth"
 import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/lib/supabase"
 import { Navbar } from "@/components/navbar"
+import { Profile } from "@/lib/database.types"
 
 interface User {
   id: string
@@ -81,20 +82,54 @@ export default function AdminDashboard() {
 
   // Check if user is admin
   useEffect(() => {
-    // Add debugging
-    console.log('Admin page debug:', {
+    // Enhanced debugging
+    console.log('🔍 ADMIN PAGE DEBUG - Full state check:', {
       authLoading,
-      user: user ? { id: user.id, email: user.email } : null,
-      profile: profile ? { id: profile.id, email: profile.email, role: profile.role } : null
+      user: user ? { 
+        id: user.id, 
+        email: user.email,
+        fullUser: user 
+      } : null,
+      profile: profile ? { 
+        id: profile.id, 
+        email: profile.email, 
+        role: profile.role,
+        fullProfile: profile 
+      } : null,
+      profileIsNull: profile === null,
+      profileIsUndefined: profile === undefined,
+      timestamp: new Date().toISOString()
     })
 
-    if (!authLoading && !user) {
+    // Wait for auth to finish loading
+    if (authLoading) {
+      console.log('🔍 ADMIN PAGE DEBUG - Still loading auth...')
+      return
+    }
+
+    // Check if user is not logged in
+    if (!user) {
+      console.log('🔍 ADMIN PAGE DEBUG - No user found, redirecting to login')
       router.push("/login")
       return
     }
 
-    if (!authLoading && user && profile?.role !== 'admin') {
-      console.log('Access denied - profile role:', profile?.role)
+    // Check if profile is still loading or null
+    if (!profile) {
+      console.log('🔍 ADMIN PAGE DEBUG - Profile is null/undefined, waiting for profile to load...')
+      // Don't redirect yet, profile might still be loading
+      return
+    }
+
+    // Check if user has admin role
+    const roleString = String(profile.role)
+    if (roleString !== 'admin') {
+      console.log('🔍 ADMIN PAGE DEBUG - Access denied. Role check:', {
+        profileRole: profile.role,
+        roleString: roleString,
+        expectedRole: 'admin',
+        comparison: roleString === 'admin'
+      })
       toast({
         title: "Access Denied",
         description: `This page is only accessible to administrators. Your role: ${profile?.role || 'undefined'}`,
@@ -104,10 +139,9 @@ export default function AdminDashboard() {
       return
     }
 
-    if (user && profile?.role === 'admin') {
-      console.log('Admin access granted')
-      fetchAdminData()
-    }
+    // User has admin access
+    console.log('🔍 ADMIN PAGE DEBUG - Admin access granted! Loading admin data...')
+    fetchAdminData()
   }, [user, profile, authLoading])
 
   const fetchAdminData = async () => {

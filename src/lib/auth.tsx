@@ -82,29 +82,59 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchProfile = async (userId: string, retryCount = 0) => {
     try {
-      console.log('🔍 Fetching profile for user:', userId, 'retry:', retryCount)
+      console.log('🔍 ADMIN DEBUG - Fetching profile for user:', userId, 'retry:', retryCount)
+      console.log('🔍 ADMIN DEBUG - Current user object:', user)
+      
+      // Test if we can query the profiles table at all
+      console.log('🔍 ADMIN DEBUG - Testing profiles table access...')
+      const { data: testData, error: testError } = await supabase
+        .from('profiles')
+        .select('id, email, role')
+        .limit(5)
+      
+      console.log('🔍 ADMIN DEBUG - Profiles table test result:', { testData, testError })
+
+      // Now try the specific user query
+      console.log('🔍 ADMIN DEBUG - Querying specific profile...')
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single()
 
+      console.log('🔍 ADMIN DEBUG - Profile query result:', { data, error, userId })
+
       if (error) {
-        console.error('❌ Error fetching profile:', error)
+        console.error('❌ ADMIN DEBUG - Error fetching profile:', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        })
         
         // If profile doesn't exist and it's a new user, retry a few times
         if (error.code === 'PGRST116' && retryCount < 3) {
-          console.log('⏳ Profile not found, retrying in 1 second...')
+          console.log('⏳ ADMIN DEBUG - Profile not found, retrying in 1 second...')
           await new Promise(resolve => setTimeout(resolve, 1000))
           return fetchProfile(userId, retryCount + 1)
         }
+        
+        // Set profile to null on error to prevent undefined state
+        console.log('❌ ADMIN DEBUG - Setting profile to null due to error')
+        setProfile(null)
         return
       }
 
-      console.log('✅ Profile fetched successfully:', data)
+      console.log('✅ ADMIN DEBUG - Profile fetched successfully:', {
+        id: data.id,
+        email: data.email,
+        role: data.role,
+        fullData: data
+      })
       setProfile(data)
     } catch (error) {
-      console.error('❌ Error fetching profile:', error)
+      console.error('❌ ADMIN DEBUG - Catch block error:', error)
+      setProfile(null)
     }
   }
 
