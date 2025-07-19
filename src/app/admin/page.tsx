@@ -16,15 +16,16 @@ import { useAuth } from "@/lib/auth"
 import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/lib/supabase"
 import { Navbar } from "@/components/navbar"
-import { Profile } from "@/lib/database.types"
+import { Profile, Property as PropertyType, Tables } from "@/lib/database.types"
 
 interface User {
   id: string
   email: string
-  full_name: string
+  first_name: string | null
+  last_name: string | null
   role: 'tenant' | 'landlord' | 'admin'
   created_at: string
-  phone?: string
+  phone?: string | null
   onboarding_completed?: boolean
 }
 
@@ -39,10 +40,11 @@ interface Property {
   bathrooms: number
   property_type: string
   created_at: string
-  available: boolean
+  is_active: boolean
   landlord_id: string
   landlord: {
-    full_name: string
+    first_name: string | null
+    last_name: string | null
     email: string
   }
 }
@@ -162,7 +164,8 @@ export default function AdminDashboard() {
       .select(`
         *,
         landlord:profiles!landlord_id (
-          full_name,
+          first_name,
+          last_name,
           email
         )
       `)
@@ -190,10 +193,10 @@ export default function AdminDashboard() {
       // Get property counts
       const { data: propertiesData } = await supabase
         .from('properties')
-        .select('available')
+        .select('is_active')
 
       const totalProperties = propertiesData?.length || 0
-      const activeProperties = propertiesData?.filter(p => p.available).length || 0
+      const activeProperties = propertiesData?.filter(p => p.is_active).length || 0
 
       // Get application counts
       const { data: applicationsData } = await supabase
@@ -291,7 +294,8 @@ export default function AdminDashboard() {
 
   const filteredUsers = useMemo(() => {
     return users.filter(user => {
-      const matchesSearch = user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ')
+      const matchesSearch = fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            user.email?.toLowerCase().includes(searchTerm.toLowerCase())
       const matchesFilter = userFilter === "all" || user.role === userFilter
       return matchesSearch && matchesFilter
@@ -304,8 +308,8 @@ export default function AdminDashboard() {
                            property.address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            property.city?.toLowerCase().includes(searchTerm.toLowerCase())
       const matchesFilter = propertyFilter === "all" || 
-                           (propertyFilter === "active" && property.available) ||
-                           (propertyFilter === "inactive" && !property.available)
+                           (propertyFilter === "active" && property.is_active) ||
+                           (propertyFilter === "inactive" && !property.is_active)
       return matchesSearch && matchesFilter
     })
   }, [properties, searchTerm, propertyFilter])
@@ -505,11 +509,13 @@ export default function AdminDashboard() {
                       <div className="flex items-center space-x-4">
                         <Avatar>
                           <AvatarFallback>
-                            {user.full_name?.split(' ').map(n => n[0]).join('') || 'U'}
+                            {[user.first_name, user.last_name].filter(Boolean).map(n => n?.[0]).join('') || 'U'}
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <div className="font-medium">{user.full_name || 'No name'}</div>
+                          <div className="font-medium">
+                            {[user.first_name, user.last_name].filter(Boolean).join(' ') || 'No name'}
+                          </div>
                           <div className="text-sm text-muted-foreground">{user.email}</div>
                           <div className="text-xs text-muted-foreground">
                             Joined {new Date(user.created_at).toLocaleDateString()}
@@ -545,7 +551,7 @@ export default function AdminDashboard() {
                             <AlertDialogHeader>
                               <AlertDialogTitle>Delete User</AlertDialogTitle>
                               <AlertDialogDescription>
-                                Are you sure you want to delete {user.full_name || user.email}? This action cannot be undone.
+                                Are you sure you want to delete {[user.first_name, user.last_name].filter(Boolean).join(' ') || user.email}? This action cannot be undone.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
@@ -608,7 +614,7 @@ export default function AdminDashboard() {
                           {property.address}, {property.city}, {property.state}
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          Landlord: {property.landlord?.full_name || 'Unknown'} ({property.landlord?.email || 'No email'})
+                          Landlord: {[property.landlord?.first_name, property.landlord?.last_name].filter(Boolean).join(' ') || 'Unknown'} ({property.landlord?.email || 'No email'})
                         </div>
                         <div className="text-xs text-muted-foreground">
                           Listed {new Date(property.created_at).toLocaleDateString()}
@@ -622,8 +628,8 @@ export default function AdminDashboard() {
                           </div>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <Badge className={property.available ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
-                            {property.available ? 'Active' : 'Inactive'}
+                          <Badge className={property.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+                            {property.is_active ? 'Active' : 'Inactive'}
                           </Badge>
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
