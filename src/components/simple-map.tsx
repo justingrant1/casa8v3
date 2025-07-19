@@ -48,6 +48,7 @@ interface SimpleMapProps {
   center?: { lat: number; lng: number }
   zoom?: number
   onMarkerClick?: (property: Property) => void
+  searchCoordinates?: { lat: number; lng: number }
 }
 
 export function SimpleMap({ 
@@ -55,7 +56,8 @@ export function SimpleMap({
   className = "",
   center,
   zoom = 12,
-  onMarkerClick
+  onMarkerClick,
+  searchCoordinates
 }: SimpleMapProps) {
   const { user } = useAuth()
   const { toggleFavorite, isFavorite } = useFavorites()
@@ -72,6 +74,8 @@ export function SimpleMap({
 
   // Calculate center if not provided - memoized to prevent infinite loops
   const mapCenter = useMemo(() => {
+    // Prioritize searchCoordinates if provided
+    if (searchCoordinates) return searchCoordinates
     if (center) return center
     
     const validProperties = properties.filter(p => p.coordinates)
@@ -83,7 +87,7 @@ export function SimpleMap({
     const avgLng = validProperties.reduce((sum, p) => sum + (p.coordinates?.lng || 0), 0) / validProperties.length
     
     return { lat: avgLat, lng: avgLng }
-  }, [center, properties])
+  }, [center, properties, searchCoordinates])
 
   // Initialize map
   useEffect(() => {

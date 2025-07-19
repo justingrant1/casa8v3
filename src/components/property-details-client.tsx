@@ -169,13 +169,41 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
             {/* Image Carousel */}
-            <ImageCarousel images={getImageUrls(property.images)} propertyTitle={property.title} />
+            <ImageCarousel 
+              images={getImageUrls(property.images)} 
+              propertyTitle={property.title}
+              propertyType={property.type}
+            />
 
             {/* Property Info */}
-            <h1 className="text-4xl font-bold mb-2">{property.title}</h1>
-            <div className="flex items-center text-lg text-gray-500 mb-4">
-              <MapPin className="h-5 w-5 mr-2" />
-              {property.address}, {property.city}, {property.state} {property.zip_code}
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
+              <div className="flex-1">
+                <div className="flex flex-wrap items-start justify-between gap-4 mb-2">
+                  <h1 className="text-4xl font-bold">{property.title}</h1>
+                  <Button 
+                    variant="outline" 
+                    size="lg"
+                    className="flex items-center gap-2 h-12"
+                    onClick={handleShare}
+                  >
+                    <Share2 className="h-5 w-5" />
+                    Share
+                  </Button>
+                </div>
+                <div className="flex items-center text-lg text-gray-500">
+                  <MapPin className="h-5 w-5 mr-2" />
+                  <button
+                    onClick={() => {
+                      const address = `${property.address}, ${property.city}, ${property.state} ${property.zip_code}`
+                      const encodedAddress = encodeURIComponent(address)
+                      window.open(`https://maps.google.com/maps?q=${encodedAddress}`, '_blank')
+                    }}
+                    className="text-left hover:text-blue-600 transition-colors cursor-pointer underline"
+                  >
+                    {property.address}, {property.city}, {property.state} {property.zip_code}
+                  </button>
+                </div>
+              </div>
             </div>
 
             <div className="flex items-center space-x-8 mb-6 border-y py-4">
@@ -215,27 +243,26 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
             {/* Lease Details */}
             <div className="mb-8">
               <h2 className="text-2xl font-bold mb-4">Lease Details</h2>
-              <div className="bg-gray-50 rounded-lg p-6">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-lg font-semibold text-gray-700">Security Deposit</span>
+              <div className="bg-gray-50 rounded-lg p-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Lease Term:</span>
+                    <span className="font-semibold text-gray-900">12+ months</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Security Deposit:</span>
                     <div className="text-right">
-                      <span className="text-2xl font-bold text-gray-900">
+                      <span className="text-gray-700 text-sm">
                         ${(property.security_deposit || 1000).toLocaleString()}
                       </span>
                       {property.security_deposit_negotiable && (
-                        <div className="flex items-center justify-end mt-1">
-                          <Check className="h-4 w-4 mr-1 text-green-500" />
-                          <span className="text-sm text-green-600 font-medium">Negotiable</span>
+                        <div className="flex items-center justify-end mt-0.5">
+                          <Check className="h-3 w-3 mr-1 text-green-500" />
+                          <span className="text-xs text-green-600">Negotiable</span>
                         </div>
                       )}
                     </div>
                   </div>
-                  {!property.security_deposit_negotiable && (
-                    <div className="text-sm text-gray-500">
-                      Security deposit amount is fixed
-                    </div>
-                  )}
                 </div>
               </div>
             </div>

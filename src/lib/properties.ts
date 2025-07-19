@@ -135,7 +135,7 @@ function applyFilters(properties: any[], filters?: PropertyFilter): any[] {
   return filtered
 }
 
-export async function searchProperties(searchTerm: string, filters?: PropertyFilter): Promise<any[]> {
+export async function searchProperties(searchTerm: string, filters?: PropertyFilter & { coordinates?: { lat: number; lng: number } }): Promise<any[]> {
   try {
     // Use JOIN to fetch properties with landlord data in one query
     let query = supabase
@@ -178,8 +178,20 @@ export async function searchProperties(searchTerm: string, filters?: PropertyFil
       query = query.eq('bedrooms', filters.bedrooms)
     }
 
+    if (filters?.bathrooms !== undefined) {
+      query = query.eq('bathrooms', filters.bathrooms)
+    }
+
     if (filters?.propertyType) {
       query = query.eq('property_type', filters.propertyType)
+    }
+
+    if (filters?.minPrice !== undefined) {
+      query = query.gte('price', filters.minPrice)
+    }
+
+    if (filters?.maxPrice !== undefined) {
+      query = query.lte('price', filters.maxPrice)
     }
 
     if (filters?.limit) {
@@ -198,11 +210,45 @@ export async function searchProperties(searchTerm: string, filters?: PropertyFil
     }
 
     // Format properties - profiles are already included from JOIN
-    return properties.map(formatPropertyForFrontend)
+    let formattedProperties = properties.map(formatPropertyForFrontend)
+
+    // Apply geographic filtering if coordinates are provided (backend filtering)
+    if (filters?.coordinates) {
+      const { lat: searchLat, lng: searchLng } = filters.coordinates
+      const radiusMiles = 50 // 50 mile radius for relevant results
+      
+      formattedProperties = formattedProperties.filter(property => {
+        if (!property.coordinates) return false
+        
+        const distance = calculateDistance(
+          searchLat, 
+          searchLng, 
+          property.coordinates.lat, 
+          property.coordinates.lng
+        )
+        
+        return distance <= radiusMiles
+      })
+    }
+
+    return formattedProperties
   } catch (error) {
     console.error('Error in searchProperties:', error)
     throw error
   }
+}
+
+// Helper function to calculate distance between two points in miles
+function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 3959 // Earth's radius in miles
+  const dLat = (lat2 - lat1) * Math.PI / 180
+  const dLng = (lng2 - lng1) * Math.PI / 180
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+    Math.sin(dLng/2) * Math.sin(dLng/2)
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
+  return R * c
 }
 
 export async function getPropertyById(id: string): Promise<any | null> {

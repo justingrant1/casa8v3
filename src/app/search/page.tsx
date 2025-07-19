@@ -54,18 +54,44 @@ function SearchPageContent() {
     const fetchProperties = async () => {
       setLoading(true)
       try {
+        // Read all possible search parameters
         const location = searchParams.get('location') || ''
+        const city = searchParams.get('city') || ''
+        const state = searchParams.get('state') || ''
+        const lat = searchParams.get('lat')
+        const lng = searchParams.get('lng')
         const bedrooms = searchParams.get('bedrooms') || 'any'
 
+        // Build comprehensive filters
         const propertyFilters: any = {}
-        if (location) {
+        
+        // Handle location search - prioritize structured city/state over general location
+        if (city) {
+          propertyFilters.city = city
+        } else if (location) {
           propertyFilters.city = location
         }
+        
+        if (state) {
+          propertyFilters.state = state
+        }
+        
+        // Add coordinate information for geographic filtering
+        if (lat && lng) {
+          propertyFilters.coordinates = {
+            lat: parseFloat(lat),
+            lng: parseFloat(lng)
+          }
+        }
+        
         if (bedrooms !== 'any') {
           propertyFilters.bedrooms = parseInt(bedrooms)
         }
 
-        const data = await searchProperties(location, propertyFilters)
+        // Use the most specific search term available
+        const searchTerm = city || location || ''
+        
+        const data = await searchProperties(searchTerm, propertyFilters)
         const formattedProperties = data.map(formatPropertyForFrontend)
         setProperties(formattedProperties)
       } catch (error) {
@@ -174,7 +200,12 @@ function SearchPageContent() {
                           lat: parseFloat(property.latitude),
                           lng: parseFloat(property.longitude)
                         } : null)
-                      }))} 
+                      }))}
+                      searchCoordinates={(() => {
+                        const lat = searchParams.get('lat')
+                        const lng = searchParams.get('lng')
+                        return (lat && lng) ? { lat: parseFloat(lat), lng: parseFloat(lng) } : undefined
+                      })()}
                     />
                   ) : (
                     <div className="flex items-center justify-center h-full bg-gray-100 rounded-lg">

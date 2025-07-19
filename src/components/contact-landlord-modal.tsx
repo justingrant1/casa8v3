@@ -119,7 +119,7 @@ export function ContactLandlordModal({
                   disabled={landlordPhoneNumber === "Phone not available"}
                 >
                   <Phone className="w-4 h-4 mr-2" />
-                  Call Property Owner
+                  Call {landlord.name}
                 </Button>
               </a>
               <p className="text-xs text-gray-400 mt-2 text-center">Clicking will open your phone app</p>

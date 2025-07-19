@@ -264,7 +264,12 @@ export function LocationSearch({
             <button
               key={index}
               onClick={() => handleSelect(suggestion)}
-              className="w-full px-4 py-3 text-left hover:bg-gray-50 focus:bg-gray-50 focus:outline-none flex items-center space-x-3 transition-colors"
+              onTouchEnd={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                handleSelect(suggestion)
+              }}
+              className="w-full px-4 py-3 text-left hover:bg-gray-50 focus:bg-gray-50 focus:outline-none flex items-center space-x-3 transition-colors touch-manipulation"
             >
               <MapPin className="h-4 w-4 text-gray-400 flex-shrink-0" />
               <span className="text-sm">{suggestion.description}</span>

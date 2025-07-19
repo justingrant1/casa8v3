@@ -34,20 +34,9 @@ export function PropertyCard({ property }: PropertyCardProps) {
     // Create full address string for better mapping
     const fullAddress = `${property.address}, ${property.city}, ${property.state} ${property.zip_code}`.trim()
     const encodedAddress = encodeURIComponent(fullAddress)
-    const mapsUrl = `https://maps.google.com/maps?q=${encodedAddress}`
-    
-    // For mobile devices, try to open the native maps app first
-    if (/Android/i.test(navigator.userAgent)) {
-      // Try Android native maps first, fallback to web
-      window.open(`geo:0,0?q=${encodedAddress}`, '_blank')
-      setTimeout(() => window.open(mapsUrl, '_blank'), 500)
-    } else if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-      // Try iOS native maps first, fallback to web
-      window.open(`maps://maps.google.com/maps?q=${encodedAddress}`, '_blank')
-      setTimeout(() => window.open(mapsUrl, '_blank'), 500)
-    } else {
-      window.open(mapsUrl, '_blank')
-    }
+    // Always use Google Maps web interface to ensure consistency
+    const googleMapsUrl = `https://maps.google.com/maps?q=${encodedAddress}`
+    window.open(googleMapsUrl, '_blank')
   }
 
   const handleShare = async () => {

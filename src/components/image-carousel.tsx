@@ -3,14 +3,16 @@
 import { useState, useRef, useEffect } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { PropertyDetailImage, ThumbnailImage } from '@/components/ui/optimized-image'
 
 interface ImageCarouselProps {
   images: string[]
   propertyTitle: string
+  propertyType?: string
 }
 
-export function ImageCarousel({ images, propertyTitle }: ImageCarouselProps) {
+export function ImageCarousel({ images, propertyTitle, propertyType }: ImageCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [imageErrors, setImageErrors] = useState<Set<number>>(new Set())
   const scrollContainerRef = useRef<HTMLDivElement>(null)
@@ -87,23 +89,30 @@ export function ImageCarousel({ images, propertyTitle }: ImageCarouselProps) {
           ))}
         </div>
 
+        {/* Property Type Badge */}
+        {propertyType && (
+          <Badge className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm text-gray-800 border-0 shadow-md">
+            {propertyType}
+          </Badge>
+        )}
+
         {images.length > 1 && (
           <>
             <Button
-              variant="secondary"
-              size="icon"
-              className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white/90 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity"
+              variant="ghost"
+              size="sm"
+              className="absolute left-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 bg-black/10 hover:bg-black/20 border-0 opacity-0 group-hover:opacity-80 transition-all duration-300 rounded-full"
               onClick={prevImage}
             >
-              <ChevronLeft className="h-5 w-5" />
+              <ChevronLeft className="h-3 w-3 text-white" />
             </Button>
             <Button
-              variant="secondary"
-              size="icon"
-              className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white/90 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity"
+              variant="ghost"
+              size="sm"
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 bg-black/10 hover:bg-black/20 border-0 opacity-0 group-hover:opacity-80 transition-all duration-300 rounded-full"
               onClick={nextImage}
             >
-              <ChevronRight className="h-5 w-5" />
+              <ChevronRight className="h-3 w-3 text-white" />
             </Button>
             <div className="absolute bottom-4 right-4 bg-black/50 text-white px-3 py-1 rounded-full text-sm">
               {currentIndex + 1} / {images.length}

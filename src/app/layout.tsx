@@ -6,6 +6,7 @@ import { AuthProvider } from "@/lib/auth";
 import { FavoritesProvider } from "@/lib/favorites-context";
 import { Toaster } from "@/components/ui/toaster";
 import { ErrorBoundary } from "@/components/error-boundary";
+import { ScrollToTop } from "@/components/scroll-to-top";
 
 
 export const metadata: Metadata = {
@@ -49,6 +50,7 @@ export default function RootLayout({
         <ErrorBoundary>
           <AuthProvider>
             <FavoritesProvider>
+              <ScrollToTop />
               {children}
               <Toaster />
             </FavoritesProvider>

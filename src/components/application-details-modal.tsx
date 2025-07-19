@@ -48,7 +48,7 @@ export function ApplicationDetailsModal({ isOpen, onClose, application }: Applic
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[95vw] max-w-md sm:max-w-2xl lg:max-w-4xl max-h-[90vh] overflow-y-auto mx-2 sm:mx-4">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
             <FileText className="h-5 w-5" />
@@ -58,8 +58,8 @@ export function ApplicationDetailsModal({ isOpen, onClose, application }: Applic
 
         <div className="space-y-6">
           {/* Application Status */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
               <Badge className={getStatusColor(application.status)}>
                 {application.status.charAt(0).toUpperCase() + application.status.slice(1)}
               </Badge>
@@ -83,8 +83,8 @@ export function ApplicationDetailsModal({ isOpen, onClose, application }: Applic
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-start gap-4">
-                <Avatar className="h-16 w-16">
+              <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+                <Avatar className="h-16 w-16 mx-auto sm:mx-0">
                   <AvatarFallback className="text-lg">
                     {application.tenant_name
                       .split(' ')
@@ -93,15 +93,17 @@ export function ApplicationDetailsModal({ isOpen, onClose, application }: Applic
                       .toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                <div className="flex-1 space-y-2">
+                <div className="flex-1 space-y-3 text-center sm:text-left">
                   <h3 className="text-lg font-semibold">{application.tenant_name}</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="flex items-center gap-2">
-                      <Mail className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm">{application.tenant_email}</span>
+                  <div className="space-y-3 sm:space-y-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                      <div className="flex items-center justify-center sm:justify-start gap-2">
+                        <Mail className="h-4 w-4 text-gray-500" />
+                        <span className="text-sm break-all">{application.tenant_email}</span>
+                      </div>
                     </div>
                     {application.tenant_phone && (
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center justify-center sm:justify-start gap-2">
                         <Phone className="h-4 w-4 text-gray-500" />
                         <span className="text-sm">{application.tenant_phone}</span>
                       </div>
