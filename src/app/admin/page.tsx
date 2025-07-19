@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -79,44 +79,28 @@ export default function AdminDashboard() {
   const [searchTerm, setSearchTerm] = useState("")
   const [userFilter, setUserFilter] = useState("all")
   const [propertyFilter, setPropertyFilter] = useState("all")
+  const [accessChecked, setAccessChecked] = useState(false)
 
-  // Check if user is admin
+  // Check if user is admin - only run once when auth is ready
   useEffect(() => {
-    // Enhanced debugging
-    console.log('🔍 ADMIN PAGE DEBUG - Full state check:', {
-      authLoading,
-      user: user ? { 
-        id: user.id, 
-        email: user.email,
-        fullUser: user 
-      } : null,
-      profile: profile ? { 
-        id: profile.id, 
-        email: profile.email, 
-        role: profile.role,
-        fullProfile: profile 
-      } : null,
-      profileIsNull: profile === null,
-      profileIsUndefined: profile === undefined,
-      timestamp: new Date().toISOString()
-    })
-
     // Wait for auth to finish loading
     if (authLoading) {
-      console.log('🔍 ADMIN PAGE DEBUG - Still loading auth...')
+      return
+    }
+
+    // Only run access check once
+    if (accessChecked) {
       return
     }
 
     // Check if user is not logged in
     if (!user) {
-      console.log('🔍 ADMIN PAGE DEBUG - No user found, redirecting to login')
       router.push("/login")
       return
     }
 
     // Check if profile is still loading or null
     if (!profile) {
-      console.log('🔍 ADMIN PAGE DEBUG - Profile is null/undefined, waiting for profile to load...')
       // Don't redirect yet, profile might still be loading
       return
     }
@@ -124,12 +108,6 @@ export default function AdminDashboard() {
     // Check if user has admin role
     const roleString = String(profile.role)
     if (roleString !== 'admin') {
-      console.log('🔍 ADMIN PAGE DEBUG - Access denied. Role check:', {
-        profileRole: profile.role,
-        roleString: roleString,
-        expectedRole: 'admin',
-        comparison: roleString === 'admin'
-      })
       toast({
         title: "Access Denied",
         description: `This page is only accessible to administrators. Your role: ${profile?.role || 'undefined'}`,
@@ -140,9 +118,9 @@ export default function AdminDashboard() {
     }
 
     // User has admin access
-    console.log('🔍 ADMIN PAGE DEBUG - Admin access granted! Loading admin data...')
+    setAccessChecked(true)
     fetchAdminData()
-  }, [user, profile, authLoading])
+  }, [user, profile, authLoading, accessChecked])
 
   const fetchAdminData = async () => {
     try {
@@ -311,22 +289,26 @@ export default function AdminDashboard() {
     }
   }
 
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email?.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesFilter = userFilter === "all" || user.role === userFilter
-    return matchesSearch && matchesFilter
-  })
+  const filteredUsers = useMemo(() => {
+    return users.filter(user => {
+      const matchesSearch = user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           user.email?.toLowerCase().includes(searchTerm.toLowerCase())
+      const matchesFilter = userFilter === "all" || user.role === userFilter
+      return matchesSearch && matchesFilter
+    })
+  }, [users, searchTerm, userFilter])
 
-  const filteredProperties = properties.filter(property => {
-    const matchesSearch = property.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         property.address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         property.city?.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesFilter = propertyFilter === "all" || 
-                         (propertyFilter === "active" && property.available) ||
-                         (propertyFilter === "inactive" && !property.available)
-    return matchesSearch && matchesFilter
-  })
+  const filteredProperties = useMemo(() => {
+    return properties.filter(property => {
+      const matchesSearch = property.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           property.address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           property.city?.toLowerCase().includes(searchTerm.toLowerCase())
+      const matchesFilter = propertyFilter === "all" || 
+                           (propertyFilter === "active" && property.available) ||
+                           (propertyFilter === "inactive" && !property.available)
+      return matchesSearch && matchesFilter
+    })
+  }, [properties, searchTerm, propertyFilter])
 
   const getRoleColor = (role: string) => {
     switch (role) {
