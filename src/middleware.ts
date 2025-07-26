@@ -50,35 +50,14 @@ export async function middleware(req: NextRequest) {
       pathname === route || pathname.startsWith(route + '/')
     )
 
-    // Handle auth callback and redirect properly
+    // Let the auth callback route handle the authentication flow
     if (pathname === '/auth/callback') {
-      const { searchParams } = new URL(req.url)
-      const code = searchParams.get('code')
-      const type = searchParams.get('type')
+      return res
+    }
 
-      if (code) {
-        try {
-          await supabase.auth.exchangeCodeForSession(code)
-          
-          // If this is a password recovery callback, redirect to reset-password
-          if (type === 'recovery') {
-            const redirectUrl = new URL('/reset-password', req.url)
-            // Preserve the original query parameters
-            searchParams.forEach((value, key) => {
-              if (key !== 'code') {
-                redirectUrl.searchParams.set(key, value)
-              }
-            })
-            return NextResponse.redirect(redirectUrl)
-          }
-          
-          // Default redirect after successful auth
-          return NextResponse.redirect(new URL('/dashboard', req.url))
-        } catch (error) {
-          console.error('Error exchanging code for session:', error)
-          return NextResponse.redirect(new URL('/login?error=auth_error', req.url))
-        }
-      }
+    // Allow access to Google signup completion page
+    if (pathname === '/google-signup-complete') {
+      return res
     }
 
     // Handle direct reset-password access with query parameters
@@ -149,6 +128,7 @@ export const config = {
   matcher: [
     '/auth/:path*',
     '/reset-password',
+    '/google-signup-complete',
     '/dashboard/:path*',
     '/dashboard-simple/:path*',
     '/profile/:path*',
