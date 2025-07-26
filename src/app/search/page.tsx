@@ -18,7 +18,7 @@ import { PropertyCard } from "@/components/property-card"
 import { SearchForm } from "@/components/search-form"
 import { useAuth } from "@/lib/auth"
 import { useFavorites } from "@/lib/favorites-context"
-import { getProperties, searchProperties, formatPropertyForFrontend } from "@/lib/properties"
+import { getProperties, searchProperties, formatPropertyForFrontend, clearPropertiesCache } from "@/lib/properties"
 import { getImageUrls } from "@/lib/storage"
 
 function SearchPageContent() {
@@ -54,6 +54,9 @@ function SearchPageContent() {
     const fetchProperties = async () => {
       setLoading(true)
       try {
+        // Clear cache to ensure we get fresh data, not limited homepage data
+        clearPropertiesCache()
+        
         // Read all possible search parameters
         const location = searchParams.get('location') || ''
         const city = searchParams.get('city') || ''
@@ -93,12 +96,14 @@ function SearchPageContent() {
         // If no search term, get all properties; otherwise search
         let data
         if (searchTerm.trim() === '' && Object.keys(propertyFilters).length === 0) {
+          // Explicitly fetch all properties without any limit
           data = await getProperties()
         } else {
           data = await searchProperties(searchTerm, propertyFilters)
         }
         
         const formattedProperties = data.map(formatPropertyForFrontend)
+        console.log('Formatted properties for map:', formattedProperties)
         setProperties(formattedProperties)
       } catch (error) {
         console.error('Error fetching properties:', error)
@@ -151,7 +156,23 @@ function SearchPageContent() {
             <div className="bg-white p-4 rounded-lg shadow-md">
               <div className="flex flex-col sm:flex-row justify-between items-center mb-4">
                 <div>
-                  <h2 className="text-2xl font-bold">Search Results</h2>
+                  <h2 className="text-2xl font-bold">
+                    {(() => {
+                      const location = searchParams.get('location')
+                      const city = searchParams.get('city')
+                      const state = searchParams.get('state')
+                      
+                      if (location) {
+                        return `Search results for ${location}`
+                      } else if (city && state) {
+                        return `Search results for ${city}, ${state}`
+                      } else if (city) {
+                        return `Search results for ${city}`
+                      } else {
+                        return 'Search Results'
+                      }
+                    })()}
+                  </h2>
                   <p className="text-gray-600">{properties.length} properties found</p>
                 </div>
                 <div className="flex items-center gap-4 mt-4 sm:mt-0">
@@ -207,7 +228,7 @@ function SearchPageContent() {
                           lng: parseFloat(property.longitude)
                         } : null)
                       }))}
-                      searchCoordinates={(() => {
+                      center={(() => {
                         const lat = searchParams.get('lat')
                         const lng = searchParams.get('lng')
                         return (lat && lng) ? { lat: parseFloat(lat), lng: parseFloat(lng) } : undefined

@@ -132,6 +132,7 @@ export function LocationSearch({
   const handleSelect = async (prediction: PlacePrediction) => {
     const locationText = prediction.description
     setQuery(locationText)
+    setSuggestions([]) // Clear suggestions immediately
     setIsOpen(false)
     setLoading(true)
 
@@ -263,7 +264,15 @@ export function LocationSearch({
           {suggestions.map((suggestion, index) => (
             <button
               key={index}
-              onClick={() => handleSelect(suggestion)}
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                handleSelect(suggestion)
+              }}
+              onMouseDown={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+              }}
               onTouchEnd={(e) => {
                 e.preventDefault()
                 e.stopPropagation()
