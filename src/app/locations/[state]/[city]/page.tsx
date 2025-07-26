@@ -220,7 +220,7 @@ export default async function CityPage({ params }: CityPageProps) {
             <div className="h-[500px] rounded-lg overflow-hidden shadow-lg">
               <SimpleMap 
                 properties={propertiesWithCoords}
-                searchCoordinates={location.coordinates}
+                center={location.coordinates}
               />
             </div>
           </div>
