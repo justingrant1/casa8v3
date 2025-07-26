@@ -15,9 +15,10 @@ interface PropertyCardCarouselProps {
 export function PropertyCardCarousel({ images, propertyTitle, className = "", onImageClick }: PropertyCardCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [imageErrors, setImageErrors] = useState<Set<number>>(new Set())
-  const [isDragging, setIsDragging] = useState(false)
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
+  const [isScrolling, setIsScrolling] = useState(false)
+  const [clickStartTime, setClickStartTime] = useState(0)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
     const container = scrollContainerRef.current
@@ -28,10 +29,28 @@ export function PropertyCardCarousel({ images, propertyTitle, className = "", on
       const itemWidth = container.offsetWidth
       const newIndex = Math.round(scrollLeft / itemWidth)
       setCurrentIndex(newIndex)
+      
+      // Set scrolling state
+      setIsScrolling(true)
+      
+      // Clear existing timeout
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current)
+      }
+      
+      // Reset scrolling state after scroll ends
+      scrollTimeoutRef.current = setTimeout(() => {
+        setIsScrolling(false)
+      }, 150)
     }
 
     container.addEventListener('scroll', handleScroll)
-    return () => container.removeEventListener('scroll', handleScroll)
+    return () => {
+      container.removeEventListener('scroll', handleScroll)
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current)
+      }
+    }
   }, [])
 
   if (!images || images.length === 0) {
@@ -66,61 +85,33 @@ export function PropertyCardCarousel({ images, propertyTitle, className = "", on
     scrollToImage(newIndex)
   }
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(false)
-    setDragStart({ x: e.clientX, y: e.clientY })
-  }
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (dragStart.x !== 0 || dragStart.y !== 0) {
-      const deltaX = Math.abs(e.clientX - dragStart.x)
-      const deltaY = Math.abs(e.clientY - dragStart.y)
-      if (deltaX > 5 || deltaY > 5) {
-        setIsDragging(true)
+  const handleContainerClick = (e: React.MouseEvent) => {
+    // Only trigger click if we're not scrolling and it's been a short time since click started
+    if (onImageClick && !isScrolling) {
+      const clickDuration = Date.now() - clickStartTime
+      if (clickDuration < 200) { // Quick click, not a drag
+        onImageClick()
       }
     }
   }
 
-  const handleMouseUp = (e: React.MouseEvent) => {
-    if (!isDragging && onImageClick) {
-      onImageClick()
-    }
-    setIsDragging(false)
-    setDragStart({ x: 0, y: 0 })
+  const handleMouseDown = () => {
+    setClickStartTime(Date.now())
   }
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    setIsDragging(false)
-    const touch = e.touches[0]
-    setDragStart({ x: touch.clientX, y: touch.clientY })
-  }
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (dragStart.x !== 0 || dragStart.y !== 0) {
-      const touch = e.touches[0]
-      const deltaX = Math.abs(touch.clientX - dragStart.x)
-      const deltaY = Math.abs(touch.clientY - dragStart.y)
-      if (deltaX > 5 || deltaY > 5) {
-        setIsDragging(true)
-      }
-    }
-  }
-
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (!isDragging && onImageClick) {
-      e.preventDefault()
-      onImageClick()
-    }
-    setIsDragging(false)
-    setDragStart({ x: 0, y: 0 })
+  const handleTouchStart = () => {
+    setClickStartTime(Date.now())
   }
 
   return (
     <div className={`relative w-full h-48 overflow-hidden group ${className}`}>
       <div
         ref={scrollContainerRef}
-        className="flex h-full overflow-x-auto snap-x snap-mandatory scroll-smooth"
+        className="flex h-full overflow-x-auto snap-x snap-mandatory scroll-smooth cursor-pointer"
         style={{ scrollbarWidth: 'none' }}
+        onClick={handleContainerClick}
+        onMouseDown={handleMouseDown}
+        onTouchStart={handleTouchStart}
       >
         {images.map((image, index) => (
           <div
@@ -139,18 +130,6 @@ export function PropertyCardCarousel({ images, propertyTitle, className = "", on
         ))}
       </div>
 
-      {/* Clickable overlay */}
-      {onImageClick && (
-        <div
-          className="absolute inset-0 cursor-pointer"
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-        />
-      )}
 
       {images.length > 1 && (
         <>
