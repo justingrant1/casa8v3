@@ -299,18 +299,28 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
 
                 <div className="flex items-center pt-4 border-t">
                   <Avatar className="h-12 w-12">
-                    <AvatarImage src={(property as any).profiles?.avatar_url} />
                     <AvatarFallback>
-                      {(property as any).profiles?.first_name?.[0] || 'L'}
+                      {property.data_source === 'scraped' && property.scraped_contact_name
+                        ? property.scraped_contact_name[0].toUpperCase()
+                        : (property as any).profiles?.first_name?.[0] || 'L'}
                     </AvatarFallback>
                   </Avatar>
                   <div className="ml-4">
                     <div className="font-bold">
-                      {(property as any).profiles 
-                        ? `${(property as any).profiles.first_name || ''} ${(property as any).profiles.last_name || ''}`.trim() || 'Property Owner'
-                        : 'Property Owner'}
+                      {property.data_source === 'scraped' && property.scraped_contact_name
+                        ? property.scraped_contact_name
+                        : (property as any).profiles 
+                          ? `${(property as any).profiles.first_name || ''} ${(property as any).profiles.last_name || ''}`.trim() || 'Property Owner'
+                          : 'Property Owner'}
                     </div>
-                    <div className="text-sm text-gray-500">Landlord</div>
+                    <div className="text-sm text-gray-500">
+                      {property.data_source === 'scraped' ? 'Property Manager' : 'Landlord'}
+                    </div>
+                    {property.data_source === 'scraped' && property.scraped_contact_phone && (
+                      <div className="text-sm text-blue-600 font-medium">
+                        {property.scraped_contact_phone}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <Button 
@@ -345,8 +355,12 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
         onClose={() => setShowContactModal(false)}
         landlord={{
           id: property.landlord_id,
-          name: property.landlord || 'Property Owner',
-          phone: property.landlord_phone,
+          name: property.data_source === 'scraped' && property.scraped_contact_name
+            ? property.scraped_contact_name
+            : property.landlord || 'Property Owner',
+          phone: property.data_source === 'scraped' && property.scraped_contact_phone
+            ? property.scraped_contact_phone
+            : property.landlord_phone,
           email: property.landlord_email
         }}
         property={{

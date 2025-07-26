@@ -380,6 +380,79 @@ export function formatPropertyForFrontend(property: any) {
   }
 }
 
+export async function getNearbyProperties(
+  latitude: number, 
+  longitude: number, 
+  maxDistanceKm: number = 100, 
+  limit: number = 5
+): Promise<any[]> {
+  try {
+    console.log('Getting nearby properties for coordinates:', { latitude, longitude, maxDistanceKm, limit })
+    
+    const { data, error } = await supabase
+      .rpc('get_nearby_properties', {
+        user_lat: latitude,
+        user_lng: longitude,
+        max_distance_km: maxDistanceKm,
+        property_limit: limit
+      })
+
+    if (error) {
+      console.error('Error fetching nearby properties:', error)
+      throw error
+    }
+
+    if (!data || data.length === 0) {
+      console.log('No nearby properties found')
+      return []
+    }
+
+    console.log(`Found ${data.length} nearby properties`)
+
+    // Get landlord profiles for the properties
+    const landlordIds = [...new Set(data.map((p: any) => p.landlord_id).filter(Boolean))]
+    
+    let landlordProfiles: any = {}
+    if (landlordIds.length > 0) {
+      const { data: profiles, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, email, phone, avatar_url')
+        .in('id', landlordIds)
+
+      if (profileError) {
+        console.error('Error fetching landlord profiles:', profileError)
+      } else {
+        landlordProfiles = profiles?.reduce((acc: any, profile: any) => {
+          acc[profile.id] = profile
+          return acc
+        }, {}) || {}
+      }
+    }
+
+    // Format properties with landlord data and distance
+    const formattedProperties = data.map((property: any) => {
+      const enrichedProperty = {
+        ...property,
+        profiles: landlordProfiles[property.landlord_id] || null
+      }
+      
+      const formatted = formatPropertyForFrontend(enrichedProperty)
+      
+      // Add distance information
+      return {
+        ...formatted,
+        distance: property.distance_km,
+        distanceMiles: Math.round(property.distance_km * 0.621371 * 10) / 10 // Convert km to miles, round to 1 decimal
+      }
+    })
+
+    return formattedProperties
+  } catch (error) {
+    console.error('Error in getNearbyProperties:', error)
+    throw error
+  }
+}
+
 export async function getFavoriteProperties(userId: string): Promise<Property[]> {
   try {
     const { data, error } = await supabase

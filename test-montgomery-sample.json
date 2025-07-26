@@ -1,0 +1,68 @@
+[
+  {
+    "url": "https://www.affordablehousing.com/property/test-property-1",
+    "title": "Affordable 2BR Apartment - Montgomery",
+    "address": "123 Main Street, Montgomery, AL 36104",
+    "zipCode": "36104",
+    "rent": "$850",
+    "bedrooms": "2",
+    "bathrooms": "1",
+    "squareFeet": "900",
+    "yearBuilt": "1995",
+    "propertyType": "Apartment",
+    "listedBy": "Montgomery Housing Authority",
+    "phoneNumber": "(334) 555-0123",
+    "description": "Spacious 2-bedroom apartment in downtown Montgomery. Close to public transportation and shopping. Includes water and trash pickup.",
+    "availability": "Available Now",
+    "features": "Air Conditioning, Parking Available, Pet Friendly",
+    "images": [
+      "https://example.com/image1.jpg",
+      "https://example.com/image2.jpg"
+    ],
+    "localImagePaths": []
+  },
+  {
+    "url": "https://www.affordablehousing.com/property/test-property-2",
+    "title": "Cozy 1BR House - Montgomery",
+    "address": "456 Oak Avenue, Montgomery, AL 36106",
+    "zipCode": "36106",
+    "rent": "$650",
+    "bedrooms": "1",
+    "bathrooms": "1",
+    "squareFeet": "750",
+    "yearBuilt": "1980",
+    "propertyType": "House",
+    "listedBy": "River Region Properties",
+    "phoneNumber": "(334) 555-0456",
+    "description": "Charming 1-bedroom house with private yard. Perfect for single occupant or couple. Recently renovated kitchen.",
+    "availability": "Available December 1st",
+    "features": "Private Yard, Updated Kitchen, Washer/Dryer Hookups",
+    "images": [
+      "https://example.com/house1.jpg"
+    ],
+    "localImagePaths": []
+  },
+  {
+    "url": "https://www.affordablehousing.com/property/test-property-3",
+    "title": "Family 3BR Townhome - Montgomery",
+    "address": "789 Pine Street, Montgomery, AL 36108",
+    "zipCode": "36108",
+    "rent": "$1,200",
+    "bedrooms": "3",
+    "bathrooms": "2",
+    "squareFeet": "1,200",
+    "yearBuilt": "2005",
+    "propertyType": "Townhome",
+    "listedBy": "Capital City Rentals",
+    "phoneNumber": "(334) 555-0789",
+    "description": "Modern 3-bedroom townhome in family-friendly neighborhood. Great schools nearby. Two-car garage included.",
+    "availability": "Available January 15th",
+    "features": "Two-Car Garage, Modern Appliances, Fenced Backyard, Central Air",
+    "images": [
+      "https://example.com/townhome1.jpg",
+      "https://example.com/townhome2.jpg",
+      "https://example.com/townhome3.jpg"
+    ],
+    "localImagePaths": []
+  }
+]

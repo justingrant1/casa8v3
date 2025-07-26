@@ -82,6 +82,13 @@ export interface Database {
           security_deposit_negotiable: boolean | null
           created_at: string
           updated_at: string
+          data_source: string
+          external_url: string | null
+          external_id: string | null
+          source_market: string | null
+          last_scraped_at: string | null
+          scraped_contact_name: string | null
+          scraped_contact_phone: string | null
         }
         Insert: {
           id?: string
@@ -108,6 +115,13 @@ export interface Database {
           security_deposit_negotiable?: boolean | null
           created_at?: string
           updated_at?: string
+          data_source?: string
+          external_url?: string | null
+          external_id?: string | null
+          source_market?: string | null
+          last_scraped_at?: string | null
+          scraped_contact_name?: string | null
+          scraped_contact_phone?: string | null
         }
         Update: {
           id?: string
@@ -134,6 +148,13 @@ export interface Database {
           security_deposit_negotiable?: boolean | null
           created_at?: string
           updated_at?: string
+          data_source?: string
+          external_url?: string | null
+          external_id?: string | null
+          source_market?: string | null
+          last_scraped_at?: string | null
+          scraped_contact_name?: string | null
+          scraped_contact_phone?: string | null
         }
       }
       applications: {
