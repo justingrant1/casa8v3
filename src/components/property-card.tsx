@@ -67,6 +67,14 @@ export function PropertyCard({ property }: PropertyCardProps) {
     }
   }
 
+  const handleImageClick = () => {
+    // Haptic feedback for supported devices
+    if (navigator.vibrate) {
+      navigator.vibrate(10)
+    }
+    router.push(`/property/${property.id}`)
+  }
+
   return (
     <>
       <Card className="w-full max-w-sm sm:max-w-md rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out transform hover:-translate-y-1">
@@ -74,6 +82,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
           <PropertyCardCarousel
             images={getOptimizedImageUrls(property.images, 'card')}
             propertyTitle={property.title}
+            onImageClick={handleImageClick}
           />
           {property.type && (
             <Badge variant="secondary" className="absolute top-4 left-4 bg-white/80 backdrop-blur-sm">
